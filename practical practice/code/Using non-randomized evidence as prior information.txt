@@ -1,0 +1,127 @@
+model{
+for(i in 1:ns){ 
+### modeling the dependency between age (corresponding to data agedur[i,1]) and duration of illness (agedur[i,2]) in order to include studies with missing data on these covariates and also the correlation between the covariates
+	agedur[i,1:2]~dmnorm(mu[1:2],prect[1:2,1:2])
+} 
+mu[1]<-0  ### We have standardized the value of the covariates, thus they are centered on zero.
+mu[2]<-0
+tau1<-1 ### due to standardization
+tau2<-1 ### due to standardization
+rho~dunif(-1,1)
+T[1,1]<-tau1*tau1
+T[2,2]<-tau2*tau2
+T[1,2]<-rho*tau1*tau2
+T[2,1]<-T[1,2]
+prect[1:2,1:2]<-inverse(T[1:2,1:2]) ### due to standardization
+
+for(i in 1:ns){ 
+	w[i,1] <-0
+	delta1[i,t[i,1]]<-0
+	u[i] ~ dnorm(0,.0001)                                         
+	 
+	for (k in 1:na[i])  { 
+		se[i,t[i,k]]<-sd[i,t[i,k]]/sqrt(n[i,t[i,k]])
+		varr[i,t[i,k]]<-se[i,t[i,k]]*se[i,t[i,k]]
+		prec[i,t[i,k]]<-1/varr[i,t[i,k]]
+
+		###normal likelihood
+		y[i,t[i,k]]~dnorm(phi[i,t[i,k]],prec[i,t[i,k]])
+		phi[i,t[i,k]]<-(u[i]+delta1[i,t[i,k]])*pooled.sd[i]	
+
+		###nominator for the pooled sd		
+		nom1[i,k]<-n[i,t[i,k]]*sd[i,t[i,k]]*sd[i,t[i,k]] 
+	}	                                             
+	
+	ss[i]<-sum(n[i,1:nt])-nt+na[i] #total sample size in a study
+	nom[i]<-sum(nom1[i,1:na[i]])#nominator for the pooled sd
+	pooled.sd[i]<-sqrt(nom[i]/(ss[i]-na[i]))#pooled sd
+
+	for (k in 2:na[i]) {
+		smd[i,k]<-(y[i,t[i,k]]-y[i,t[i,1]])/pooled.sd[i]
+		varSMD[i,k]<-1/n[i,t[i,k]]+1/n[i,t[i,1]]+pow(smd[i,k],2)/(2*(n[i,t[i,k]]+n[i,t[i,1]]-2))
+		seSMD[i,k]<-sqrt(varSMD[i,k])
+		I[i,k]<-equals(t[i,1],regress.ref)-equals(t[i,k],regress.ref)
+	}  ### checks whether or not the comparison is vs placebo
+
+	for (k in 2:na[i]) {
+		delta1[i,t[i,k]]<-delta[i,t[i,k]]+I[i,k]*beta*(agedur[i,1])+I[i,k]*gamma*(agedur[i,2]) #regression on age and duration of illness
+		delta[i,t[i,k]] ~ dnorm(md[i,t[i,k]], PRECd[i,t[i,k]]) 
+		md[i,t[i,k]] <-  d[t[i,k]] - d[t[i,1]]  + sw[i,k]                   
+		PRECd[i,t[i,k]]<-1/(taud[i,t[i,k]]*taud[i,t[i,k]] )   
+		taud[i,t[i,k]] <- tau *2*(k-1)/k                                    
+		w[i,k] <- (delta[i,t[i,k]]  - d[t[i,k]] + d[t[i,1]])    #adjustment, multi-arm RCTs
+           	sw[i,k] <-sum(w[i,1:(k-1)])/(k-1) 
+	}
+}   
+
+beta~dnorm(0,0.1) #regression coefficient for mean age
+gamma~dnorm(0,0.1)#regression coefficient for mean duration of illness
+
+######################################################
+### formulating informative priors based on the observational estimates
+yobs[1:4]~dmnorm(d.obs[1:4], PrecObs[1:4,1:4])
+### we do not include regression terms here because we have assumed modifications of relative treatment effects only vs. placebo; the non-randomized study in our example only includes active drugs.  
+
+Sobs[1,1]<-s11/ww2+tau.naive*tau.naive #change estimate of 1vs4 weight to ww2
+Sobs[2,2]<-s22/ww+tau.naive*tau.naive
+Sobs[3,3]<-s33/ww+tau.naive*tau.naive
+Sobs[4,4]<-s44/ww+tau.naive*tau.naive
+Sobs[1,2]<-s12/ww+tau.naive*tau.naive/2
+Sobs[2,1]<-s12/ww+tau.naive*tau.naive/2
+Sobs[1,3]<-s13/ww+tau.naive*tau.naive/2
+Sobs[3,1]<-s13/ww+tau.naive*tau.naive/2
+Sobs[1,4]<-s14/ww+tau.naive*tau.naive/2
+Sobs[4,1]<-s14/ww+tau.naive*tau.naive/2
+Sobs[2,3]<-s23/ww+tau.naive*tau.naive/2
+Sobs[3,2]<-s23/ww+tau.naive*tau.naive/2
+Sobs[2,4]<-s24/ww+tau.naive*tau.naive/2
+Sobs[4,2]<-s24/ww+tau.naive*tau.naive/2
+Sobs[4,3]<-s34/ww+tau.naive*tau.naive/2
+Sobs[3,4]<-s34/ww+tau.naive*tau.naive/2
+PrecObs[1:4,1:4]<-inverse(Sobs[1:4,1:4])
+
+tau.naive<-0.085
+ww2~dunif(0,0.3) ### this is used to down-weight observational evidence
+ww ~ dunif(0.5, 1)
+
+d.obs[1]~dnorm(0.1,.0001) #changed to 0.1 to account for bias term
+d.obs[2]~dnorm(0,.0001)
+d.obs[3]~dnorm(0,.0001)
+d.obs[4]~dnorm(0,.0001)
+### the relative effect estimates from the observational study. 
+d[4]<-d.obs[1]
+d[5]<-d.obs[2]
+d[6]<-d.obs[3]
+d[15]<-d.obs[4]
+
+d[ref]<-0
+
+for (k in 2:3){d[k] ~ dnorm(0,.0001)} ### here we assign uninformative priors to the basic parameters not informed by the observational evidence
+for (k in 7:14){d[k] ~ dnorm(0,.0001) } 
+d[16] ~ dnorm(0,.0001)
+tau~dunif(0,5) #vague prior for random effects standard deviation 
+
+
+### Collection of results
+### pairwise SMDs for all comparisons
+for (c in 1:nt) {  for (k in 1:nt)  { SMD[c,k] <- d[c] - d[k]  }  }
+#compared to reference
+for (c in 1:nt) {  SMD.ref[c] <-d[c] - d[ref] }
+
+#estimating the SUCRA values
+order <- rank(d[])
+for(k in 1:nt) {
+	# this is when the outcome is negative - change to order[k] <- t+1-rank(d[]) when the outcome is positive
+	most.effective[k] <- equals(order[k],1)
+	for(j in 1:nt) {
+		effectiveness[k,j] <- equals(order[k],j)
+		cumeffectiveness[k,j] <- sum(effectiveness[k,1:j])
+	}
+}
+
+##SUCRAS
+for(k in 1:nt) {
+	SUCRA[k] <- sum(cumeffectiveness[k,1:(nt-1)]) /(nt-1)
+}
+
+}

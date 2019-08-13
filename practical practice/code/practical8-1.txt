@@ -1,0 +1,38 @@
+#ns=number of studies
+#r.A and r.B=number of events in treatment A and B
+#n.A and n.B=sample size in treatment A and B
+#tau.sq=heterogeneity
+
+model {
+for (i in 1:ns) {
+	
+##binomial likelihood of number of events for each arm of study i 
+	r.A[i] ~ dbin(p.A[i],n.A[i])
+	r.B[i] ~ dbin(p.B[i],n.B[i])
+	
+##parameterization of the 'true' effect of each study i
+	logit(p.A[i]) <- u[i]		                
+	logit(p.B[i]) <- u[i]+theta[i]
+
+
+##distribution of random effects
+	theta[i] ~ dnorm(mean,prec)
+
+#theta1[i] <- theta[i] + b*percent[i]
+#theta ~ dnorm(mean,prec)
+
+}
+
+##prior distribution for summary lnOR
+mean ~ dnorm(0,.01)
+	
+##prior distribution for log-odds in baseline arm of study i
+for (i in 1:ns) {u[i] ~ dnorm(0,.01)}
+	
+##prior distribution for heterogeneity
+tau ~ dnorm(0,1)I(0,)
+prec <- 1/tau.sq
+tau.sq <- pow(tau,2)
+##OR 
+OR <- exp(mean)
+}

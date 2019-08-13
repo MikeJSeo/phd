@@ -1,0 +1,300 @@
+---
+title: "Preliminary analysis - Martha dataset"
+output:
+  word_document:
+    reference_docx: word-styles.docx
+    toc: yes
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(tidy = TRUE, echo = FALSE, comment = '')
+```
+
+```{r results='hide', message=FALSE, warning=FALSE, echo = FALSE}
+library("readxl")
+#devtools::install_github("guido-s/netmeta", ref = "develop", force = TRUE)
+library(netmeta)
+library(meta)
+library(knitr)
+library(metasens)
+
+#setwd("C:/Users/ms19g661/Desktop") #change working directory
+setwd("C:/Users/mike/Desktop")
+
+original <- read_excel("martha.xlsx", sheet = "DATA", col_names = FALSE)
+original <- as.data.frame(original)
+
+#remove last column which is sum
+original <- original[-length(original[,1]),]
+
+#remove all NA rows (last five rows)
+row.has.all.na <- apply(original, 1, function(x){all(is.na(x))})
+original <- original[!row.has.all.na,]
+
+# Fix missing treatment; Study ID = Jefferson2000 (29060/785)
+if(original[839, 4] == "*") original[839,4] <- "paroxetine"
+original[original == "Placebo"] = "placebo"
+
+#################################################### functions
+
+split_data <- function(martha, outcome){
+
+  # only keep necessary characteristic variables we need for now
+  characteristics <- which(martha[3,] %in% c("StudyID", "Drug", "No_randomised"))
+  martha_characteristics <- martha[, characteristics]
+  colnames(martha_characteristics) <- martha[3, characteristics]
+
+  # extract outcome; only keep trials that are not all '*'; also remove the first 3 row headers
+  martha_outcome <- as.matrix(martha[,martha[1,] %in% outcome])
+  ind <- apply(martha_outcome, 1, function(x) all(x == "*"))
+  ind[1:3] <- TRUE
+  martha_outcome <- as.matrix(martha_outcome[!ind, ])
+  martha_characteristics <- martha_characteristics[!ind,] 
+  
+  # change No_randomised to numeric
+  martha_characteristics["No_randomised"][martha_characteristics["No_randomised"] == "*"] <- 0   #some values are missing - denoted with * 
+  martha_characteristics["No_randomised"] <- sapply(martha_characteristics[,"No_randomised"], as.numeric)
+
+  # change the * to 0 and add the same columns up; change the values to numeric
+  martha_outcome[martha_outcome == "*"] <- 0
+  martha_outcome <- apply(martha_outcome, 2, function(x){x[grepl('S ', x)] <- NA; x}) #delete some weird values (i.e. "S 0" for Suicidal Ideation
+  martha_outcome <- apply(martha_outcome, 2, as.numeric)
+  martha_outcome <- apply(martha_outcome, 1, sum, na.rm = TRUE)
+  
+  # combine the characteristics and outcome
+  martha_combined <- cbind(martha_characteristics, martha_outcome)
+  print(sum(martha_combined$martha_outcome, na.rm = TRUE)) 
+  #check this number with what we have calculated previously
+  
+  return(martha_combined)
+}
+
+
+# function to do meta analysis after grouping treatments into one
+do_meta_analysis <- function(data){
+  
+  data$Drug <- ifelse(data$Drug == "placebo", "placebo", "treatment")
+  # combine identical treatments together
+  meta <- aggregate(data[,c("No_randomised", "martha_outcome")], list(Drug = data[,"Drug"], StudyID = data[,"StudyID"]), sum) 
+
+  p1 = pairwise(treat = Drug, event = martha_outcome, n = No_randomised, studlab = StudyID, data = meta, sm = "OR")
+  model1 = metabin(event.e = martha_outcome2, n.e = No_randomised2, event.c = martha_outcome1, n.c = No_randomised1, data = p1, studlab = StudyID, sm = "OR")
+  return(model1)
+}
+
+# function to perform MH-NMA 
+do_MH_NMA <- function(data, method = "MH", random.effects = FALSE){
+  # combine identical treatments together
+  data <- aggregate(data[,c("No_randomised", "martha_outcome")], list(Drug = data[,"Drug"], StudyID = data[,"StudyID"]), sum)
+
+  p2 = pairwise(treat = Drug, event = martha_outcome, n = No_randomised, studlab = StudyID, data = data, sm = "OR")
+
+  if(method == "Inverse"){
+    model2 <- netmetabin(p2, ref = "placebo", method = method, comb.random = random.effects, allstudies = TRUE)
+  }else{
+    model2 <- netmetabin(p2, ref = "placebo", method = method)
+  }
+
+  return(model2)
+}
+
+
+settings.meta(digits = 2, digits.pval = 2)
+```
+
+
+# Suicidal ideation
+
+```{r results='hide', message=FALSE, warning=FALSE, echo = FALSE, cache = TRUE}
+suicidal <- split_data(original, "SUICIDAL IDEATION/BEHAVIOUR or SELF HARM") #total number of events is 365
+model1 <- do_meta_analysis(suicidal)
+model2 <- do_MH_NMA(suicidal) 
+model3 <- do_MH_NMA(suicidal, method = "Inverse")
+model4 <- do_MH_NMA(suicidal, method = "Inverse", random.effects = TRUE)
+```
+
+## Network graph
+
+We included a total of `r length(model1$studlab)` studies in the analysis of this outcome. We had a total of `r sum(model1$event.c)` events in placebo and `r sum(model1$event.e)` events in drugs.
+
+```{r, fig.height=10, fig.width=10}
+netgraph(model2, seq = "optimal", col = "black", plastic = FALSE, points = TRUE, pch = 21, cex.points = 3,
+         col.points = "black", bg.points = "gray", thickness = "se.fixed", multiarm = FALSE, number.of.studies = TRUE)
+```
+
+## Pairwise meta-analysis
+
+After grouping all drugs under one node, we performed a pairwise meta-analysis between drugs vs placebo. We used Mantel-Haenszel method to synthesize odds ratios. We found a very small effect size with large uncertainty, i.e. an OR 1.07 [0.82, 1.38], favouring placebo. The random effects model gave almost identical results.
+
+```{r}
+summary(model1)
+```
+
+We present contour-enhanced funnel plot. We don't see asymmetry in the funnel plot. Thus, we can conclude that there is no publication bias in this study.
+
+```{r}
+funnel(model1, pch = 16,
+       contour = c(0.9, 0.95, 0.99),
+       col.contour = c("green", "yellow", "pink"))
+legend(2, 0,
+       c("0.1 > p > 0.05", "0.05 > p > 0.01", "< 0.01"),
+       fill = c("green", "yellow", "pink"), bty = "n")
+```
+
+## Mantel-Haenszel network meta-analysis
+
+We performed a Mantel-Haenszel NMA. Results are summarized in the forest plot below. Odds ratio smaller than 1 indicate that a drug reduced suicidal ideation as compared to placebo. All estimates come with large uncertainty; thus, no firm conclusion can be drawn for any of the drugs.
+
+```{r}
+forest(model2, sortvar = model2$TE.fixed[,which(colnames(model2$TE.fixed)=="placebo")])
+```
+
+## Inverse variance network meta-analysis
+
+The estimates found by using inverse variance method for both fixed and random effects model closely match the result we found in Mantel-Haenszel NMA. There are more treatments included in this NMA since a continuity correction (adding 0.5 to no event arms) has been used. Fixed and random effects NMA gave identical results, because heterogeneity was estimated to be zero.
+
+```{r, echo = FALSE}
+forest(model3, sortvar = model3$TE.fixed[,which(colnames(model3$TE.fixed)=="placebo")])
+```
+
+# Nausea
+
+```{r results='hide', message=FALSE, warning=FALSE, echo = FALSE, cache = TRUE}
+nausea <- split_data(original, "NAUSEA") 
+model5 <- do_meta_analysis(nausea)
+model6 <- do_MH_NMA(nausea, method = "Inverse", random.effects = TRUE)
+```
+
+
+## Network graph
+
+We included a total of `r length(model5$studlab)` studies in the analysis of this outcome. We had a total of `r round(sum(model5$event.c))` events in placebo and `r round(sum(model5$event.e))` events in drugs.
+
+```{r, fig.height=10, fig.width=10}
+netgraph(model6, seq = "optimal", col = "black", plastic = FALSE, points = TRUE, pch = 21, cex.points = 3,
+         col.points = "black", bg.points = "gray", thickness = "se.fixed", multiarm = FALSE, number.of.studies = TRUE)
+```
+
+## Pairwise meta-analysis
+
+After grouping all drugs under one node, we performed a pairwise meta-analysis between drugs vs placebo. We used Mantel-Haenszel method to synthesize odds ratios. We found a very **large** effect size with small uncertainty, i.e. an OR 2.59 [2.46, 2.74], favouring placebo.
+
+```{r}
+summary(model5)
+```
+
+We present contour-enhanced funnel plot below. We don't see asymmetry in the funnel plot. Thus, we can conclude that there is no publication bias in this study.
+
+```{r}
+funnel(model5, pch = 16,
+       contour = c(0.9, 0.95, 0.99),
+       col.contour = c("green", "yellow", "pink"))
+legend(8, 0,
+       c("0.1 > p > 0.05", "0.05 > p > 0.01", "< 0.01"),
+       fill = c("green", "yellow", "pink"), bty = "n")
+```
+
+
+## Random effects network meta-analysis
+
+We performed a random effects NMA. Results are summarized in the forest plot below. Odds ratio smaller than 1 indicate that a drug reduced nausea as compared to placebo. Odds ratios are much greater than 1 with small uncertainty; thus, we can infer that drug may be developing nausea for some patients.
+
+```{r, echo = FALSE}
+forest(model6, sortvar = model6$TE.random[,which(colnames(model6$TE.random)=="placebo")])
+```
+
+
+# Agitation
+
+```{r results='hide', message=FALSE, warning=FALSE, echo = FALSE, cache = TRUE}
+agitation <- split_data(original, "AGITATION") 
+model7 <- do_meta_analysis(agitation)
+model8 <- do_MH_NMA(agitation, method = "Inverse", random.effects = TRUE)
+```
+
+
+## Network graph
+
+We included a total of `r length(model7$studlab)` studies in the analysis of this outcome. We had a total of `r round(sum(model7$event.c))` events in placebo and `r round(sum(model7$event.e))` events in drugs.
+
+```{r, fig.height=10, fig.width=10}
+netgraph(model8, seq = "optimal", col = "black", plastic = FALSE, points = TRUE, pch = 21, cex.points = 3,
+         col.points = "black", bg.points = "gray", thickness = "se.fixed", multiarm = FALSE, number.of.studies = TRUE)
+```
+
+## Pairwise meta-analysis
+
+After grouping all drugs under one node, we performed a pairwise meta-analysis between drugs vs placebo. We used Mantel-Haenszel method to synthesize odds ratios. We found a small effect size with moderate uncertainty, i.e. an OR 1.17 [0.99, 1.40], favouring placebo. 
+
+
+```{r}
+summary(model7)
+```
+
+We present contour-enhanced funnel plot below. We don't see asymmetry in the funnel plot. Thus, we can conclude that there is no publication bias in this study.
+
+
+```{r}
+funnel(model7, pch = 16,
+       contour = c(0.9, 0.95, 0.99),
+       col.contour = c("green", "yellow", "pink"))
+legend(2, 0,
+       c("0.1 > p > 0.05", "0.05 > p > 0.01", "< 0.01"),
+       fill = c("green", "yellow", "pink"), bty = "n")
+```
+
+
+## Random effects network meta-analysis
+
+We performed a random effects NMA. Results are summarized in the forest plot below. Odds ratio smaller than 1 indicate that a drug reduced agitation as compared to placebo. All estimates come with large uncertainty; thus, no firm conclusion can be drawn for any of the drugs.
+
+```{r, echo = FALSE, fig.height = 5, fig.width = 5}
+forest(model8, sortvar = model8$TE.random[,which(colnames(model8$TE.random)=="placebo")])
+```
+
+
+# Tremor
+
+```{r results='hide', message=FALSE, warning=FALSE, echo = FALSE, cache = TRUE}
+tremor <- split_data(original, "TREMOR") 
+model9 <- do_meta_analysis(tremor)
+model10 <- do_MH_NMA(tremor, method = "Inverse", random.effects = TRUE)
+```
+
+
+## Network graph
+
+We included a total of `r length(model9$studlab)` studies in the analysis of this outcome. We had a total of `r round(sum(model9$event.c))` events in placebo and `r round(sum(model9$event.e))` events in drugs.
+
+```{r, fig.height=10, fig.width=10}
+netgraph(model10, seq = "optimal", col = "black", plastic = FALSE, points = TRUE, pch = 21, cex.points = 3,
+         col.points = "black", bg.points = "gray", thickness = "se.fixed", multiarm = FALSE, number.of.studies = TRUE)
+```
+
+## Pairwise meta-analysis
+
+After grouping all drugs under one node, we performed a pairwise meta-analysis between drugs vs placebo. We used Mantel-Haenszel method to synthesize odds ratios. We found a large effect size with small uncertainty, i.e. an OR 4.22 [3.50, 5.10], favouring placebo. 
+
+```{r}
+summary(model9)
+```
+
+We present contour-enhanced funnel plot below. There might be a publication bias since studies with low precision are not spread evenly on both sides of the average.
+
+```{r}
+funnel(model9, pch = 16,
+       contour = c(0.9, 0.95, 0.99),
+       col.contour = c("green", "yellow", "pink"))
+legend(10, 0,
+       c("0.1 > p > 0.05", "0.05 > p > 0.01", "< 0.01"),
+       fill = c("green", "yellow", "pink"), bty = "n")
+```
+
+
+## Random effects network meta-analysis
+
+We performed a random effects NMA. Results are summarized in the forest plot below. Odds ratio smaller than 1 indicate that a drug reduced tremor as compared to placebo. Odds ratio are large with small uncertainty; thus, we can infer that drug may be developing tremor for some patients.
+
+```{r, echo = FALSE, fig.height = 7, fig.width = 7}
+forest(model10, sortvar = model10$TE.random[,which(colnames(model10$TE.random)=="placebo")])
+```
