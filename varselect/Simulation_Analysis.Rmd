@@ -1,0 +1,917 @@
+---
+title: "Simulation Analysis"
+author: "Michael Seo"
+date: "6 August 2019"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(tidy = TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), warning = FALSE, message=FALSE, echo = FALSE)
+```
+
+
+```{r}
+# load packages needed
+library(MASS) # Used for data simulation
+library(glmnet) #for lasso
+library(glmmLasso) #for glmmLasso
+library(dclone) # for parallel processing of JAGS code
+library(knitr) # for printing tables 
+```
+
+```{r}
+# Setting directory
+#setwd("C:/Users/ms19g661/Desktop")
+setwd("C:/Users/mike/Desktop")
+#stent <- read.dta13("stent.dta")
+
+#load/save everything else from/to github
+#setwd("~/GitHub/jags/LASSO")
+setwd("C:/Users/mike/Desktop/Github/jags/LASSO")
+
+source("helpful.functions.final.R")
+```
+
+```{r}
+niter <- 100 #number of simulation to run
+col_labels <- c(paste0("X", 1:10), paste0("X", 1:10, ":treat"), "treat") # first simulation data
+col_labels2 <- c(paste0("X", 1:20), paste0("X", 1:20, ":treat"), "treat") # second
+col_labels_glmmLasso <- c(paste0("X", 1:10), paste0("X", 1:10, "_treat"), "treat")
+col_labels_glmmLasso2 <- c(paste0("X", 1:20), paste0("X", 1:20, "_treat"), "treat")
+
+correct_em <- c(rep(0, 3), rep(1, 2), rep(0, 5))
+correct_em2 <- c(rep(0, 6), rep(1, 4), rep(0, 10))
+correct_em_values <- c(0, 0, 0, 0.2, 0.3, 0, 0, 0, 0, 0)
+correct_em_values2 <- c(rep(0, 6), 0.2, 0.3, -0.1, -0.2, rep(0, 10))
+
+# setup for parallel computing
+n.cores <- 3
+cl <- makePSOCKcluster(n.cores)
+tmp <- clusterEvalQ(cl, library(dclone))
+```
+
+
+
+```{r simple_null_scenario1, cache = TRUE, results = "hide"}
+simple_null_store_mse1 <- matrix(NA, nrow = niter, ncol = 3)
+simple_null_store_sd1 <- rep(NA, niter)
+
+for(i in seq(niter)){
+  
+  set.seed(i)
+  data <-generate.simulation()
+  m1 <- lm(y ~ treat, data = data)
+  
+  mse_null <- sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
+  simple_null_store_mse1[i,] <- find_performance2(mse_null, correct_em_values, correct_em)
+  simple_null_store_sd1[i] <- summary(m1)$coef["treat", "Std. Error"]
+}
+simple_null_store_mse1_mean <- apply(simple_null_store_mse1, 2, mean)
+simple_null_store_sd1_mean <- mean(simple_null_store_sd1)
+```
+
+
+```{r simple_null_scenario2, cache = TRUE, results = "hide"}
+simple_null_store_mse2 <- matrix(NA, nrow = niter, ncol = 3)
+simple_null_store_sd2 <- rep(NA, niter)
+
+for(i in seq(niter)){
+  
+  set.seed(i)
+  data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13,14,15,16), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2))
+  m1 <- lm(y ~ treat, data = data)
+  
+  mse_null <- sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
+  simple_null_store_mse2[i,] <- find_performance2(mse_null, correct_em_values2, correct_em2)
+  simple_null_store_sd2[i] <- summary(m1)$coef["treat", "Std. Error"]
+}
+simple_null_store_mse2_mean <- apply(simple_null_store_mse2, 2, mean)
+simple_null_store_sd2_mean <- mean(simple_null_store_sd2)
+```
+
+
+```{r simple_null_scenario3, cache = TRUE, results = "hide"}
+simple_null_store_mse3 <- matrix(NA, nrow = niter, ncol = 3)
+simple_null_store_sd3 <- rep(NA, niter)
+
+for(i in seq(niter)){
+  
+  set.seed(i)
+  data <-generate.simulation(model = "binomial")
+  m1 <- glm(y ~ treat, family = "binomial", data = data)
+  
+  mse_null <- sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
+  simple_null_store_mse3[i,] <- find_performance2(mse_null, correct_em_values, correct_em)
+  simple_null_store_sd3[i] <- summary(m1)$coef["treat", "Std. Error"]
+}
+simple_null_store_mse3_mean <- apply(simple_null_store_mse3, 2, mean)
+simple_null_store_sd3_mean <- mean(simple_null_store_sd3)
+```
+
+```{r simple_null_scenario4, cache = TRUE, results = "hide"}
+simple_null_store_mse4 <- matrix(NA, nrow = niter, ncol = 3)
+simple_null_store_sd4 <- rep(NA, niter)
+
+for(i in seq(niter)){
+  
+  set.seed(i)
+  data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13,14,15,16), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2), model = "binomial")
+  m1 <- glm(y ~ treat, family = "binomial", data = data)
+
+  mse_null <- sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
+  simple_null_store_mse4[i,] <- find_performance2(mse_null, correct_em_values2, correct_em2)
+  simple_null_store_sd4[i] <- summary(m1)$coef["treat", "Std. Error"]
+}
+simple_null_store_mse4_mean <- apply(simple_null_store_mse4, 2, mean)
+simple_null_store_sd4_mean <- mean(simple_null_store_sd4)
+```
+
+
+
+```{r simple_model_scenario1, cache = TRUE, results = "hide"}
+simple_store_mse1 <- matrix(NA, nrow = niter, ncol = 3)
+simple_store_sd1 <- rep(NA, niter)
+
+for(i in seq(niter)){
+  
+  set.seed(i)
+  data <-generate.simulation()
+  m1 <- lm(y ~ (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat, data = data)
+  
+  mse_simple <- sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
+  simple_store_mse1[i,] <- find_performance2(mse_simple, correct_em_values, correct_em)
+  simple_store_sd1[i] <- summary(m1)$coef["treat", "Std. Error"]
+}
+simple_store_mse1_mean <- apply(simple_store_mse1, 2, mean)
+simple_store_sd1_mean <- mean(simple_store_sd1)
+```
+
+```{r simple_model_scenario2, cache = TRUE, results = "hide"}
+simple_store_mse2 <- matrix(NA, nrow = niter, ncol = 3)
+simple_store_sd2 <- rep(NA, niter)
+
+for(i in seq(niter)){
+  
+  set.seed(i)
+  data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13,14,15,16), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2))
+  m1 <- lm(y ~ (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20)*treat, data = data)
+  
+  mse_simple <- sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
+  simple_store_mse2[i,] <- find_performance2(mse_simple, correct_em_values2, correct_em2)
+  simple_store_sd2[i] <- summary(m1)$coef["treat", "Std. Error"]
+}
+simple_store_mse2_mean <- apply(simple_store_mse2, 2, mean)
+simple_store_sd2_mean <- mean(simple_store_sd2)
+```
+
+```{r simple_model_scenario3, cache = TRUE, results = "hide"}
+simple_store_mse3 <- matrix(NA, nrow = niter, ncol = 3)
+simple_store_sd3 <- rep(NA, niter)
+
+for(i in seq(niter)){
+  
+  set.seed(i)
+  data <-generate.simulation(model = "binomial")
+  
+  m1 <- glm(y ~ (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat, family = "binomial", data = data)
+  
+  mse_simple <- sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
+  simple_store_mse3[i,] <- find_performance2(mse_simple, correct_em_values, correct_em)
+  simple_store_sd3[i] <- summary(m1)$coef["treat", "Std. Error"]
+}
+simple_store_mse3_mean <- apply(simple_store_mse3, 2, mean)
+simple_store_sd3_mean <- mean(simple_store_sd3)
+```
+
+```{r simple_model_scenario4, cache = TRUE, results = "hide"}
+simple_store_mse4 <- matrix(NA, nrow = niter, ncol = 3)
+simple_store_sd4 <- rep(NA, niter)
+
+for(i in seq(niter)){
+  
+  set.seed(i)
+  data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13,14,15,16), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2), model = "binomial")
+
+  m1 <- glm(y ~ (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20)*treat, family = "binomial", data = data)
+
+  mse_simple <- sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
+  simple_store_mse4[i,] <- find_performance2(mse_simple, correct_em_values2, correct_em2)
+  simple_store_sd4[i] <- summary(m1)$coef["treat", "Std. Error"]
+}
+simple_store_mse4_mean <- apply(simple_store_mse4, 2, mean)
+simple_store_sd4_mean <- mean(simple_store_sd4)
+```
+
+
+
+```{r step_model_scenario1, cache = TRUE, results = "hide"}
+step_store_mse1 <- matrix(NA, nrow = niter, ncol = 3)
+step_store_sd1 <- rep(NA, niter)
+
+for(i in seq(niter)){
+
+  set.seed(i)
+  data <- generate.simulation()
+
+  m1 <- lm(y ~ (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat, data = data)
+  s1 <- step(m1, scope=list(lower=~treat))
+ 
+  mse_step <- sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% variable.names(s1), summary(s1)$coef[x,"Estimate"], 0))
+  step_store_mse1[i,] <- find_performance2(mse_step, correct_em_values, correct_em)
+  step_store_sd1[i] <- summary(s1)$coef["treat", "Std. Error"]
+}
+step_store_mse1_mean <- apply(step_store_mse1, 2, mean)
+step_store_sd1_mean <- mean(step_store_sd1)
+```
+
+
+```{r step_model_scenario2, cache = TRUE, results = "hide"}
+step_store_mse2 <- matrix(NA, nrow = niter, ncol = 3)
+step_store_sd2 <- rep(NA, niter)
+
+for(i in seq(niter)){
+
+  set.seed(i)
+  data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13,14,15,16), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2))
+
+  m1 <- lm(y ~ (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20)*treat, data = data)
+  s1 <- step(m1, scope=list(lower=~treat))
+
+  mse_step <- sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% variable.names(s1), summary(s1)$coef[x,"Estimate"], 0))
+  step_store_mse2[i,] <- find_performance2(mse_step, correct_em_values2, correct_em2)
+  step_store_sd2[i] <- summary(s1)$coef["treat", "Std. Error"]
+}
+step_store_mse2_mean <- apply(step_store_mse2, 2, mean)
+step_store_sd2_mean <- mean(step_store_sd2)
+```
+
+
+```{r step_model_scenario3, cache = TRUE, results = "hide"}
+step_store_mse3 <- matrix(NA, nrow = niter, ncol = 3)
+step_store_sd3 <- rep(NA, niter)
+
+for(i in seq(niter)){
+
+  set.seed(i)
+  data <- generate.simulation(model = "binomial")
+
+  m1 <- glm(y ~ (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat, family = "binomial", data = data)
+  s1 <- step(m1, scope=list(lower=~treat))
+ 
+  mse_step <- sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% variable.names(s1), summary(s1)$coef[x,"Estimate"], 0))
+  step_store_mse3[i,] <- find_performance2(mse_step, correct_em_values, correct_em)
+  step_store_sd3[i] <- summary(s1)$coef["treat", "Std. Error"]
+}
+step_store_mse3_mean <- apply(step_store_mse3, 2, mean)
+step_store_sd3_mean <- mean(step_store_sd3)
+```
+
+
+```{r step_model_scenario4, cache = TRUE, results = "hide"}
+step_store_mse4 <- matrix(NA, nrow = niter, ncol = 3)
+step_store_sd4 <- rep(NA, niter)
+
+for(i in seq(niter)){
+
+  set.seed(i)
+  data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13,14,15,16), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2), model = "binomial")
+
+  m1 <- glm(y ~ (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20)*treat, family = "binomial", data = data)
+  s1 <- step(m1, scope=list(lower=~treat)) 
+ 
+  mse_step <- sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% variable.names(s1), summary(s1)$coef[x,"Estimate"], 0))
+  step_store_mse4[i,] <- find_performance2(mse_step, correct_em_values2, correct_em2)
+  step_store_sd4[i] <- summary(s1)$coef["treat", "Std. Error"]
+}
+step_store_mse4_mean <- apply(step_store_mse4, 2, mean)
+step_store_sd4_mean <- mean(step_store_sd4)
+```
+
+
+
+```{r glmnet_scenario1, cache = TRUE, result = "hide"}
+glmnet_store_mse1 <- matrix(NA, nrow = niter, ncol = 3)
+
+p.fac = rep(1, 21)
+p.fac[c(11)] = 0 #No shrinkage for treatment effect
+
+for(i in seq(niter)){
+
+  set.seed(i)
+  data <- generate.simulation()
+  data$studyid <- NULL
+  
+  cvfit = cv.glmnet(as.matrix(data[,-1]), as.matrix(data[1]), penalty.factor = p.fac)
+  aa <-coef(cvfit, s = "lambda.1se")
+
+  mse_glmnet <-  sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
+  glmnet_store_mse1[i,] <- find_performance2(mse_glmnet, correct_em_values, correct_em)
+}
+glmnet_store_mse1_mean <- apply(glmnet_store_mse1, 2, mean)
+```
+
+
+```{r glmnet_scenario2, cache = TRUE, result = "hide"}
+glmnet_store_mse2 <- matrix(NA, nrow = niter, ncol = 3)
+
+p.fac = rep(1, 41)
+p.fac[c(21)] = 0 #No shrinkage for treatment effect
+
+for(i in seq(niter)){
+
+  set.seed(i)
+  data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13,14,15,16), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2))
+  data$studyid <- NULL
+  
+  cvfit = cv.glmnet(as.matrix(data[,-1]), as.matrix(data[1]), penalty.factor = p.fac)
+  aa <- coef(cvfit, s = "lambda.1se")
+ 
+  mse_glmnet <-  sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
+  glmnet_store_mse2[i,] <- find_performance2(mse_glmnet, correct_em_values2, correct_em2)
+}
+glmnet_store_mse2_mean <- apply(glmnet_store_mse2, 2, mean)
+```
+
+
+```{r glmnet_scenario3, cache = TRUE, result = "hide"}
+glmnet_store_mse3 <- matrix(NA, nrow = niter, ncol = 3)
+
+p.fac = rep(1, 21)
+p.fac[c(11)] = 0 #No shrinkage for treatment effect
+
+for(i in seq(niter)){
+
+  set.seed(i)
+  data <- generate.simulation(model = "binomial")
+  data$studyid <- NULL
+  
+  cvfit = cv.glmnet(as.matrix(data[,-1]), as.matrix(data[1]), penalty.factor = p.fac, family = "binomial", type.measure = "class")
+  aa <-coef(cvfit, s = "lambda.1se")
+ 
+  mse_glmnet <-  sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
+  glmnet_store_mse3[i,] <- find_performance2(mse_glmnet, correct_em_values, correct_em)
+}
+glmnet_store_mse3_mean <- apply(glmnet_store_mse3, 2, mean)
+```
+
+
+```{r glmnet_scenario4, cache = TRUE, result = "hide"}
+glmnet_store_mse4 <- matrix(NA, nrow = niter, ncol = 3)
+
+p.fac = rep(1, 41)
+p.fac[c(21)] = 0 #No shrinkage for treatment effect
+
+for(i in seq(niter)){
+
+  set.seed(i)
+  data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13,14,15,16), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2), model = "binomial")
+  data$studyid <- NULL
+  
+  cvfit = cv.glmnet(as.matrix(data[,-1]), as.matrix(data[1]), penalty.factor = p.fac, family = "binomial", type.measure = "class")
+  aa <- coef(cvfit, s = "lambda.1se")
+  
+  mse_glmnet <-  sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
+  glmnet_store_mse4[i,] <- find_performance2(mse_glmnet, correct_em_values2, correct_em2)
+}
+glmnet_store_mse4_mean <- apply(glmnet_store_mse4, 2, mean)
+```
+
+
+```{r glmmLasso_store_scenario1, cache = TRUE, result = "hide", include = FALSE}
+glmmLasso_store_mse1 <- matrix(NA, nrow = niter, ncol = 3)
+
+for(i in seq(niter)){
+  
+  set.seed(i)  
+  data <- generate.simulation()
+  colnames(data) <- gsub(":", "_", colnames(data))  
+
+  lambda <- seq(500,0,by=-5)
+  BIC_vec<-rep(Inf,length(lambda))
+
+  for(j in 1:length(lambda)){
+    glm1 <- glmmLasso(y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat +X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat,
+                      rnd = list(studyid =~ -1 + treat),
+                      family = gaussian(link = "identity"),
+                      lambda = lambda[j],
+                      final.re = FALSE,
+                      data = data, control = list(index = c(NA, 1:20, NA)))
+    BIC_vec[j]<-glm1$bic
+  }
+  opt<-which.min(BIC_vec)
+
+  glm1 <- glmmLasso(y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat +X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat,
+                      rnd = list(studyid =~ -1 + treat),
+                      family = gaussian(link = "identity"),
+                      lambda = lambda[opt],
+                      final.re =FALSE,
+                      data = data, control = list(index = c(NA, 1:20, NA)))
+
+  aa <- summary(glm1)$coefficients
+  aa <- rownames(aa[aa[,"Estimate"] != 0,])
+
+  mse_glmmLasso <- sapply(col_labels_glmmLasso[-c(1:10)], function(x) ifelse(x %in% aa, summary(glm1)$coefficients[x,"Estimate"], 0))
+  glmmLasso_store_mse1[i,] <- find_performance2(mse_glmmLasso, correct_em_values, correct_em)
+}
+glmmLasso_store_mse1_mean <- apply(glmmLasso_store_mse1, 2, mean)
+```
+
+
+```{r glmmLasso_store_scenario2, cache = TRUE, result = "hide", include = FALSE}
+glmmLasso_store_mse2 <- matrix(NA, nrow = niter, ncol = 3)
+
+for(i in seq(niter)){
+  
+  set.seed(i)  
+  data <- generate.simulation(Nstudies = 10, Ncovariate = 20,continuous.cov = c(1,2,3,4,7,8,11,12,13), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2))
+  colnames(data) <- gsub(":", "_", colnames(data))  
+
+  lambda <- seq(500,0,by=-5)
+  BIC_vec<-rep(Inf,length(lambda))
+
+  for(j in 1:length(lambda)){
+    
+    glm1 <- glmmLasso(y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + X11_treat + X12_treat + X13_treat + X14_treat + X15_treat + X16_treat + X17_treat + X18_treat + X19_treat + X20_treat + treat,
+                      rnd = list(studyid =~ -1 + treat),
+                      family = gaussian(link = "identity"),
+                      lambda = lambda[j],
+                      final.re = FALSE,
+                      data = data, control = list(index = c(NA, 1:40, NA)))
+    BIC_vec[j]<-glm1$bic
+  }
+  opt<-which.min(BIC_vec)
+  
+  glm1 <- glmmLasso(y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + X11_treat + X12_treat + X13_treat + X14_treat + X15_treat + X16_treat + X17_treat + X18_treat + X19_treat + X20_treat + treat,
+                      rnd = list(studyid =~ -1 + treat),
+                      family = gaussian(link = "identity"),
+                      lambda = lambda[opt],
+                      final.re = FALSE,
+                      data = data, control = list(index = c(NA, 1:40, NA)))
+
+  aa <- summary(glm1)$coefficients
+  aa <- rownames(aa[aa[,"Estimate"] != 0,])
+
+  mse_glmmLasso <- sapply(col_labels_glmmLasso2[-c(1:20)], function(x) ifelse(x %in% aa, summary(glm1)$coefficients[x,"Estimate"], 0))
+  glmmLasso_store_mse2[i,] <- find_performance2(mse_glmmLasso, correct_em_values2, correct_em2)
+}
+glmmLasso_store_mse2_mean <- apply(glmmLasso_store_mse2, 2, mean)
+```
+
+
+```{r glmmLasso_store_scenario3, cache = TRUE, result = "hide", include = FALSE}
+glmmLasso_store_mse3 <- matrix(NA, nrow = niter, ncol = 3)
+
+for(i in seq(niter)){
+  
+  set.seed(i)  
+  data <- generate.simulation(model = "binomial")
+  colnames(data) <- gsub(":", "_", colnames(data))  
+
+  lambda <- seq(500,0,by=-5)
+  BIC_vec<-rep(Inf,length(lambda))
+
+  for(j in 1:length(lambda)){
+    glm1 <- glmmLasso(y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat +X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat,
+                      rnd = list(studyid =~ -1 + treat),
+                      family = binomial(link = "logit"),
+                      lambda = lambda[j],
+                      final.re = FALSE,
+                      data = data, control = list(index = c(NA, 1:20, NA)))
+    BIC_vec[j]<-glm1$bic
+  }
+  opt<-which.min(BIC_vec)
+
+  glm1 <- glmmLasso(y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat +X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat,
+                      rnd = list(studyid =~ -1 + treat),
+                      family = binomial(link = "logit"),
+                      lambda = lambda[opt],
+                      final.re = FALSE,
+                      data = data, control = list(index = c(NA, 1:20, NA)))
+
+  aa <- summary(glm1)$coefficients
+  aa <- rownames(aa[aa[,"Estimate"] != 0,])
+
+  mse_glmmLasso <- sapply(col_labels_glmmLasso[-c(1:10)], function(x) ifelse(x %in% aa, summary(glm1)$coefficients[x,"Estimate"], 0))
+  glmmLasso_store_mse3[i,] <- find_performance2(mse_glmmLasso, correct_em_values, correct_em)
+}
+glmmLasso_store_mse3_mean <- apply(glmmLasso_store_mse3, 2, mean)
+```
+
+
+```{r glmmLasso_store_scenario4, cache = TRUE, result = "hide", include = FALSE}
+glmmLasso_store_mse4 <- matrix(NA, nrow = niter, ncol = 3)
+
+for(i in seq(niter)){
+  
+  set.seed(i)  
+  data <- generate.simulation(Nstudies = 10, Ncovariate = 20,continuous.cov = c(1,2,3,4,7,8,11,12,13), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2), model = "binomial")
+  colnames(data) <- gsub(":", "_", colnames(data))  
+
+  lambda <- seq(500,0,by=-5)
+  BIC_vec<-rep(Inf,length(lambda))
+
+  for(j in 1:length(lambda)){
+    
+    glm1 <- glmmLasso(y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + X11_treat + X12_treat + X13_treat + X14_treat + X15_treat + X16_treat + X17_treat + X18_treat + X19_treat + X20_treat + treat,
+                      rnd = list(studyid =~ -1 + treat),
+                      family = binomial(link = "logit"),
+                      lambda = lambda[j],
+                      final.re = FALSE,
+                      data = data, control = list(index = c(NA, 1:40, NA)))
+    BIC_vec[j]<-glm1$bic
+  }
+  opt<-which.min(BIC_vec)
+  
+  glm1 <- glmmLasso(y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + X11_treat + X12_treat + X13_treat + X14_treat + X15_treat + X16_treat + X17_treat + X18_treat + X19_treat + X20_treat + treat,
+                      rnd = list(studyid =~ -1 + treat),
+                      family = binomial(link = "logit"),
+                      lambda = lambda[opt],
+                      final.re = FALSE,
+                      data = data, control = list(index = c(NA, 1:40, NA)))
+
+  aa <- summary(glm1)$coefficients
+  aa <- rownames(aa[aa[,"Estimate"] != 0,])
+
+  mse_glmmLasso <- sapply(col_labels_glmmLasso2[-c(1:20)], function(x) ifelse(x %in% aa, summary(glm1)$coefficients[x,"Estimate"], 0))
+  glmmLasso_store_mse4[i,] <- find_performance2(mse_glmmLasso, correct_em_values2, correct_em2)
+}
+glmmLasso_store_mse4_mean <- apply(glmmLasso_store_mse4, 2, mean)
+```
+
+
+
+```{r SSVS_store_scenario1, cache = TRUE, results = "hide"}
+SSVS_store_mse1 <- matrix(NA, nrow = niter, ncol = 3)
+SSVS_store_sd1 <- rep(NA, niter)
+
+for(i in seq(niter)){
+
+  set.seed(i)
+  data <- generate.simulation()
+  data_jags <- with(data,{
+                  list(Nstudies = length(unique(studyid)),
+                  X = cbind(X1, X2, X3, X4, X5, X6, X7, X8, X9, X10),
+                  Np = length(X1),
+                  Ncovariate = 10,
+                  studyid = studyid,
+                  treat = treat + 1,
+                  y = y)
+  })
+  
+  samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-SSVS.txt", n.chains = 3, n.adapt = 100, n.update = 100, n.iter = 3000)
+  
+  a <- summary(samples)
+
+  g_mean <-  a$statistics[grep("g\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- a$statistics[grep("d\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- treat_mean["d[2]"]
+  names(treat_mean) <- "treat"
+  
+  mse_SSVS <- c(g_mean, treat_mean)
+  SSVS_store_mse1[i,] <- find_performance2(mse_SSVS, correct_em_values, correct_em)
+  SSVS_store_sd1[i] <- a$statistics["d[2]", "SD"]
+}
+SSVS_store_mse1_mean <- apply(SSVS_store_mse1, 2, mean)
+SSVS_store_sd1_mean <- mean(SSVS_store_sd1)
+```
+
+
+```{r SSVS_store_scenario2, cache = TRUE, results = "hide"}
+SSVS_store_mse2 <- matrix(NA, nrow = niter, ncol = 3)
+SSVS_store_sd2 <- rep(NA, niter)
+
+for(i in seq(niter)){
+
+  set.seed(i)
+  data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2))
+  data_jags <- with(data,{
+  list(Nstudies = length(unique(studyid)),
+                  X = data[,paste0('X', 1:20)],
+                  Np = length(X1),
+                  Ncovariate = 20,
+                  studyid = studyid,
+                  treat = treat + 1,
+                  y = y)
+  })
+  samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-SSVS.txt", n.chains = 3, n.adapt = 100, n.update = 100, n.iter = 3000)
+  
+  a <- summary(samples)
+
+  g_mean <-  a$statistics[grep("g\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- a$statistics[grep("d\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- treat_mean["d[2]"]
+  names(treat_mean) <- "treat"
+
+  mse_SSVS <- c(g_mean, treat_mean)
+  SSVS_store_mse2[i,] <- find_performance2(mse_SSVS, correct_em_values2, correct_em2)
+  SSVS_store_sd2[i] <- a$statistics["d[2]", "SD"]
+}
+SSVS_store_mse2_mean <- apply(SSVS_store_mse2, 2, mean)
+SSVS_store_sd2_mean <- mean(SSVS_store_sd2)
+```
+
+
+```{r SSVS_store_scenario3, cache = TRUE, results = "hide"}
+SSVS_store_mse3 <- matrix(NA, nrow = niter, ncol = 3)
+SSVS_store_sd3 <- rep(NA, niter)
+
+for(i in seq(niter)){
+
+  set.seed(i)
+  data <- generate.simulation(model = "binomial")
+  data_jags <- with(data,{
+                  list(Nstudies = length(unique(studyid)),
+                  X = cbind(X1, X2, X3, X4, X5, X6, X7, X8, X9, X10),
+                  Np = length(X1),
+                  Ncovariate = 10,
+                  studyid = studyid,
+                  treat = treat + 1,
+                  y = y)
+  })
+  
+  samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-SSVS-Binomial.txt", n.chains = 3, n.adapt = 100, n.update = 100, n.iter = 3000)
+
+  a <- summary(samples)
+ 
+  g_mean <-  a$statistics[grep("g\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- a$statistics[grep("d\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- treat_mean["d[2]"]
+  names(treat_mean) <- "treat"
+
+  mse_SSVS <- c(g_mean, treat_mean)
+  SSVS_store_mse3[i,] <- find_performance2(mse_SSVS, correct_em_values, correct_em)
+  SSVS_store_sd3[i] <- a$statistics["d[2]", "SD"]
+}
+SSVS_store_mse3_mean <- apply(SSVS_store_mse3, 2, mean)
+SSVS_store_sd3_mean <- mean(SSVS_store_sd3)
+```
+
+
+```{r SSVS_store_scenario4, cache = TRUE, results = "hide"}
+SSVS_store_mse4 <- matrix(NA, nrow = niter, ncol = 3)
+SSVS_store_sd4 <- rep(NA, niter)
+
+for(i in seq(niter)){
+
+  set.seed(i)
+  data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2), model = "binomial")
+  data_jags <- with(data,{
+  list(Nstudies = length(unique(studyid)),
+                  X = data[,paste0('X', 1:20)],
+                  Np = length(X1),
+                  Ncovariate = 20,
+                  studyid = studyid,
+                  treat = treat + 1,
+                  y = y)
+  })
+  samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-SSVS-Binomial.txt", n.chains = 3, n.adapt = 100, n.update = 100, n.iter = 3000)
+
+  a <- summary(samples)
+
+  g_mean <-  a$statistics[grep("g\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- a$statistics[grep("d\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- treat_mean["d[2]"]
+  names(treat_mean) <- "treat"
+
+  mse_SSVS <- c(g_mean, treat_mean)
+  SSVS_store_mse4[i,] <- find_performance2(mse_SSVS, correct_em_values2, correct_em2)
+  SSVS_store_sd4[i] <- a$statistics["d[2]", "SD"]
+}
+SSVS_store_mse4_mean <- apply(SSVS_store_mse4, 2, mean)
+SSVS_store_sd4_mean <- mean(SSVS_store_sd4)
+```
+
+
+
+```{r bayesLASSO_store_scenario1, cache = TRUE, results = "hide", eval = FALSE}
+bayesLASSO_store_mse1 <- matrix(NA, nrow = niter, ncol = 3)
+bayesLASSO_store_sd1 <- rep(NA, niter)
+
+for(i in seq(niter)){
+
+  set.seed(i)
+  data <- generate.simulation()
+  data_jags <- with(data,{
+                  list(Nstudies = length(unique(studyid)),
+                  X = cbind(X1, X2, X3, X4, X5, X6, X7, X8, X9, X10),
+                  Np = length(X1),
+                  Ncovariate = 10,
+                  studyid = studyid,
+                  treat = treat + 1,
+                  y = y)
+  })
+  
+  samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-bayesLASSO.txt", n.chains = 3, n.adapt = 100, n.update = 100, n.iter = 3000)
+
+  a <- summary(samples)
+
+  g_mean <-  a$statistics[grep("g\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- a$statistics[grep("d\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- treat_mean["d[2]"]
+  names(treat_mean) <- "treat"
+  
+  mse_bayesLASSO <- c(g_mean, treat_mean)
+  bayesLASSO_store_mse1[i,] <- find_performance2(mse_bayesLASSO, correct_em_values, correct_em)
+  bayesLASSO_store_sd1[i] <- a$statistics["d[2]", "SD"]
+}
+bayesLASSO_store_mse1_mean <- apply(bayesLASSO_store_mse1, 2, mean)
+bayesLASSO_store_sd1_mean <- mean(bayesLASSO_store_sd1)
+```
+
+
+```{r bayesLASSO_store_scenario2, cache = TRUE, results = "hide", eval = FALSE}
+bayesLASSO_store_mse2 <- matrix(NA, nrow = niter, ncol = 3)
+bayesLASSO_store_sd2 <- rep(NA, niter)
+
+for(i in seq(niter)){
+
+  set.seed(i)   
+  data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2))
+  data_jags <- with(data,{
+  list(Nstudies = length(unique(studyid)),
+                  X = data[,paste0('X', 1:20)],
+                  Np = length(X1),
+                  Ncovariate = 20,
+                  studyid = studyid,
+                  treat = treat + 1,
+                  y = y)
+  })
+
+  samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-bayesLASSO.txt", n.chains = 3, n.adapt = 100, n.update = 100, n.iter = 3000)
+
+  a <- summary(samples)
+
+  g_mean <-  a$statistics[grep("g\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- a$statistics[grep("d\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- treat_mean["d[2]"]
+  names(treat_mean) <- "treat"
+  
+  mse_bayesLASSO <- c(g_mean, treat_mean)
+  bayesLASSO_store_mse2[i,] <- find_performance2(mse_bayesLASSO, correct_em_values2, correct_em2)
+  bayesLASSO_store_sd2[i] <- a$statistics["d[2]", "SD"]
+}
+bayesLASSO_store_mse2_mean <- apply(bayesLASSO_store_mse2, 2, mean)
+bayesLASSO_store_sd2_mean <- mean(bayesLASSO_store_sd2)
+```
+
+
+
+```{r bayesLASSO_store_scenario3, cache = TRUE, results = "hide", eval = FALSE}
+bayesLASSO_store_mse3 <- matrix(NA, nrow = niter, ncol = 3)
+bayesLASSO_store_sd3 <- rep(NA, niter)
+
+for(i in seq(niter)){
+
+  set.seed(i)
+  data <- generate.simulation(model = "binomial")
+  data_jags <- with(data,{
+                  list(Nstudies = length(unique(studyid)),
+                  X = cbind(X1, X2, X3, X4, X5, X6, X7, X8, X9, X10),
+                  Np = length(X1),
+                  Ncovariate = 10,
+                  studyid = studyid,
+                  treat = treat + 1,
+                  y = y)
+  })
+  
+  samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 100, n.iter = 3000)
+  
+  a <- summary(samples)
+
+  g_mean <-  a$statistics[grep("g\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- a$statistics[grep("d\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- treat_mean["d[2]"]
+  names(treat_mean) <- "treat"
+  
+  mse_bayesLASSO <- c(g_mean, treat_mean)
+  bayesLASSO_store_mse3[i,] <- find_performance2(mse_bayesLASSO, correct_em_values, correct_em)
+  bayesLASSO_store_sd3[i] <- a$statistics["d[2]", "SD"]
+}
+bayesLASSO_store_mse3_mean <- apply(bayesLASSO_store_mse3, 2, mean)
+bayesLASSO_store_sd3_mean <- mean(bayesLASSO_store_sd3)
+```
+
+
+
+```{r bayesLASSO_store_scenario4, cache = TRUE, results = "hide", eval = FALSE}
+bayesLASSO_store_mse4 <- matrix(NA, nrow = niter, ncol = 3)
+bayesLASSO_store_sd4 <- rep(NA, niter)
+
+for(i in seq(niter)){
+
+  set.seed(i)
+  data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2), model = "binomial")
+  data_jags <- with(data,{
+  list(Nstudies = length(unique(studyid)),
+                  X = data[,paste0('X', 1:20)],
+                  Np = length(X1),
+                  Ncovariate = 20,
+                  studyid = studyid,
+                  treat = treat + 1,
+                  y = y)
+  })
+  
+  samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 100, n.iter = 3000)
+
+  a <- summary(samples)
+
+  g_mean <-  a$statistics[grep("g\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- a$statistics[grep("d\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- treat_mean["d[2]"]
+  names(treat_mean) <- "treat"
+
+  mse_bayesLASSO <- c(g_mean, treat_mean)
+  bayesLASSO_store_mse4[i,] <- find_performance2(mse_bayesLASSO, correct_em_values2, correct_em2)
+  bayesLASSO_store_sd4[i] <- a$statistics["d[2]", "SD"]
+}
+bayesLASSO_store_mse4_mean <- apply(bayesLASSO_store_mse4, 2, mean)
+bayesLASSO_store_sd4_mean <- mean(bayesLASSO_store_sd4)
+```
+
+
+# Simulation Results
+
+Scenario 1: continuous, few covariates
+
+```{r}
+result_matrix1_mse <- matrix(NA, nrow = 7, ncol = 3)
+colnames(result_matrix1_mse) <- c("false em mse", "true em mse","treatment mse")
+rownames(result_matrix1_mse) <-  c("simple null", "simple lm","naive step", "naive lasso", "glmmLasso", "bayes lasso", "SSVS")
+result_matrix1_mse[1,] <- simple_null_store_mse1_mean
+result_matrix1_mse[2,] <- simple_store_mse1_mean
+result_matrix1_mse[3,] <- step_store_mse1_mean
+result_matrix1_mse[4,] <- glmnet_store_mse1_mean
+result_matrix1_mse[5,] <- glmmLasso_store_mse1_mean
+#result_matrix1_mse[6,] <- bayesLASSO_store_mse1_mean
+result_matrix1_mse[7,] <- SSVS_store_mse1_mean
+
+# treatment_sd <- c(simple_null_store_sd1_mean, simple_store_sd1_mean, step_store_sd1_mean, NA, NA, bayesLASSO_store_sd1_mean, SSVS_store_sd1_mean)
+treatment_sd <- c(simple_null_store_sd1_mean, simple_store_sd1_mean, step_store_sd1_mean, NA, NA, NA, SSVS_store_sd1_mean)
+
+
+result_matrix1 <- cbind(result_matrix1_mse, treatment_sd)
+kable(result_matrix1)
+```
+
+Scenario 2: continuous, many covariates
+
+```{r}
+result_matrix2_mse <- matrix(NA, nrow = 7, ncol = 3)
+colnames(result_matrix2_mse) <- c("false em mse", "true em mse","treatment mse")
+rownames(result_matrix2_mse) <- c("simple null", "simple lm","naive step", "naive lasso", "glmmLasso", "bayes lasso", "SSVS")
+result_matrix2_mse[1,] <- simple_null_store_mse2_mean
+result_matrix2_mse[2,] <- simple_store_mse2_mean
+result_matrix2_mse[3,] <- step_store_mse2_mean
+result_matrix2_mse[4,] <- glmnet_store_mse2_mean
+result_matrix2_mse[5,] <- glmmLasso_store_mse2_mean
+#result_matrix2_mse[6,] <- bayesLASSO_store_mse2_mean
+result_matrix2_mse[7,] <- SSVS_store_mse2_mean
+
+#treatment_sd <- c(simple_null_store_sd2_mean, simple_store_sd2_mean, step_store_sd2_mean, NA, NA, bayesLASSO_store_sd2_mean, SSVS_store_sd2_mean)
+treatment_sd <- c(simple_null_store_sd2_mean, simple_store_sd2_mean, step_store_sd2_mean, NA, NA, NA, SSVS_store_sd2_mean)
+
+result_matrix2 <- cbind(result_matrix2_mse, treatment_sd)
+kable(result_matrix2)
+```
+
+Scenario 3: binary, few covariates
+
+```{r}
+result_matrix3_mse <- matrix(NA, nrow = 7, ncol = 3)
+colnames(result_matrix3_mse) <- c("false em mse", "true em mse","treatment mse")
+rownames(result_matrix3_mse) <- c("simple null", "simple lm", "naive step", "naive lasso", "glmmLasso", "bayes lasso", "SSVS")
+result_matrix3_mse[1,] <- simple_null_store_mse3_mean
+result_matrix3_mse[2,] <- simple_store_mse3_mean
+result_matrix3_mse[3,] <- step_store_mse3_mean
+result_matrix3_mse[4,] <- glmnet_store_mse3_mean
+result_matrix3_mse[5,] <- glmmLasso_store_mse3_mean
+#result_matrix3_mse[6,] <- bayesLASSO_store_mse3_mean
+result_matrix3_mse[7,] <- SSVS_store_mse3_mean
+
+#treatment_sd <- c(simple_null_store_sd3_mean, simple_store_sd3_mean, step_store_sd3_mean, NA, NA, bayesLASSO_store_sd3_mean, SSVS_store_sd3_mean)
+treatment_sd <- c(simple_null_store_sd3_mean, simple_store_sd3_mean, step_store_sd3_mean, NA, NA, NA, SSVS_store_sd3_mean)
+
+result_matrix3 <- cbind(result_matrix3_mse, treatment_sd)
+kable(result_matrix3)
+```
+
+Scenario 4: binary, many covariates
+
+```{r}
+result_matrix4_mse <- matrix(NA, nrow = 7, ncol = 3)
+colnames(result_matrix4_mse) <- c("false em mse", "true em mse","treatment mse")
+rownames(result_matrix4_mse) <-  c("simple null", "simple lm", "naive step", "naive lasso", "glmmLasso",  "bayes lasso", "SSVS")
+result_matrix4_mse[1,] <- simple_null_store_mse4_mean
+result_matrix4_mse[2,] <- simple_store_mse4_mean
+result_matrix4_mse[3,] <- step_store_mse4_mean
+result_matrix4_mse[4,] <- glmnet_store_mse4_mean
+result_matrix4_mse[5,] <- glmmLasso_store_mse4_mean
+#result_matrix4_mse[6,] <- bayesLASSO_store_mse4_mean
+result_matrix4_mse[7,] <- SSVS_store_mse4_mean
+
+#treatment_sd <- c(simple_null_store_sd4_mean, simple_store_sd4_mean, step_store_sd4_mean, NA, NA, bayesLASSO_store_sd4_mean, SSVS_store_sd4_mean)
+treatment_sd <- c(simple_null_store_sd4_mean, simple_store_sd4_mean, step_store_sd4_mean, NA, NA, NA, SSVS_store_sd4_mean)
+
+result_matrix4 <- cbind(result_matrix4_mse, treatment_sd)
+kable(result_matrix4)
+```
