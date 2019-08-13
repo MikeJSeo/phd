@@ -20,7 +20,7 @@ library(glmmLasso) #for glmmLasso
 library(dclone) # for parllel processing of JAGS code
 library(knitr) # for printing tables 
 
-source("helpful.functions.final.R")
+source("helpful.functions.R")
 ```
 
 
@@ -32,8 +32,8 @@ setwd("C:/Users/ms19g661/Desktop")
 stent <- read.dta13("1_year_stent_data_21092018.dta")
 
 #load/save everything else from/to github
-setwd("~/GitHub/jags/LASSO")
-#setwd("C:/Users/mike/Desktop/Github/jags/LASSO")
+setwd("~/GitHub/phd/varselect")
+#setwd("C:/Users/mike/Desktop/Github/phd/varselect")
 ```
 
 
