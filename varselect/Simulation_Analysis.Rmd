@@ -13,27 +13,27 @@ knitr::opts_chunk$set(tidy = TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60),
 ```{r}
 # load packages needed
 library(MASS) # Used for data simulation
+
+library(lme4) #for fitting glmm
 library(glmnet) #for lasso
 library(glmmLasso) #for glmmLasso
 library(dclone) # for parallel processing of JAGS code
-library(knitr) # for printing tables 
 ```
 
 ```{r}
 # Setting directory
-#setwd("C:/Users/ms19g661/Desktop")
-setwd("C:/Users/mike/Desktop")
-#stent <- read.dta13("stent.dta")
+setwd("C:/Users/ms19g661/Desktop")
+#setwd("C:/Users/mike/Desktop")
 
 #load/save everything else from/to github
-#setwd("~/GitHub/jags/LASSO")
-setwd("C:/Users/mike/Desktop/Github/jags/LASSO")
+setwd("~/GitHub/phd/varselect")
+#setwd("C:/Users/mike/Desktop/Github/jags/LASSO")
 
-source("helpful.functions.final.R")
+source("helpful.functions.R")
 ```
 
 ```{r}
-niter <- 100 #number of simulation to run
+niter <- 1000 #number of simulation to run
 col_labels <- c(paste0("X", 1:10), paste0("X", 1:10, ":treat"), "treat") # first simulation data
 col_labels2 <- c(paste0("X", 1:20), paste0("X", 1:20, ":treat"), "treat") # second
 col_labels_glmmLasso <- c(paste0("X", 1:10), paste0("X", 1:10, "_treat"), "treat")
@@ -52,36 +52,37 @@ tmp <- clusterEvalQ(cl, library(dclone))
 
 
 
-```{r simple_null_scenario1, cache = TRUE, results = "hide"}
-simple_null_store_mse1 <- matrix(NA, nrow = niter, ncol = 3)
-simple_null_store_sd1 <- rep(NA, niter)
+```{r glmm_null_scenario1, cache = TRUE}
+glmm_null_store_mse1 <- matrix(NA, nrow = niter, ncol = 3)
+glmm_null_store_sd1 <- rep(NA, niter)
 
 for(i in seq(niter)){
   
   set.seed(i)
   data <-generate.simulation()
-  m1 <- lm(y ~ treat, data = data)
+  m1 <- lmer(y ~ studyid + treat + (-1 + treat|studyid), data = data)
   
-  mse_null <- sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
-  simple_null_store_mse1[i,] <- find_performance2(mse_null, correct_em_values, correct_em)
-  simple_null_store_sd1[i] <- summary(m1)$coef["treat", "Std. Error"]
+  mse_null <- sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
+  glmm_null_store_mse1[i,] <- find_performance2(mse_null, correct_em_values, correct_em)
+  glmm_null_store_sd1[i] <- summary(m1)$coef["treat", "Std. Error"]
 }
-simple_null_store_mse1_mean <- apply(simple_null_store_mse1, 2, mean)
-simple_null_store_sd1_mean <- mean(simple_null_store_sd1)
+glmm_null_store_mse1_mean <- apply(glmm_null_store_mse1, 2, mean)
+glmm_null_store_sd1_mean <- mean(glmm_null_store_sd1)
 ```
 
 
 ```{r simple_null_scenario2, cache = TRUE, results = "hide"}
-simple_null_store_mse2 <- matrix(NA, nrow = niter, ncol = 3)
-simple_null_store_sd2 <- rep(NA, niter)
+glmm_null_store_mse2 <- matrix(NA, nrow = niter, ncol = 3)
+glmm_null_store_sd2 <- rep(NA, niter)
 
 for(i in seq(niter)){
   
   set.seed(i)
   data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13,14,15,16), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2))
+  m1 <- lmer(y ~ -1 + studyid + treat + (-1 + treat|studyid), data = data)
   m1 <- lm(y ~ treat, data = data)
   
-  mse_null <- sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
+  mse_null <- sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
   simple_null_store_mse2[i,] <- find_performance2(mse_null, correct_em_values2, correct_em2)
   simple_null_store_sd2[i] <- summary(m1)$coef["treat", "Std. Error"]
 }

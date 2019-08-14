@@ -28,7 +28,7 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
                             lambda = lambda[j],
                             data = data_glmmLasso_train,
                             final.re = FALSE,
-                            control = list(index = c(NA, 1:(dim(data_glmmLasso)[2] - 3), NA)))
+                            control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA)))
                   ,silent=TRUE) 
       if(class(glm2)!="try-error")
       {  
@@ -40,14 +40,14 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
   Devianz_vec<-apply(Devianz_ma,1,sum)
   opt2<-which.min(Devianz_vec)
   print(Devianz_vec)
-  print(opt2)
+  print(paste0("optimal lambda value is ", lambda[opt2]))
   
   glm2 <- try(glmmLasso(form.fixed, rnd = form.rnd,  
                         family = family, 
                         lambda = lambda[opt2],
                         data = data_glmmLasso_train,
                         final.re = FALSE,
-                        control = list(index = c(NA, 1:(dim(data_glmmLasso)[2] - 3), NA)))
+                        control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA)))
               ,silent=TRUE) 
   glm2
 }

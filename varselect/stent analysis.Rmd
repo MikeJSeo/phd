@@ -14,11 +14,10 @@ knitr::opts_chunk$set(tidy = TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60),
 # load packages needed
 library(readstata13)
 
+library(lme4) #for fitting glmm
 library(glmnet) #for lasso
 library(glmmLasso) #for glmmLasso
-
 library(dclone) # for parllel processing of JAGS code
-library(knitr) # for printing tables 
 
 source("helpful.functions.R")
 ```
@@ -48,6 +47,7 @@ data0 <- stent[stent$trial_name %in% study_inclusion,]
 for(i in 1:dim(data0)[1]){
   data0$trial_name[i] <- which(data0$trial_name[i] == study_inclusion)
 }
+data0$trial_name <- as.factor(data0$trial_name)
 
 X <-  data0[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")]
 
@@ -96,53 +96,59 @@ rownames(stent_sd) <- col_labels_stent_all
 colnames(stent_sd) <- c("simple null","simple lm", "naive step", "naive lasso", "glmmLasso", "bayes lasso", "SSVS")
 ```
 
+## glmm_null
 
-```{r simple_null_stent, cache = TRUE, results = "hide"}
-m1 <- glm(y ~ treat, family = binomial(link = "logit"), data = mydata)
-stent_coef[,1] <- sapply(col_labels_stent_all, function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
-stent_sd[,1] <- sapply(col_labels_stent_all, function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Std. Error"], 0))
+```{r glmm_null_stent, cache = TRUE}
+m1 <- glmer(y ~ -1 + studyid + treat + (-1 + treat|studyid), data = mydata, family = binomial)
+summary(m1)
 ```
 
-```{r simple_model_stent, cache = TRUE, results = "hide"}
-m1 <- glm(y ~ (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, family = binomial(link = "logit"), data = mydata)
-stent_coef[,2] <- sapply(col_labels_stent_all, function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
-stent_sd[,2] <- sapply(col_labels_stent_all, function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Std. Error"], 0))
+## glmm_full
 
-# ladtreated = 1, num_stents = 5
-contr <- c(rep(0, 6), 0, 0, 0, 0, 0, rep(0, 5), 1, 0, 0, 5)
-v1 <- vcov(m1)
-se1 <- c(sqrt(contr %*% v1 %*% contr))
-exp(c(contr %*% coef(m1)) + qnorm(c(.025,.50,.975))* c(se1))
-
-# ladtreated = 0, num_stents = 1
-contr <- c(rep(0, 6), 0, 0, 0, 0, 0, rep(0, 5), 0, 0, 0, 1)
-v1 <- vcov(m1)
-se1 <- c(sqrt(contr %*% v1 %*% contr))
-exp(c(contr %*% coef(m1)) + qnorm(c(.025,.50,.975))* c(se1))
+```{r glmm_full_stent, cache = TRUE}
+m2 <- glmer(y ~ -1 + studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat + (-1 + treat|studyid), data = mydata, family = binomial)
+summary(m2)
 ```
 
+
+```{r simple_model_stent, cache = TRUE, results = "hide", eval = FALSE}
+m3 <- glm(y ~ (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, family = binomial(link = "logit"), data = mydata)
+summary(m3)
+# # ladtreated = 1, num_stents = 5
+# contr <- c(rep(0, 6), 0, 0, 0, 0, 0, rep(0, 5), 1, 0, 0, 5)
+# v1 <- vcov(m1)
+# se1 <- c(sqrt(contr %*% v1 %*% contr))
+# exp(c(contr %*% coef(m1)) + qnorm(c(.025,.50,.975))* c(se1))
+# 
+# # ladtreated = 0, num_stents = 1
+# contr <- c(rep(0, 6), 0, 0, 0, 0, 0, rep(0, 5), 0, 0, 0, 1)
+# v1 <- vcov(m1)
+# se1 <- c(sqrt(contr %*% v1 %*% contr))
+# exp(c(contr %*% coef(m1)) + qnorm(c(.025,.50,.975))* c(se1))
+```
+
+## naive step
 
 ```{r naive_step_stent, cache = TRUE, results = "hide"}
 m1 <- glm(y ~ (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, family = binomial(link = "logit"), data = mydata)
 s1 <- step(m1, scope=list(upper = ~ (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, lower = ~ treat))
-stent_coef[,3] <- sapply(col_labels_stent_all, function(x) ifelse(x %in% variable.names(s1), summary(s1)$coef[x,"Estimate"], 0))
-stent_sd[,3] <- sapply(col_labels_stent_all, function(x) ifelse(x %in% variable.names(s1), summary(s1)$coef[x,"Std. Error"], 0))
 ```
 
-```{r glmnet_stent, cache = TRUE, results = "hide"}
+```{r}
+summary(s1)
+```
+
+
+```{r glmnet_stent, cache = TRUE}
 data_glmnet <- model.matrix(y~ -1 + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, data = mydata)
 data_glmnet <- cbind(y = mydata$y, data_glmnet = data_glmnet)
 
-p.fac.stent = c(rep(1, 9), 0, rep(1,9)) #No shrinkage for treatment effect
+p.fac.stent <- c(rep(1, 9), 0, rep(1,9)) #No shrinkage for treatment effect
 cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.stent, family = "binomial", type.measure = "class")
-aa <-coef(cvfit, s = "lambda.1se")
-
-stent_coef[,4] <- sapply(col_labels_stent_all, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
+coef(cvfit, s = "lambda.min")
 ```
 
-
-```{r glmmLasso_stent, cache = TRUE, results = "hide", include = FALSE}
-#options(na.action='na.pass')
+```{r glmmLasso_stent, cache = TRUE}
 data_glmmLasso <- model.matrix(y~ -1 + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3  + num_stent)*treat, data = mydata)
 data_glmmLasso <- cbind(y = mydata$y, data_glmmLasso = data_glmmLasso, studyid = mydata$studyid)
 
@@ -152,15 +158,12 @@ data_glmmLasso$studyid <- as.factor(data_glmmLasso$studyid)
 
 form.fixed <- as.formula(y ~ as.factor(studyid) + age +  gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent + age_treat +  gender_treat + diabetes_treat + stable_cad_treat + multivessel_treat + ladtreated_treat + overlap_treat + m_dia_above_3_treat + num_stent_treat + treat)
 form.rnd <- list(studyid =~ -1 + treat)
+
 cv.fit <- cv.glmmLasso(data_glmmLasso, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(100, 0,
   by = -5), family = binomial(link = "logit"))
+summary(cv.fit)
 ```
 
-```{r}
-glmm <- summary(cv.fit)$coefficients
-stent_coef[,5] <- sapply(col_labels_stent_glmm, function(x) ifelse(x %in% rownames(glmm)[glmm[,1] != 0], glmm[x,1], 0))
-glmmLasso_StdDev <- cv.fit$StdDev
-```
 
 ```{r}
 # setup for parallel computing
@@ -169,81 +172,13 @@ cl <- makePSOCKcluster(n.cores)
 tmp <- clusterEvalQ(cl, library(dclone))
 ```
 
-```{r bayesianLASSO_stent, cache = TRUE, results = "hide"}
-model_bayesLASSO <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta","g", "d", "tauDelta"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 100, n.iter = 1000)
-```
-
-
-```{r SSVS_stent, cache = TRUE, results = "hide"}
-model_SSVS <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta","g", "d", "tauDelta", "IndA", "IndA2"), model = "IPD-MA-SSVS-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 100, n.iter = 1000)
-```
-
-```{r}
-a <- summary(model_SSVS)$statistics
-alpha_mean <- a[grep("alpha\\[", rownames(a)), "Mean"]
-names(alpha_mean) <- paste0("as.factor(studyid)", 1:length(alpha_mean))
-
-beta_mean <- a[grep("beta\\[", rownames(a)), "Mean"]
-names(beta_mean) <- col_labels_stent
-  
-g_mean <-  a[grep("g\\[", rownames(a)), "Mean"]
-names(g_mean) <- paste0(col_labels_stent, ":treat")
-
-treat_mean <- a[grep("d\\[2", rownames(a)), "Mean"]
-names(treat_mean) <- "treat"
-
-sdDelta_mean <- 1/sqrt(a[grep("tauDelta", rownames(a)), "Mean"])
-
-coef_SSVS <- c(beta_mean, g_mean, treat_mean, alpha_mean)
-stent_coef[,7] <- sapply(col_labels_stent_all, function(x) ifelse(x %in% names(coef_SSVS)[coef_SSVS != 0], coef_SSVS[x], 0))
-
-indA_mean <- a[grep("IndA\\[", rownames(a)), "Mean"] - 1
-names(indA_mean) <- col_labels_stent
-
-indA2_mean <- a[grep("IndA2\\[", rownames(a)), "Mean"] - 1
-names(indA2_mean) <- paste0(col_labels_stent, ":treat")
-
-aaa <- rep(1, length(unique(mydata$studyid)) + 1) # add treat + factors
-names(aaa) <- c("treat", paste0("as.factor(studyid)", 1:length(unique(mydata$studyid))))
-
-ind_SSVS <- c(indA_mean, indA2_mean, aaa)
-stent_coef[,8] <- sapply(col_labels_stent_all, function(x) ifelse(x %in% names(ind_SSVS)[ind_SSVS != 0], ind_SSVS[x], 0))
-
-heterogeneity = c(NA, NA, NA, NA, glmmLasso_StdDev, NA, sdDelta_mean, NA)
-stent_coef <- rbind(stent_coef, heterogeneity)
-
-## standard deviation
-alpha_sd <- a[grep("alpha\\[", rownames(a)), "SD"]
-names(alpha_sd) <- paste0("as.factor(studyid)", 1:length(alpha_sd))
-
-beta_sd <- a[grep("beta\\[", rownames(a)), "SD"]
-names(beta_sd) <- col_labels_stent
-  
-g_sd <-  a[grep("g\\[", rownames(a)), "SD"]
-names(g_sd) <- paste0(col_labels_stent, ":treat")
-
-treat_sd <- a[grep("d\\[2", rownames(a)), "SD"]
-names(treat_sd) <- "treat"
-
-sd_SSVS <- c(beta_sd, g_sd, treat_sd, alpha_sd)
-stent_sd[,7] <- sapply(col_labels_stent_all, function(x) ifelse(x %in% names(sd_SSVS)[sd_SSVS != 0], sd_SSVS[x], 0))
-```
-
-
-Below are the coefficients for the models
-
-```{r}
-kable(stent_coef, digits = 3)
-```
-
-Below are the estimates of standard error for these coefficients.
-
-```{r}
-kable(stent_sd, digits = 3)
-```
-
-Below are the results for Bayesian LASSO which is not included above chart.
-
-```{r}
+```{r bayesianLASSO_stent, cache = TRUE, eval = FALSE}
+model_bayesLASSO <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta","g", "d", "tauDelta"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 1000, n.iter = 10000)
 summary(model_bayesLASSO)
+```
+
+
+```{r SSVS_stent, cache = TRUE, eval = FALSE}
+model_SSVS <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta","g", "d", "tauDelta", "IndA", "IndA2"), model = "IPD-MA-SSVS-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 1000, n.iter = 10000)
+summary(model_SSVS)
 ```
