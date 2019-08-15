@@ -18,16 +18,17 @@ library(lme4) #for fitting glmm
 library(glmnet) #for lasso
 library(glmmLasso) #for glmmLasso
 library(dclone) # for parallel processing of JAGS code
+library(knitr) # for tables
 ```
 
 ```{r}
 # Setting directory
-setwd("C:/Users/ms19g661/Desktop")
-#setwd("C:/Users/mike/Desktop")
+#setwd("C:/Users/ms19g661/Desktop")
+setwd("C:/Users/mike/Desktop")
 
 #load/save everything else from/to github
-setwd("~/GitHub/phd/varselect")
-#setwd("C:/Users/mike/Desktop/Github/jags/LASSO")
+#setwd("~/GitHub/phd/varselect")
+setwd("C:/Users/mike/Desktop/Github/phd/varselect")
 
 source("helpful.functions.R")
 ```
@@ -71,7 +72,7 @@ glmm_null_store_sd1_mean <- mean(glmm_null_store_sd1)
 ```
 
 
-```{r simple_null_scenario2, cache = TRUE, results = "hide"}
+```{r glmm_null_scenario2, cache = TRUE}
 glmm_null_store_mse2 <- matrix(NA, nrow = niter, ncol = 3)
 glmm_null_store_sd2 <- rep(NA, niter)
 
@@ -79,128 +80,125 @@ for(i in seq(niter)){
   
   set.seed(i)
   data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13,14,15,16), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2))
-  m1 <- lmer(y ~ -1 + studyid + treat + (-1 + treat|studyid), data = data)
-  m1 <- lm(y ~ treat, data = data)
-  
+  m1 <- lmer(y ~ studyid + treat + (-1 + treat|studyid), data = data)
+
   mse_null <- sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
-  simple_null_store_mse2[i,] <- find_performance2(mse_null, correct_em_values2, correct_em2)
-  simple_null_store_sd2[i] <- summary(m1)$coef["treat", "Std. Error"]
+  glmm_null_store_mse2[i,] <- find_performance2(mse_null, correct_em_values2, correct_em2)
+  glmm_null_store_sd2[i] <- summary(m1)$coef["treat", "Std. Error"]
 }
-simple_null_store_mse2_mean <- apply(simple_null_store_mse2, 2, mean)
-simple_null_store_sd2_mean <- mean(simple_null_store_sd2)
+glmm_null_store_mse2_mean <- apply(glmm_null_store_mse2, 2, mean)
+glmm_null_store_sd2_mean <- mean(glmm_null_store_sd2)
 ```
 
 
-```{r simple_null_scenario3, cache = TRUE, results = "hide"}
-simple_null_store_mse3 <- matrix(NA, nrow = niter, ncol = 3)
-simple_null_store_sd3 <- rep(NA, niter)
+```{r glmm_null_scenario3, cache = TRUE}
+glmm_null_store_mse3 <- matrix(NA, nrow = niter, ncol = 3)
+glmm_null_store_sd3 <- rep(NA, niter)
 
 for(i in seq(niter)){
   
   set.seed(i)
   data <-generate.simulation(model = "binomial")
-  m1 <- glm(y ~ treat, family = "binomial", data = data)
-  
-  mse_null <- sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
-  simple_null_store_mse3[i,] <- find_performance2(mse_null, correct_em_values, correct_em)
-  simple_null_store_sd3[i] <- summary(m1)$coef["treat", "Std. Error"]
+  m1 <- glmer(y ~ studyid + treat + (-1 + treat|studyid), data = data, family = binomial)
+
+  mse_null <- sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
+  glmm_null_store_mse3[i,] <- find_performance2(mse_null, correct_em_values, correct_em)
+  glmm_null_store_sd3[i] <- summary(m1)$coef["treat", "Std. Error"]
 }
-simple_null_store_mse3_mean <- apply(simple_null_store_mse3, 2, mean)
-simple_null_store_sd3_mean <- mean(simple_null_store_sd3)
+glmm_null_store_mse3_mean <- apply(glmm_null_store_mse3, 2, mean)
+glmm_null_store_sd3_mean <- mean(glmm_null_store_sd3)
 ```
 
-```{r simple_null_scenario4, cache = TRUE, results = "hide"}
-simple_null_store_mse4 <- matrix(NA, nrow = niter, ncol = 3)
-simple_null_store_sd4 <- rep(NA, niter)
+```{r glmm_null_scenario4, cache = TRUE}
+glmm_null_store_mse4 <- matrix(NA, nrow = niter, ncol = 3)
+glmm_null_store_sd4 <- rep(NA, niter)
 
 for(i in seq(niter)){
   
   set.seed(i)
   data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13,14,15,16), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2), model = "binomial")
-  m1 <- glm(y ~ treat, family = "binomial", data = data)
+  m1 <- glmer(y ~ studyid + treat + (-1 + treat|studyid), data = data, family = binomial)
 
-  mse_null <- sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
-  simple_null_store_mse4[i,] <- find_performance2(mse_null, correct_em_values2, correct_em2)
-  simple_null_store_sd4[i] <- summary(m1)$coef["treat", "Std. Error"]
+  mse_null <- sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
+  glmm_null_store_mse4[i,] <- find_performance2(mse_null, correct_em_values2, correct_em2)
+  glmm_null_store_sd4[i] <- summary(m1)$coef["treat", "Std. Error"]
 }
-simple_null_store_mse4_mean <- apply(simple_null_store_mse4, 2, mean)
-simple_null_store_sd4_mean <- mean(simple_null_store_sd4)
+glmm_null_store_mse4_mean <- apply(glmm_null_store_mse4, 2, mean)
+glmm_null_store_sd4_mean <- mean(glmm_null_store_sd4)
 ```
 
 
-
-```{r simple_model_scenario1, cache = TRUE, results = "hide"}
-simple_store_mse1 <- matrix(NA, nrow = niter, ncol = 3)
-simple_store_sd1 <- rep(NA, niter)
+```{r glmm_full_scenario1, cache = TRUE}
+glmm_store_mse1 <- matrix(NA, nrow = niter, ncol = 3)
+glmm_store_sd1 <- rep(NA, niter)
 
 for(i in seq(niter)){
   
   set.seed(i)
   data <-generate.simulation()
-  m1 <- lm(y ~ (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat, data = data)
+  m1 <- lmer(y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid), data = data)
   
-  mse_simple <- sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
-  simple_store_mse1[i,] <- find_performance2(mse_simple, correct_em_values, correct_em)
-  simple_store_sd1[i] <- summary(m1)$coef["treat", "Std. Error"]
+  mse_simple <- sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
+  glmm_store_mse1[i,] <- find_performance2(mse_simple, correct_em_values, correct_em)
+  glmm_store_sd1[i] <- summary(m1)$coef["treat", "Std. Error"]
 }
-simple_store_mse1_mean <- apply(simple_store_mse1, 2, mean)
-simple_store_sd1_mean <- mean(simple_store_sd1)
+glmm_store_mse1_mean <- apply(glmm_store_mse1, 2, mean)
+glmm_store_sd1_mean <- mean(glmm_store_sd1)
 ```
 
-```{r simple_model_scenario2, cache = TRUE, results = "hide"}
-simple_store_mse2 <- matrix(NA, nrow = niter, ncol = 3)
-simple_store_sd2 <- rep(NA, niter)
+```{r glmm_full_scenario2, cache = TRUE}
+glmm_store_mse2 <- matrix(NA, nrow = niter, ncol = 3)
+glmm_store_sd2 <- rep(NA, niter)
 
 for(i in seq(niter)){
   
   set.seed(i)
   data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13,14,15,16), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2))
-  m1 <- lm(y ~ (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20)*treat, data = data)
+  m1 <- lmer(y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20)*treat + (-1 + treat|studyid), data = data)
   
-  mse_simple <- sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
-  simple_store_mse2[i,] <- find_performance2(mse_simple, correct_em_values2, correct_em2)
-  simple_store_sd2[i] <- summary(m1)$coef["treat", "Std. Error"]
+  mse_simple <- sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
+  glmm_store_mse2[i,] <- find_performance2(mse_simple, correct_em_values2, correct_em2)
+  glmm_store_sd2[i] <- summary(m1)$coef["treat", "Std. Error"]
 }
-simple_store_mse2_mean <- apply(simple_store_mse2, 2, mean)
-simple_store_sd2_mean <- mean(simple_store_sd2)
+glmm_store_mse2_mean <- apply(glmm_store_mse2, 2, mean)
+glmm_store_sd2_mean <- mean(glmm_store_sd2)
 ```
 
-```{r simple_model_scenario3, cache = TRUE, results = "hide"}
-simple_store_mse3 <- matrix(NA, nrow = niter, ncol = 3)
-simple_store_sd3 <- rep(NA, niter)
+```{r glmm_full_scenario3, cache = TRUE}
+glmm_store_mse3 <- matrix(NA, nrow = niter, ncol = 3)
+glmm_store_sd3 <- rep(NA, niter)
 
 for(i in seq(niter)){
   
   set.seed(i)
   data <-generate.simulation(model = "binomial")
+  m1 <- glmer(y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid), data = data, family = binomial)
   
-  m1 <- glm(y ~ (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat, family = "binomial", data = data)
-  
-  mse_simple <- sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
-  simple_store_mse3[i,] <- find_performance2(mse_simple, correct_em_values, correct_em)
-  simple_store_sd3[i] <- summary(m1)$coef["treat", "Std. Error"]
+  mse_simple <- sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
+  glmm_store_mse3[i,] <- find_performance2(mse_simple, correct_em_values, correct_em)
+  glmm_store_sd3[i] <- summary(m1)$coef["treat", "Std. Error"]
 }
-simple_store_mse3_mean <- apply(simple_store_mse3, 2, mean)
-simple_store_sd3_mean <- mean(simple_store_sd3)
+glmm_store_mse3_mean <- apply(glmm_store_mse3, 2, mean)
+glmm_store_sd3_mean <- mean(glmm_store_sd3)
 ```
 
-```{r simple_model_scenario4, cache = TRUE, results = "hide"}
-simple_store_mse4 <- matrix(NA, nrow = niter, ncol = 3)
-simple_store_sd4 <- rep(NA, niter)
+```{r glmm_full_scenario4, cache = TRUE}
+glmm_store_mse4 <- matrix(NA, nrow = niter, ncol = 3)
+glmm_store_sd4 <- rep(NA, niter)
 
 for(i in seq(niter)){
   
   set.seed(i)
   data <- generate.simulation(Nstudies = 10, Ncovariate = 20, continuous.cov = c(1,2,3,4,7,8,11,12,13,14,15,16), pf = c(1,2,3,4,5,6,7,8,9,10), em = c(7,8,9,10), b1 = c(0.1, -0.1, 0.2, 0.2, -0.2, 0.3, 0.1, 0.1, -0.1, -0.2), b2 = c(0.2, 0.3, -0.1, -0.2), model = "binomial")
+  
+  m1 <- glmer(y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20)*treat + (-1 + treat|studyid), data = data, family = binomial)
 
-  m1 <- glm(y ~ (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20)*treat, family = "binomial", data = data)
-
-  mse_simple <- sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% variable.names(m1), summary(m1)$coef[x,"Estimate"], 0))
-  simple_store_mse4[i,] <- find_performance2(mse_simple, correct_em_values2, correct_em2)
-  simple_store_sd4[i] <- summary(m1)$coef["treat", "Std. Error"]
+  mse_simple <- sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
+  glmm_store_mse4[i,] <- find_performance2(mse_simple, correct_em_values2, correct_em2)
+  glmm_store_sd4[i] <- summary(m1)$coef["treat", "Std. Error"]
 }
-simple_store_mse4_mean <- apply(simple_store_mse4, 2, mean)
-simple_store_sd4_mean <- mean(simple_store_sd4)
+glmm_store_mse4_mean <- apply(glmm_store_mse4, 2, mean)
+glmm_store_sd4_mean <- mean(glmm_store_sd4)
 ```
 
 
@@ -290,7 +288,7 @@ step_store_sd4_mean <- mean(step_store_sd4)
 
 
 
-```{r glmnet_scenario1, cache = TRUE, result = "hide"}
+```{r glmnet_scenario1, cache = TRUE}
 glmnet_store_mse1 <- matrix(NA, nrow = niter, ncol = 3)
 
 p.fac = rep(1, 21)
@@ -303,7 +301,7 @@ for(i in seq(niter)){
   data$studyid <- NULL
   
   cvfit = cv.glmnet(as.matrix(data[,-1]), as.matrix(data[1]), penalty.factor = p.fac)
-  aa <-coef(cvfit, s = "lambda.1se")
+  aa <-coef(cvfit, s = "lambda.min")
 
   mse_glmnet <-  sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
   glmnet_store_mse1[i,] <- find_performance2(mse_glmnet, correct_em_values, correct_em)
@@ -312,7 +310,7 @@ glmnet_store_mse1_mean <- apply(glmnet_store_mse1, 2, mean)
 ```
 
 
-```{r glmnet_scenario2, cache = TRUE, result = "hide"}
+```{r glmnet_scenario2, cache = TRUE}
 glmnet_store_mse2 <- matrix(NA, nrow = niter, ncol = 3)
 
 p.fac = rep(1, 41)
@@ -325,7 +323,7 @@ for(i in seq(niter)){
   data$studyid <- NULL
   
   cvfit = cv.glmnet(as.matrix(data[,-1]), as.matrix(data[1]), penalty.factor = p.fac)
-  aa <- coef(cvfit, s = "lambda.1se")
+  aa <- coef(cvfit, s = "lambda.min")
  
   mse_glmnet <-  sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
   glmnet_store_mse2[i,] <- find_performance2(mse_glmnet, correct_em_values2, correct_em2)
@@ -334,7 +332,7 @@ glmnet_store_mse2_mean <- apply(glmnet_store_mse2, 2, mean)
 ```
 
 
-```{r glmnet_scenario3, cache = TRUE, result = "hide"}
+```{r glmnet_scenario3, cache = TRUE}
 glmnet_store_mse3 <- matrix(NA, nrow = niter, ncol = 3)
 
 p.fac = rep(1, 21)
@@ -347,7 +345,7 @@ for(i in seq(niter)){
   data$studyid <- NULL
   
   cvfit = cv.glmnet(as.matrix(data[,-1]), as.matrix(data[1]), penalty.factor = p.fac, family = "binomial", type.measure = "class")
-  aa <-coef(cvfit, s = "lambda.1se")
+  aa <-coef(cvfit, s = "lambda.min")
  
   mse_glmnet <-  sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
   glmnet_store_mse3[i,] <- find_performance2(mse_glmnet, correct_em_values, correct_em)
@@ -356,7 +354,7 @@ glmnet_store_mse3_mean <- apply(glmnet_store_mse3, 2, mean)
 ```
 
 
-```{r glmnet_scenario4, cache = TRUE, result = "hide"}
+```{r glmnet_scenario4, cache = TRUE}
 glmnet_store_mse4 <- matrix(NA, nrow = niter, ncol = 3)
 
 p.fac = rep(1, 41)
@@ -369,7 +367,7 @@ for(i in seq(niter)){
   data$studyid <- NULL
   
   cvfit = cv.glmnet(as.matrix(data[,-1]), as.matrix(data[1]), penalty.factor = p.fac, family = "binomial", type.measure = "class")
-  aa <- coef(cvfit, s = "lambda.1se")
+  aa <- coef(cvfit, s = "lambda.min")
   
   mse_glmnet <-  sapply(col_labels2[-c(1:20)], function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
   glmnet_store_mse4[i,] <- find_performance2(mse_glmnet, correct_em_values2, correct_em2)

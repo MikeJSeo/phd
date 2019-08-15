@@ -25,14 +25,14 @@ source("helpful.functions.R")
 
 ```{r}
 # Setting directory
-setwd("C:/Users/ms19g661/Desktop")
-#setwd("C:/Users/mike/Desktop")
+#setwd("C:/Users/ms19g661/Desktop")
+setwd("C:/Users/mike/Desktop")
 #stent <- read.dta13("stent.dta")
 stent <- read.dta13("1_year_stent_data_21092018.dta")
 
 #load/save everything else from/to github
-setwd("~/GitHub/phd/varselect")
-#setwd("C:/Users/mike/Desktop/Github/phd/varselect")
+#setwd("~/GitHub/phd/varselect")
+setwd("C:/Users/mike/Desktop/Github/phd/varselect")
 ```
 
 
@@ -172,13 +172,13 @@ cl <- makePSOCKcluster(n.cores)
 tmp <- clusterEvalQ(cl, library(dclone))
 ```
 
-```{r bayesianLASSO_stent, cache = TRUE, eval = FALSE}
+```{r bayesianLASSO_stent, cache = TRUE}
 model_bayesLASSO <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta","g", "d", "tauDelta"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 1000, n.iter = 10000)
 summary(model_bayesLASSO)
 ```
 
 
-```{r SSVS_stent, cache = TRUE, eval = FALSE}
+```{r SSVS_stent, cache = TRUE}
 model_SSVS <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta","g", "d", "tauDelta", "IndA", "IndA2"), model = "IPD-MA-SSVS-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 1000, n.iter = 10000)
 summary(model_SSVS)
 ```
