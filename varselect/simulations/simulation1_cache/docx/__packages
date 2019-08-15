@@ -1,0 +1,17 @@
+base
+methods
+datasets
+utils
+grDevices
+graphics
+stats
+MASS
+Matrix
+lme4
+foreach
+glmnet
+glmmLasso
+coda
+parallel
+dclone
+knitr

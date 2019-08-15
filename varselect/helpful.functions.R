@@ -54,8 +54,8 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
 
 
   
-generate.simulation <- function(Nstudies = 5, Ncovariate = 10, continuous.cov = c(1,2,4,6,7,8), pf = c(1,2,3,4,5), em = c(4,5),
-                                b1 = c(0.1, -0.1, 0.2, 0.2, -0.2), b2 = c(0.2, 0.3), sampleSize = c(30, 200), model = "continuous"){
+generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.cov = NULL, pf = NULL, em = NULL,
+                                b1 = NULL, b2 = NULL, sampleSize = c(50, 100), model = "continuous"){
   
   #treatment effect
   d <- 1

@@ -1,0 +1,81 @@
+---
+title: "Simulation1"
+author: "Michael Seo"
+date: "15 August 2019"
+output: word_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(tidy = TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), warning = FALSE, message=FALSE, echo = FALSE)
+```
+
+
+```{r}
+# load packages needed
+library(MASS) # Used for data simulation
+
+library(lme4) #for fitting glmm
+library(glmnet) #for lasso
+library(glmmLasso) #for glmmLasso
+library(dclone) # for parallel processing of JAGS code
+library(knitr) # for tables
+```
+
+```{r}
+# Setting directory
+setwd("C:/Users/ms19g661/Desktop")
+#setwd("C:/Users/mike/Desktop")
+
+#load/save everything else from/to github
+setwd("~/GitHub/phd/varselect")
+#setwd("C:/Users/mike/Desktop/Github/phd/varselect")
+
+source("helpful.functions.R")
+```
+
+```{r}
+niter <- 1000 #number of simulation to run
+col_labels <- c(paste0("X", 1:10), paste0("X", 1:10, ":treat"), "treat") # first simulation data
+col_labels2 <- c(paste0("X", 1:20), paste0("X", 1:20, ":treat"), "treat") # second
+col_labels_glmmLasso <- c(paste0("X", 1:10), paste0("X", 1:10, "_treat"), "treat")
+col_labels_glmmLasso2 <- c(paste0("X", 1:20), paste0("X", 1:20, "_treat"), "treat")
+
+correct_em <- c(rep(0, 3), rep(1, 2), rep(0, 5))
+correct_em2 <- c(rep(0, 6), rep(1, 4), rep(0, 10))
+correct_em_values <- c(0, 0, 0, 0.2, 0.3, 0, 0, 0, 0, 0)
+correct_em_values2 <- c(rep(0, 6), 0.2, 0.3, -0.1, -0.2, rep(0, 10))
+
+# setup for parallel computing
+n.cores <- 3
+cl <- makePSOCKcluster(n.cores)
+tmp <- clusterEvalQ(cl, library(dclone))
+```
+
+
+Nstudies = 5, Ncovariate = 10, continuous.cov = c(1,2,4,6,7,8), pf = c(1,2,3,4,5), em = c(4,5),
+                                b1 = c(0.1, -0.1, 0.2, 0.2, -0.2), b2 = c(0.2, 0.3)
+
+## glmm_null
+
+```{r glmm_null_scenario1, cache = TRUE, results = "hide"}
+glmm_null_store_mse1 <- matrix(NA, nrow = niter, ncol = 3)
+glmm_null_store_sd1 <- rep(NA, niter)
+
+for(i in seq(niter)){
+  
+  set.seed(i)
+  data <-generate.simulation()
+  m1 <- lmer(y ~ studyid + treat + (-1 + treat|studyid), data = data)
+  
+  mse_null <- sapply(col_labels[-c(1:10)], function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
+  glmm_null_store_mse1[i,] <- find_performance2(mse_null, correct_em_values, correct_em)
+  glmm_null_store_sd1[i] <- summary(m1)$coef["treat", "Std. Error"]
+}
+glmm_null_store_mse1_mean <- apply(glmm_null_store_mse1, 2, mean)
+glmm_null_store_sd1_mean <- mean(glmm_null_store_sd1)
+```
+
+```{r}
+print(1)
+```

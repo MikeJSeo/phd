@@ -23,12 +23,12 @@ library(knitr) # for tables
 
 ```{r}
 # Setting directory
-#setwd("C:/Users/ms19g661/Desktop")
-setwd("C:/Users/mike/Desktop")
+setwd("C:/Users/ms19g661/Desktop")
+#setwd("C:/Users/mike/Desktop")
 
 #load/save everything else from/to github
-#setwd("~/GitHub/phd/varselect")
-setwd("C:/Users/mike/Desktop/Github/phd/varselect")
+setwd("~/GitHub/phd/varselect")
+#setwd("C:/Users/mike/Desktop/Github/phd/varselect")
 
 source("helpful.functions.R")
 ```
@@ -200,8 +200,6 @@ for(i in seq(niter)){
 glmm_store_mse4_mean <- apply(glmm_store_mse4, 2, mean)
 glmm_store_sd4_mean <- mean(glmm_store_sd4)
 ```
-
-
 
 ```{r step_model_scenario1, cache = TRUE, results = "hide"}
 step_store_mse1 <- matrix(NA, nrow = niter, ncol = 3)
@@ -376,6 +374,23 @@ glmnet_store_mse4_mean <- apply(glmnet_store_mse4, 2, mean)
 ```
 
 
+```{r glmmLasso_stent, cache = TRUE}
+data_glmmLasso <- model.matrix(y~ -1 + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3  + num_stent)*treat, data = mydata)
+data_glmmLasso <- cbind(y = mydata$y, data_glmmLasso = data_glmmLasso, studyid = mydata$studyid)
+
+colnames(data_glmmLasso) <- gsub(":", "_", colnames(data_glmmLasso))  
+data_glmmLasso <- as.data.frame(data_glmmLasso)
+data_glmmLasso$studyid <- as.factor(data_glmmLasso$studyid)
+
+form.fixed <- as.formula(y ~ as.factor(studyid) + age +  gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent + age_treat +  gender_treat + diabetes_treat + stable_cad_treat + multivessel_treat + ladtreated_treat + overlap_treat + m_dia_above_3_treat + num_stent_treat + treat)
+form.rnd <- list(studyid =~ -1 + treat)
+
+cv.fit <- cv.glmmLasso(data_glmmLasso, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(100, 0,
+  by = -5), family = binomial(link = "logit"))
+summary(cv.fit)
+```
+
+
 ```{r glmmLasso_store_scenario1, cache = TRUE, result = "hide", include = FALSE}
 glmmLasso_store_mse1 <- matrix(NA, nrow = niter, ncol = 3)
 
@@ -385,28 +400,13 @@ for(i in seq(niter)){
   data <- generate.simulation()
   colnames(data) <- gsub(":", "_", colnames(data))  
 
-  lambda <- seq(500,0,by=-5)
-  BIC_vec<-rep(Inf,length(lambda))
+  form.fixed <- as.formula(y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat +X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat)
+  form.rnd <- list(studyid =~ -1 + treat)
 
-  for(j in 1:length(lambda)){
-    glm1 <- glmmLasso(y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat +X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat,
-                      rnd = list(studyid =~ -1 + treat),
-                      family = gaussian(link = "identity"),
-                      lambda = lambda[j],
-                      final.re = FALSE,
-                      data = data, control = list(index = c(NA, 1:20, NA)))
-    BIC_vec[j]<-glm1$bic
-  }
-  opt<-which.min(BIC_vec)
-
-  glm1 <- glmmLasso(y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat +X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat,
-                      rnd = list(studyid =~ -1 + treat),
-                      family = gaussian(link = "identity"),
-                      lambda = lambda[opt],
-                      final.re =FALSE,
-                      data = data, control = list(index = c(NA, 1:20, NA)))
-
-  aa <- summary(glm1)$coefficients
+  cv.fit <- cv.glmmLasso(data_glmmLasso, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(100, 0,
+  by = -5), family = binomial(link = "logit"))
+  
+  aa <- summary(cv.fit)$coefficients
   aa <- rownames(aa[aa[,"Estimate"] != 0,])
 
   mse_glmmLasso <- sapply(col_labels_glmmLasso[-c(1:10)], function(x) ifelse(x %in% aa, summary(glm1)$coefficients[x,"Estimate"], 0))

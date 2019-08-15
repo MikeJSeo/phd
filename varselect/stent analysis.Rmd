@@ -25,14 +25,14 @@ source("helpful.functions.R")
 
 ```{r}
 # Setting directory
-#setwd("C:/Users/ms19g661/Desktop")
-setwd("C:/Users/mike/Desktop")
+setwd("C:/Users/ms19g661/Desktop")
+#setwd("C:/Users/mike/Desktop")
 #stent <- read.dta13("stent.dta")
 stent <- read.dta13("1_year_stent_data_21092018.dta")
 
 #load/save everything else from/to github
-#setwd("~/GitHub/phd/varselect")
-setwd("C:/Users/mike/Desktop/Github/phd/varselect")
+setwd("~/GitHub/phd/varselect")
+#setwd("C:/Users/mike/Desktop/Github/phd/varselect")
 ```
 
 
@@ -99,14 +99,14 @@ colnames(stent_sd) <- c("simple null","simple lm", "naive step", "naive lasso", 
 ## glmm_null
 
 ```{r glmm_null_stent, cache = TRUE}
-m1 <- glmer(y ~ -1 + studyid + treat + (-1 + treat|studyid), data = mydata, family = binomial)
+m1 <- glmer(y ~ studyid + treat + (-1 + treat|studyid), data = mydata, family = binomial)
 summary(m1)
 ```
 
 ## glmm_full
 
 ```{r glmm_full_stent, cache = TRUE}
-m2 <- glmer(y ~ -1 + studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat + (-1 + treat|studyid), data = mydata, family = binomial)
+m2 <- glmer(y ~ studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat + (-1 + treat|studyid), data = mydata, family = binomial)
 summary(m2)
 ```
 
