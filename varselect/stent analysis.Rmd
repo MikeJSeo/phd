@@ -139,6 +139,8 @@ summary(s1)
 ```
 
 
+## naive lasso
+
 ```{r glmnet_stent, cache = TRUE}
 data_glmnet <- model.matrix(y~ -1 + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, data = mydata)
 data_glmnet <- cbind(y = mydata$y, data_glmnet = data_glmnet)
@@ -147,6 +149,9 @@ p.fac.stent <- c(rep(1, 9), 0, rep(1,9)) #No shrinkage for treatment effect
 cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.stent, family = "binomial", type.measure = "class")
 coef(cvfit, s = "lambda.min")
 ```
+
+
+## glmmLasso
 
 ```{r glmmLasso_stent, cache = TRUE}
 data_glmmLasso <- model.matrix(y~ -1 + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3  + num_stent)*treat, data = mydata)
@@ -172,11 +177,15 @@ cl <- makePSOCKcluster(n.cores)
 tmp <- clusterEvalQ(cl, library(dclone))
 ```
 
+## Bayes Lasso
+
 ```{r bayesianLASSO_stent, cache = TRUE}
 model_bayesLASSO <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta","g", "d", "tauDelta"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 1000, n.iter = 10000)
 summary(model_bayesLASSO)
 ```
 
+
+## SSVS
 
 ```{r SSVS_stent, cache = TRUE}
 model_SSVS <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta","g", "d", "tauDelta", "IndA", "IndA2"), model = "IPD-MA-SSVS-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 1000, n.iter = 10000)
