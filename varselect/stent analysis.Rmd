@@ -150,7 +150,6 @@ cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penal
 coef(cvfit, s = "lambda.min")
 ```
 
-
 ## glmmLasso
 
 ```{r glmmLasso_stent, cache = TRUE}

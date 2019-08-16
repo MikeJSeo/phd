@@ -1,3 +1,4 @@
+## code to do cross validation for glmmLasso to get optimal lambda value
 
 cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lambda = NULL, family = NULL){
   
@@ -53,6 +54,7 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
 }
 
 
+## Code to generate simulation
   
 generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.cov = NULL, pf = NULL, em = NULL,
                                 b1 = NULL, b2 = NULL, sampleSize = c(50, 100), model = "continuous"){
@@ -124,12 +126,21 @@ find_performance <- function(val, correct_values, correct_em){
 }
 
 
-find_performance2 <- function(val, correct_em){
+find_performance2 <- function(val, correct_em, continuous.cov){
   
-  val_without_treat <- val[-length(val)]
-  true_em_value <- val_without_treat[correct_em == 1]
   val_treat <- val[length(val)]
   
-  c(mean(true_em_value[true_em_value != 0]),
+  continuous.indicator <- rep(0, length(correct_em))
+  continuous.indicator[continuous.cov] <- 1
+  
+  val_without_treat <- val[-length(val)]
+  true_em_value_continuous <- val_without_treat[correct_em == 1 & continuous.indicator == 1]
+  true_em_value_continuous <- true_em_value_continuous[true_em_value_continuous != 0]
+  
+  true_em_value_binary <- val_without_treat[correct_em == 1 & continuous.indicator == 0]
+  true_em_value_binary <- true_em_value_binary[true_em_value_binary != 0]
+  
+  c(ifelse(length(true_em_value_continuous) == 0, NA, mean(true_em_value_continuous)),
+    ifelse(length(true_em_value_binary) == 0, NA, mean(true_em_value_binary)),
     val_treat)
 }
