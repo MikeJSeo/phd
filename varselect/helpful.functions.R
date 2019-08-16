@@ -87,7 +87,7 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   }
   X[,-continuous.cov] <- rbinom(length(studyid)* (Ncovariate - length(continuous.cov)), 1, 0.5)
   
-  meany <- alpha[studyid] + delta[studyid] * treat + X[,pf] %*% b1 + X[,em] %*% b2 * treat  
+  meany <- alpha[studyid] + delta[studyid] * treat + X[,pf, drop = FALSE] %*% b1 + X[,em, drop = FALSE] %*% b2 * treat  
   sigmay <- 0.5
   py <- expit(meany)
   
@@ -114,11 +114,22 @@ calc_mse <- function(a, b){
   mean((a - b)^2)
 }
 
-find_performance2 <- function(mse, correct_values, correct_em){
+find_performance <- function(val, correct_values, correct_em){
   
-  mse_without_treat <- mse[-length(mse)]
-  mse_treat <- mse[length(mse)]
-  c(calc_mse(mse_without_treat[correct_em != 1], correct_values[correct_em != 1]),
-    calc_mse(mse_without_treat[correct_em == 1], correct_values[correct_em == 1]),
-    calc_mse(mse_treat, 1))
+  val_without_treat <- val[-length(val)]
+  val_treat <- val[length(val)]
+  c(calc_mse(val_without_treat[correct_em != 1], correct_values[correct_em != 1]),
+    calc_mse(val_without_treat[correct_em == 1], correct_values[correct_em == 1]),
+    calc_mse(val_treat, 1))
+}
+
+
+find_performance2 <- function(val, correct_em){
+  
+  val_without_treat <- val[-length(val)]
+  true_em_value <- val_without_treat[correct_em == 1]
+  val_treat <- val[length(val)]
+  
+  c(mean(true_em_value[true_em_value != 0]),
+    val_treat)
 }
