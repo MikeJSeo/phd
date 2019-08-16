@@ -52,29 +52,23 @@ correct_em_values <- c(0, 0, 0.1, 0, 0)
 
 
 
-col_labels <- c(paste0("X", 1:5), paste0("X", 1:5))
-col_labels <- c(paste0("X", 1:10), paste0("X", 1:10, ":treat"), "treat") # first simulation data
-col_labels2 <- c(paste0("X", 1:20), paste0("X", 1:20, ":treat"), "treat") # second
-col_labels_glmmLasso <- c(paste0("X", 1:10), paste0("X", 1:10, "_treat"), "treat")
-col_labels_glmmLasso2 <- c(paste0("X", 1:20), paste0("X", 1:20, "_treat"), "treat")
-
-correct_em <- c(rep(0, 3), rep(1, 2), rep(0, 5))
-correct_em2 <- c(rep(0, 6), rep(1, 4), rep(0, 10))
-correct_em_values <- c(0, 0, 0, 0.2, 0.3, 0, 0, 0, 0, 0)
-correct_em_values2 <- c(rep(0, 6), 0.2, 0.3, -0.1, -0.2, rep(0, 10))
-
-
+# col_labels <- c(paste0("X", 1:5), paste0("X", 1:5))
+# col_labels <- c(paste0("X", 1:10), paste0("X", 1:10, ":treat"), "treat") # first simulation data
+# col_labels2 <- c(paste0("X", 1:20), paste0("X", 1:20, ":treat"), "treat") # second
+# col_labels_glmmLasso <- c(paste0("X", 1:10), paste0("X", 1:10, "_treat"), "treat")
+# col_labels_glmmLasso2 <- c(paste0("X", 1:20), paste0("X", 1:20, "_treat"), "treat")
+# 
+# correct_em <- c(rep(0, 3), rep(1, 2), rep(0, 5))
+# correct_em2 <- c(rep(0, 6), rep(1, 4), rep(0, 10))
+# correct_em_values <- c(0, 0, 0, 0.2, 0.3, 0, 0, 0, 0, 0)
+# correct_em_values2 <- c(rep(0, 6), 0.2, 0.3, -0.1, -0.2, rep(0, 10))
 # generate.simulation(Nstudies = 5, Ncovariate = 10, continuous.cov = c(1,2,4,6,7,8), pf = c(1,2,3,4,5), em = c(4,5), b1 = c(0.1, 0.1, 0.5, 0.1, 0.5))
-
-
-
-
 ```
 
 
 ## glmm_null
 
-```{r glmm_null, cache = TRUE, results = "hide"}
+```{r glmm_null, cache = TRUE, results = "hide", include = FALSE}
 glmm_null_store_mse <- matrix(NA, nrow = niter, ncol = 3)
 glmm_null_store_sd <- matrix(NA, nrow = niter, ncol = 2)
 
@@ -96,7 +90,7 @@ glmm_null_store_sd_mean <- apply(glmm_null_store_sd, 2, mean)
 
 ## glmm_full
 
-```{r glmm_full, cache = TRUE, results = "hide"}
+```{r glmm_full, cache = TRUE, results = "hide", include = FALSE}
 glmm_full_store_mse <- matrix(NA, nrow = niter, ncol = 3)
 glmm_full_store_sd <- matrix(NA, nrow = niter, ncol = 2)
 
@@ -219,12 +213,87 @@ for(i in seq(niter)){
   treat_mean <- a$statistics[grep("d\\[", rownames(a$statistics)), "Mean"]
   treat_mean <- treat_mean["d[2]"]
   names(treat_mean) <- "treat"
-  
-  mse_bayesLASSO <- c(g_mean, treat_mean)
-  bayesLASSO_store_mse1[i,] <- find_performance2(mse_bayesLASSO, correct_em_values, correct_em)
-  bayesLASSO_store_sd1[i] <- a$statistics["d[2]", "SD"]
+  mean_values <- c(g_mean, treat_mean)
+  bayesLASSO_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em)
+
+  g_sd <-  a$statistics[grep("g\\[", rownames(a$statistics)), "SD"]
+  treat_sd <- a$statistics[grep("d\\[", rownames(a$statistics)), "SD"]
+  treat_sd <- treat_sd["d[2]"]
+  names(treat_sd) <- "treat"
+  sd_values <- c(g_sd, treat_sd)
+  bayesLASSO_store_sd[i,] <- find_performance2(sd_values, correct_em)
 }
-bayesLASSO_store_mse1_mean <- apply(bayesLASSO_store_mse1, 2, mean)
-bayesLASSO_store_sd1_mean <- mean(bayesLASSO_store_sd1)
+bayesLASSO_store_mse_mean <- apply(bayesLASSO_store_mse, 2, mean)
+bayesLASSO_store_sd_mean <- apply(bayesLASSO_store_sd, 2, mean)
 ```
 
+
+## SSVS
+
+```{r SSVS_store, cache = TRUE, results = "hide"}
+SSVS_store_mse <- matrix(NA, nrow = niter, ncol = 3)
+SSVS_store_sd <- matrix(NA, nrow = niter, ncol = 2)
+
+for(i in seq(niter)){
+
+  set.seed(i)
+  data <-generate.simulation(Nstudies = 5, Ncovariate = 5, continuous.cov = c(1, 3, 4), pf = c(1,2,3), em = 3, b1 = c(0.1, 0.5, 0.1), b2 = 0.1)
+  data_jags <- with(data,{
+                  list(Nstudies = length(unique(studyid)),
+                  X = cbind(X1, X2, X3, X4, X5),
+                  Np = length(X1),
+                  Ncovariate = (dim(data)[2] - 3)/2,
+                  studyid = studyid,
+                  treat = treat + 1,
+                  y = y)
+  })
+  
+  samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-SSVS.txt", n.chains = 3, n.adapt = 100, n.update = 100, n.iter = 2000)
+  
+  a <- summary(samples)
+
+  g_mean <-  a$statistics[grep("g\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- a$statistics[grep("d\\[", rownames(a$statistics)), "Mean"]
+  treat_mean <- treat_mean["d[2]"]
+  names(treat_mean) <- "treat"
+  mean_values <- c(g_mean, treat_mean)
+  SSVS_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em)
+  
+  g_sd <-  a$statistics[grep("g\\[", rownames(a$statistics)), "SD"]
+  treat_sd <- a$statistics[grep("d\\[", rownames(a$statistics)), "SD"]
+  treat_sd <- treat_sd["d[2]"]
+  names(treat_sd) <- "treat"
+  sd_values <- c(g_sd, treat_sd)
+  SSVS_store_sd[i,] <- find_performance2(sd_values, correct_em)
+}
+SSVS_store_mse_mean <- apply(SSVS_store_mse, 2, mean)
+SSVS_store_sd_mean <- apply(SSVS_store_mse, 2, mean)
+```
+
+
+
+```{r}
+result_matrix_mse <- matrix(NA, nrow = 7, ncol = 3)
+colnames(result_matrix_mse) <- c("false em mse", "true em mse","treatment mse")
+rownames(result_matrix_mse) <-  c("simple null", "simple lm","naive step", "naive lasso", "glmmLasso", "bayes lasso", "SSVS")
+result_matrix_mse[1,] <- glmm_null_store_mse_mean
+result_matrix_mse[2,] <- glmm_full_store_mse_mean
+result_matrix_mse[3,] <- step_store_mse_mean
+result_matrix_mse[4,] <- glmnet_store_mse_mean
+result_matrix_mse[5,] <- glmmLasso_store_mse_mean
+result_matrix_mse[6,] <- bayesLASSO_store_mse_mean
+result_matrix_mse[7,] <- SSVS_store_mse_mean
+kable(result_matrix_mse)
+
+result_matrix_sd <- matrix(NA, nrow = 7, ncol = 2)
+colnames(result_matrix_sd) <- c("average effect modifier se","treatment se")
+rownames(result_matrix_sd) <-  c("simple null", "simple lm","naive step", "naive lasso", "glmmLasso", "bayes lasso", "SSVS")
+result_matrix_sd[1,] <- glmm_null_store_sd_mean
+result_matrix_sd[2,] <- glmm_full_store_sd_mean
+result_matrix_sd[3,] <- step_store_sd_mean
+#result_matrix_sd[4,] <- glmnet_store_sd_mean
+#result_matrix_sd[5,] <- glmmLasso_store_sd_mean
+result_matrix_sd[6,] <- bayesLASSO_store_sd_mean
+#result_matrix_sd[7,] <- SSVS_store_sd_mean
+kable(result_matrix_sd)
+```
