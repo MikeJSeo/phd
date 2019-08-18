@@ -31,7 +31,7 @@ setwd("C:/Users/ms19g661/Desktop")
 setwd("~/GitHub/phd/varselect")
 #setwd("C:/Users/mike/Desktop/Github/phd/varselect")
 
-source("run.simulation.R")
+source("run.simulation.functions.R")
 source("helpful.functions.R")
 
 # setup for parallel computing
@@ -42,6 +42,8 @@ tmp <- clusterEvalQ(cl, library(dclone))
 # number of simulation to run
 niter <- 1000
 ```
+
+## Simulation 1
 
 ```{r, simulation1}
 ### parameters to change ###
@@ -80,3 +82,5 @@ simulation1.b <- run.simulation2()
 simulation1.a
 simulation1.b
 ```
+
+## Simulation 2

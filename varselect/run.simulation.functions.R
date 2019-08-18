@@ -192,6 +192,11 @@ run.simulation2 <- function(){
     SSVS_store_sd[i,] <- find_performance2(sd_values, correct_em)
   }
   
+  bayesLASSO_store_mse_mean <- apply(bayesLASSO_store_mse, 2, mean)
+  bayesLASSO_store_sd_mean <- apply(bayesLASSO_store_sd, 2, mean, na.rm = TRUE)
+  SSVS_store_mse_mean <- apply(SSVS_store_mse, 2, mean)
+  SSVS_store_sd_mean <- apply(SSVS_store_sd, 2, mean, na.rm = TRUE)
+  
   result_matrix_mse <- matrix(NA, nrow = 2, ncol = 3)
   colnames(result_matrix_mse) <- c("false em mse", "true em mse","treatment mse")
   rownames(result_matrix_mse) <-  c("bayesLASSO", "SSVS")
