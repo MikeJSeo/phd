@@ -28,8 +28,8 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
                             family = family, 
                             lambda = lambda[j],
                             data = data_glmmLasso_train,
-                            switch.NR = TRUE,
-                            control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA), standardize = FALSE))
+                            switch.NR = FALSE,
+                            control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA)))
                   ,silent=TRUE) 
       if(class(glm2)!="try-error")
       {  
@@ -47,8 +47,8 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
                         family = family, 
                         lambda = lambda[opt2],
                         data = data_glmmLasso_train,
-                        switch.NR = TRUE,
-                        control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA), standardize = FALSE))
+                        switch.NR = FALSE,
+                        control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA)))
               ,silent=TRUE) 
   glm2
 }
@@ -88,6 +88,9 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
     X[i,continuous.cov] <-  mvrnorm(n = 1, mu = rep(0, len), cov_matrix)
   }
   X[,-continuous.cov] <- rbinom(length(studyid)* (Ncovariate - length(continuous.cov)), 1, 0.5)
+  
+  # standardize X
+  X <- apply(X, 2, scale)
   
   meany <- alpha[studyid] + delta[studyid] * treat + X[,pf, drop = FALSE] %*% b1 + X[,em, drop = FALSE] %*% b2 * treat  
   sigmay <- 0.5
@@ -143,4 +146,26 @@ find_performance2 <- function(val, correct_em, continuous.cov){
   c(ifelse(length(true_em_value_continuous) == 0, NA, mean(true_em_value_continuous)),
     ifelse(length(true_em_value_binary) == 0, NA, mean(true_em_value_binary)),
     val_treat)
+}
+
+
+bootstrap_function  <- function(model_data, ndraws) {
+  coeff_mtx         <- matrix(0, 
+                              nrow = ndraws, 
+                              ncol = length(col_labels))
+  
+  for (i in 1:ndraws) {
+    ## For each bootstrap draw, we bootstrap the data by sampling
+    ## observations with replacement.
+    bootstrap_ids   <- sample(seq(nrow(model_data)),
+                              nrow(model_data),
+                              replace = TRUE)
+    bootstrap_data   <- model_data[bootstrap_ids,]
+    
+    ## Then we estimate the model and save the coefficients
+    bootstrap_model <- cv.glmnet(as.matrix(model_data[,-1]), as.matrix(model_data[1]), penalty.factor = p.fac, family = model.type)  
+    coeff_mtx[i,]   <- sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
+  }
+  
+  return(coeff_mtx)
 }
