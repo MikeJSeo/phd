@@ -5,10 +5,12 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
   N <-dim(data_glmmLasso)[1]
   ind<-sample(N,N)
   
-  kk<-5 # 5 fold cross-validation
+  kk <- 5 # 5 fold cross-validation
   nk <- floor(N/kk)
   
   Devianz_ma<-matrix(Inf,ncol=kk,nrow=length(lambda))
+  
+  if(length(lambda) >1 ){
   
   for(j in 1:length(lambda)){
     print(paste("Iteration ", j,sep=""))
@@ -28,8 +30,7 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
                             family = family, 
                             lambda = lambda[j],
                             data = data_glmmLasso_train,
-                            switch.NR = FALSE,
-                            control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA)))
+                            control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA), center = FALSE, standardize = FALSE))
                   ,silent=TRUE) 
       if(class(glm2)!="try-error")
       {  
@@ -40,17 +41,20 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
   }
   Devianz_vec<-apply(Devianz_ma,1,sum)
   opt2<-which.min(Devianz_vec)
-  print(Devianz_vec)
-  print(paste0("optimal lambda value is ", lambda[opt2]))
+  #print(Devianz_vec)
+  #print(paste0("optimal lambda value is ", lambda[opt2]))
+  lambda.min <- lambda[opt2]
+  } else{
+    lambda.min <- lambda  
+  }
   
   glm2 <- try(glmmLasso(form.fixed, rnd = form.rnd,  
                         family = family, 
-                        lambda = lambda[opt2],
-                        data = data_glmmLasso_train,
-                        switch.NR = FALSE,
-                        control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA)))
-              ,silent=TRUE) 
-  glm2
+                        lambda = lambda.min,
+                        data = data_glmmLasso,
+                        control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA), center = FALSE, standardize = FALSE))
+              ,silent=TRUE)
+  list(glm2 = glm2, lambda.min = lambda.min)
 }
 
 
@@ -89,20 +93,19 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   }
   X[,-continuous.cov] <- rbinom(length(studyid)* (Ncovariate - length(continuous.cov)), 1, 0.5)
   
-  # standardize X
-  X <- apply(X, 2, scale)
+  data <- model.matrix(~ -1 +  X*treat)
+  data[,-(Ncovariate+1)] <- apply(data[,-(Ncovariate+1)], 2, scale) # standardize data except treatment
   
-  meany <- alpha[studyid] + delta[studyid] * treat + X[,pf, drop = FALSE] %*% b1 + X[,em, drop = FALSE] %*% b2 * treat  
+  meany <- alpha[studyid] + delta[studyid] * treat + data[,pf, drop = FALSE] %*% b1 + data[,Ncovariate + 1 + em, drop = FALSE] %*% b2
   sigmay <- 0.5
   py <- expit(meany)
-  
+
   if(model == "continuous"){
-    y <- rnorm(length(studyid), meany, sigmay)  
+    y <- rnorm(length(studyid), meany, sigmay)
   } else if (model == "binomial"){
     y <- rbinom(length(studyid), 1, py)
   }
-  
-  data <- model.matrix(~ -1 +  X*treat)
+
   data <- cbind(y = y, data = data, studyid = studyid)
   data <- as.data.frame(data)
   data$studyid <- as.factor(data$studyid)
@@ -149,23 +152,48 @@ find_performance2 <- function(val, correct_em, continuous.cov){
 }
 
 
-bootstrap_function  <- function(model_data, ndraws) {
-  coeff_mtx         <- matrix(0, 
-                              nrow = ndraws, 
-                              ncol = length(col_labels))
+bootstrap_function_LASSO  <- function(model_data, ndraws) {
   
-  for (i in 1:ndraws) {
-    ## For each bootstrap draw, we bootstrap the data by sampling
-    ## observations with replacement.
-    bootstrap_ids   <- sample(seq(nrow(model_data)),
-                              nrow(model_data),
-                              replace = TRUE)
-    bootstrap_data   <- model_data[bootstrap_ids,]
+  coeff_mtx <- matrix(0, nrow = ndraws, ncol = length(col_labels))
+  
+  for (ii in 1:ndraws) {
+
+    bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
+    bootstrap_data <- model_data[bootstrap_ids,]
     
-    ## Then we estimate the model and save the coefficients
-    bootstrap_model <- cv.glmnet(as.matrix(model_data[,-1]), as.matrix(model_data[1]), penalty.factor = p.fac, family = model.type)  
-    coeff_mtx[i,]   <- sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
+    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[1]), penalty.factor = p.fac, family = model.type, standardize = FALSE)  
+    aa <- coef(bootstrap_model, s = "lambda.min")
+    coeff_mtx[ii,]   <- sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))  
   }
   
-  return(coeff_mtx)
+  se <- apply(coeff_mtx, 2, sd, na.rm = TRUE)
+  return(se)
 }
+
+
+bootstrap_function_glmmLasso  <- function(model_data, ndraws, lambda.min = NULL, model.type = NULL) {
+  
+  if(is.null(model.type)) stop("model type missing")
+
+  coeff_mtx <- matrix(0, nrow = ndraws, ncol = length(col_labels))
+  
+  for (ii in 1:ndraws) {
+    
+    bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
+    bootstrap_data <- model_data[bootstrap_ids,]
+    
+    if(model.type == "gaussian"){
+      bootstrap_model <- cv.glmmLasso(bootstrap_data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = lambda.min, family = gaussian(link="identity"))
+    }
+
+    aa <- summary(bootstrap_model[[1]])$coefficients
+    aa <- rownames(aa[aa[,"Estimate"] != 0,])
+      
+    coeff_mtx[ii,] <- sapply(col_labels_glmmLasso, function(x) ifelse(x %in% aa, summary(bootstrap_model[[1]])$coefficients[x,"Estimate"], 0))
+  }
+  
+  se <- apply(coeff_mtx, 2, sd, na.rm = TRUE)
+  return(se)
+}
+
+

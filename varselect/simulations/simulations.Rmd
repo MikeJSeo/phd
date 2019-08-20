@@ -106,7 +106,6 @@ glmm_null_formula <- as.formula("y ~ studyid + treat + (-1 + treat|studyid)")
 glmm_full_formula <- as.formula("y ~ studyid + treat + (X1 + X2 + X3 + X4 + X5)*treat + (-1 + treat|studyid)")
 step_full_formula <-  as.formula("y ~ (X1 + X2 + X3 + X4 + X5)*treat")
 glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + treat")
-glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + as.factor(X2) + X3 + X4 + as.factor(X5) + X1_treat + as.factor(X2_treat) + X3_treat + X4_treat + as.factor(X5_treat) + treat")
 
 model.type = "gaussian"
 ```
@@ -165,3 +164,5 @@ simulation3.a
 ```
 
 ## Simulation 4
+
+## Simulation 5

@@ -2,7 +2,7 @@
 run.simulation <- function(){
   
   glmmLasso_store_mse <- glmnet_store_mse <- step_store_mse <- glmm_full_store_mse <- glmm_null_store_mse <- matrix(NA, nrow = niter, ncol = 3)
-  step_store_sd <- glmm_full_store_sd <- glmm_null_store_sd <- matrix(NA, nrow = niter, ncol = 3)
+  glmmLasso_store_sd <- glmnet_store_sd <- step_store_sd <- glmm_full_store_sd <- glmm_null_store_sd <- matrix(NA, nrow = niter, ncol = 3)
   
   for(i in seq(niter)){
     
@@ -10,7 +10,7 @@ run.simulation <- function(){
     data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2)
     if(model.type == "gaussian"){
       m1 <- lmer(glmm_null_formula, data = data)
-    } 
+    }
     
     mean_values <- sapply(col_labels_glmm, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
     sd_values <- sapply(col_labels_glmm, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Std. Error"], 0))
@@ -60,12 +60,14 @@ run.simulation <- function(){
     p.fac <- rep(1, length(col_labels)*2 - 1)
     p.fac[length(col_labels)] <- 0
     
-    cvfit <- cv.glmnet(as.matrix(data[,-1]), as.matrix(data[1]), penalty.factor = p.fac, family = model.type)  
-    
+    cvfit <- cv.glmnet(as.matrix(data[,-1]), as.matrix(data[1]), penalty.factor = p.fac, family = model.type, standardize = FALSE)  
     aa <- coef(cvfit, s = "lambda.min")
     
     mean_values <-  sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
+    sd_values <- bootstrap_function_LASSO(data, 100)
+    
     glmnet_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em)
+    glmnet_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
   }
   
   for(i in seq(niter)){
@@ -76,16 +78,18 @@ run.simulation <- function(){
     
     form.fixed <- glmmLasso_formula 
     form.rnd <- list(studyid =~ -1 + treat)
-    
+      
     if(model.type == "gaussian") {
       cv.fit <- cv.glmmLasso(data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(100, 0, by = -5), family = gaussian(link="identity"))
     }
-   
-    aa <- summary(cv.fit)$coefficients
+    aa <- summary(cv.fit[[1]])$coefficients
     aa <- rownames(aa[aa[,"Estimate"] != 0,])
     
-    mean_values <- sapply(col_labels_glmmLasso, function(x) ifelse(x %in% aa, summary(cv.fit)$coefficients[x,"Estimate"], 0))
+    mean_values <- sapply(col_labels_glmmLasso, function(x) ifelse(x %in% aa, summary(cv.fit[[1]])$coefficients[x,"Estimate"], 0))
+    sd_values <- bootstrap_function_glmmLasso(data, 100, cv.fit[[2]], model.type)
+    
     glmmLasso_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em)
+    glmmLasso_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
   }
   
   glmm_null_store_mse_mean <- apply(glmm_null_store_mse, 2, mean)
@@ -95,7 +99,9 @@ run.simulation <- function(){
   step_store_mse_mean <- apply(step_store_mse, 2, mean)
   step_store_sd_mean <- apply(step_store_sd, 2, mean, na.rm = TRUE)
   glmnet_store_mse_mean <- apply(glmnet_store_mse, 2, mean)
+  glmnet_store_sd_mean <- apply(glmnet_store_sd, 2, mean)
   glmmLasso_store_mse_mean <- apply(glmmLasso_store_mse, 2, mean)
+  glmmLasso_store_sd_mean <- apply(glmmLasso_store_sd, 2, mean)
   
   result_matrix_mse <- matrix(NA, nrow = 5, ncol = 3)
   colnames(result_matrix_mse) <- c("false em mse", "true em mse","treatment mse")
@@ -112,8 +118,8 @@ run.simulation <- function(){
   result_matrix_sd[1,] <- glmm_null_store_sd_mean
   result_matrix_sd[2,] <- glmm_full_store_sd_mean
   result_matrix_sd[3,] <- step_store_sd_mean
-  #result_matrix_sd[4,] <- glmnet_store_sd_mean
-  #result_matrix_sd[5,] <- glmmLasso_store_sd_mean
+  result_matrix_sd[4,] <- glmnet_store_sd_mean
+  result_matrix_sd[5,] <- glmmLasso_store_sd_mean
   
   cbind(result_matrix_mse, result_matrix_sd)
 }
