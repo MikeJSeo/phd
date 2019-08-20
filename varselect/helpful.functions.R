@@ -28,8 +28,8 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
                             family = family, 
                             lambda = lambda[j],
                             data = data_glmmLasso_train,
-                            final.re = FALSE,
-                            control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA)))
+                            switch.NR = TRUE,
+                            control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA), standardize = FALSE))
                   ,silent=TRUE) 
       if(class(glm2)!="try-error")
       {  
@@ -47,8 +47,8 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
                         family = family, 
                         lambda = lambda[opt2],
                         data = data_glmmLasso_train,
-                        final.re = FALSE,
-                        control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA)))
+                        switch.NR = TRUE,
+                        control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA), standardize = FALSE))
               ,silent=TRUE) 
   glm2
 }
