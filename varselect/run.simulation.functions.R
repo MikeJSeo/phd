@@ -60,11 +60,11 @@ run.simulation <- function(){
     p.fac <- rep(1, length(col_labels)*2 - 1)
     p.fac[length(col_labels)] <- 0
     
-    cvfit <- cv.glmnet(as.matrix(data[,-1]), as.matrix(data[1]), penalty.factor = p.fac, family = model.type, standardize = FALSE)  
+    cvfit <- cv.glmnet(as.matrix(data[,-1]), as.matrix(data[1]), penalty.factor = p.fac, family = model.type)  
     aa <- coef(cvfit, s = "lambda.min")
     
     mean_values <-  sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
-    sd_values <- bootstrap_function_LASSO(data, 100)
+    sd_values <- bootstrap_function_LASSO(data, 100, p.fac)
     
     glmnet_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em)
     glmnet_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
@@ -86,7 +86,7 @@ run.simulation <- function(){
     aa <- rownames(aa[aa[,"Estimate"] != 0,])
     
     mean_values <- sapply(col_labels_glmmLasso, function(x) ifelse(x %in% aa, summary(cv.fit[[1]])$coefficients[x,"Estimate"], 0))
-    sd_values <- bootstrap_function_glmmLasso(data, 100, cv.fit[[2]], model.type)
+    sd_values <- bootstrap_function_glmmLasso(data, 100, cv.fit[[2]], model.type, form.fixed, form.rnd)
     
     glmmLasso_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em)
     glmmLasso_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)

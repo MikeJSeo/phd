@@ -24,12 +24,12 @@ library(knitr) # for tables
 
 ```{r}
 # Setting directory
-setwd("C:/Users/ms19g661/Desktop")
-#setwd("C:/Users/mike/Desktop")
+#setwd("C:/Users/ms19g661/Desktop")
+setwd("C:/Users/mike/Desktop")
 
 #load/save everything else from/to github
-setwd("~/GitHub/phd/varselect")
-#setwd("C:/Users/mike/Desktop/Github/phd/varselect")
+#setwd("~/GitHub/phd/varselect")
+setwd("C:/Users/mike/Desktop/Github/phd/varselect")
 
 source("run.simulation.functions.R")
 source("helpful.functions.R")
@@ -40,7 +40,7 @@ cl <- makePSOCKcluster(n.cores)
 tmp <- clusterEvalQ(cl, library(dclone))
 
 # number of simulation to run
-niter <- 1000
+niter <- 1
 ```
 
 ## Simulation 1
@@ -154,7 +154,7 @@ model.type = "gaussian"
 simulation3.a <- run.simulation()
 ```
 
-```{r simulation3b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
+```{r simulation3b, cache = TRUE, result = "hide", include = FALSE}
 simulation3.b <- run.simulation()
 ```
 

@@ -30,7 +30,7 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
                             family = family, 
                             lambda = lambda[j],
                             data = data_glmmLasso_train,
-                            control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA), center = FALSE, standardize = FALSE))
+                            control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA)))
                   ,silent=TRUE) 
       if(class(glm2)!="try-error")
       {  
@@ -52,7 +52,7 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
                         family = family, 
                         lambda = lambda.min,
                         data = data_glmmLasso,
-                        control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA), center = FALSE, standardize = FALSE))
+                        control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA)))
               ,silent=TRUE)
   list(glm2 = glm2, lambda.min = lambda.min)
 }
@@ -152,7 +152,7 @@ find_performance2 <- function(val, correct_em, continuous.cov){
 }
 
 
-bootstrap_function_LASSO  <- function(model_data, ndraws) {
+bootstrap_function_LASSO  <- function(model_data, ndraws, p.fac) {
   
   coeff_mtx <- matrix(0, nrow = ndraws, ncol = length(col_labels))
   
@@ -161,7 +161,7 @@ bootstrap_function_LASSO  <- function(model_data, ndraws) {
     bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
     bootstrap_data <- model_data[bootstrap_ids,]
     
-    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[1]), penalty.factor = p.fac, family = model.type, standardize = FALSE)  
+    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[1]), penalty.factor = p.fac, family = model.type)  
     aa <- coef(bootstrap_model, s = "lambda.min")
     coeff_mtx[ii,]   <- sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))  
   }
@@ -171,13 +171,16 @@ bootstrap_function_LASSO  <- function(model_data, ndraws) {
 }
 
 
-bootstrap_function_glmmLasso  <- function(model_data, ndraws, lambda.min = NULL, model.type = NULL) {
+bootstrap_function_glmmLasso  <- function(model_data, ndraws, lambda.min = NULL, model.type = NULL, form.fixed, form.rnd) {
   
   if(is.null(model.type)) stop("model type missing")
 
   coeff_mtx <- matrix(0, nrow = ndraws, ncol = length(col_labels))
   
   for (ii in 1:ndraws) {
+    
+    print(form.fixed)
+    print(form.rnd)
     
     bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
     bootstrap_data <- model_data[bootstrap_ids,]
@@ -186,6 +189,7 @@ bootstrap_function_glmmLasso  <- function(model_data, ndraws, lambda.min = NULL,
       bootstrap_model <- cv.glmmLasso(bootstrap_data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = lambda.min, family = gaussian(link="identity"))
     }
 
+    print(bootstrap_model)
     aa <- summary(bootstrap_model[[1]])$coefficients
     aa <- rownames(aa[aa[,"Estimate"] != 0,])
       
