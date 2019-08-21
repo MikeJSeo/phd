@@ -20,16 +20,17 @@ library(glmnet) #for lasso
 library(glmmLasso) #for glmmLasso
 library(dclone) # for parallel processing of JAGS code
 library(knitr) # for tables
+library(nlme) # for initial values for glmmLasso
 ```
 
 ```{r}
 # Setting directory
-#setwd("C:/Users/ms19g661/Desktop")
-setwd("C:/Users/mike/Desktop")
+setwd("C:/Users/ms19g661/Desktop")
+#setwd("C:/Users/mike/Desktop")
 
 #load/save everything else from/to github
-#setwd("~/GitHub/phd/varselect")
-setwd("C:/Users/mike/Desktop/Github/phd/varselect")
+setwd("~/GitHub/phd/varselect")
+#setwd("C:/Users/mike/Desktop/Github/phd/varselect")
 
 source("run.simulation.functions.R")
 source("helpful.functions.R")
@@ -40,7 +41,7 @@ cl <- makePSOCKcluster(n.cores)
 tmp <- clusterEvalQ(cl, library(dclone))
 
 # number of simulation to run
-niter <- 1
+niter <- 1000
 ```
 
 ## Simulation 1
@@ -66,6 +67,7 @@ glmm_null_formula <- as.formula("y ~ studyid + treat + (-1 + treat|studyid)")
 glmm_full_formula <- as.formula("y ~ studyid + treat + (X1 + X2 + X3 + X4 + X5)*treat + (-1 + treat|studyid)")
 step_full_formula <-  as.formula("y ~ (X1 + X2 + X3 + X4 + X5)*treat")
 glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + treat")
+pql_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5)*treat")
 
 model.type = "gaussian"
 ```
@@ -74,13 +76,13 @@ model.type = "gaussian"
 simulation1.a <- run.simulation()
 ```
 
-```{r simulation1b, cache = TRUE, result = "hide", include = FALSE}
+```{r simulation1b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
 simulation1.b <- run.simulation2()
 ```
 
 ```{r}
 simulation1.a
-simulation1.b
+#simulation1.b
 ```
 
 ## Simulation 2
@@ -110,17 +112,17 @@ glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5
 model.type = "gaussian"
 ```
 
-```{r simulation2a, cache = TRUE, result = "hide", include = FALSE}
+```{r simulation2a, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
 simulation2.a <- run.simulation()
 ```
 
-```{r simulation2b, cache = TRUE, result = "hide", include = FALSE}
+```{r simulation2b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
 simulation2.b <- run.simulation2()
 ```
 
 ```{r}
-simulation2.a
-simulation2.b
+#simulation2.a
+#simulation2.b
 ```
 
 ## Simulation 3
@@ -150,15 +152,15 @@ glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5
 model.type = "gaussian"
 ```
 
-```{r simulation3a, cache = TRUE, result = "hide", include = FALSE}
+```{r simulation3a, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
 simulation3.a <- run.simulation()
 ```
 
-```{r simulation3b, cache = TRUE, result = "hide", include = FALSE}
+```{r simulation3b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
 simulation3.b <- run.simulation()
 ```
 
-```{r}
+```{r, eval = FALSE}
 simulation3.a
 #simulation3.b
 ```

@@ -1,6 +1,6 @@
 ## code to do cross validation for glmmLasso to get optimal lambda value
 
-cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lambda = NULL, family = NULL){
+cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lambda = NULL, family = NULL, q_start, start){
   
   N <-dim(data_glmmLasso)[1]
   ind<-sample(N,N)
@@ -30,7 +30,8 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
                             family = family, 
                             lambda = lambda[j],
                             data = data_glmmLasso_train,
-                            control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA)))
+                            control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA), q_start = q_start, start = start,
+                                           center = FALSE, standardize = FALSE))
                   ,silent=TRUE) 
       if(class(glm2)!="try-error")
       {  
@@ -52,7 +53,8 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
                         family = family, 
                         lambda = lambda.min,
                         data = data_glmmLasso,
-                        control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA)))
+                        control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA), q_start = q_start, start = start,
+                                       center = FALSE, standardize = FALSE))
               ,silent=TRUE)
   list(glm2 = glm2, lambda.min = lambda.min)
 }
@@ -93,10 +95,11 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   }
   X[,-continuous.cov] <- rbinom(length(studyid)* (Ncovariate - length(continuous.cov)), 1, 0.5)
   
+  # standardize X: binary and continuous variables in same scale
+  X <- apply(X, 2, scale)
   data <- model.matrix(~ -1 +  X*treat)
-  data[,-(Ncovariate+1)] <- apply(data[,-(Ncovariate+1)], 2, scale) # standardize data except treatment
   
-  meany <- alpha[studyid] + delta[studyid] * treat + data[,pf, drop = FALSE] %*% b1 + data[,Ncovariate + 1 + em, drop = FALSE] %*% b2
+  meany <- alpha[studyid] + delta[studyid] * treat + X[,pf, drop = FALSE] %*% b1 + X[,em, drop = FALSE] %*% b2 * treat
   sigmay <- 0.5
   py <- expit(meany)
 
@@ -161,7 +164,7 @@ bootstrap_function_LASSO  <- function(model_data, ndraws, p.fac) {
     bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
     bootstrap_data <- model_data[bootstrap_ids,]
     
-    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[1]), penalty.factor = p.fac, family = model.type)  
+    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[1]), penalty.factor = p.fac, family = model.type, standardize = FALSE)  
     aa <- coef(bootstrap_model, s = "lambda.min")
     coeff_mtx[ii,]   <- sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))  
   }
@@ -171,25 +174,20 @@ bootstrap_function_LASSO  <- function(model_data, ndraws, p.fac) {
 }
 
 
-bootstrap_function_glmmLasso  <- function(model_data, ndraws, lambda.min = NULL, model.type = NULL, form.fixed, form.rnd) {
+bootstrap_function_glmmLasso  <- function(model_data, ndraws, lambda.min = NULL, model.type = NULL, form.fixed, form.rnd, q_start, start) {
   
   if(is.null(model.type)) stop("model type missing")
 
   coeff_mtx <- matrix(0, nrow = ndraws, ncol = length(col_labels))
   
   for (ii in 1:ndraws) {
-    
-    print(form.fixed)
-    print(form.rnd)
-    
+
     bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
     bootstrap_data <- model_data[bootstrap_ids,]
     
     if(model.type == "gaussian"){
-      bootstrap_model <- cv.glmmLasso(bootstrap_data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = lambda.min, family = gaussian(link="identity"))
+      bootstrap_model <- cv.glmmLasso(bootstrap_data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = lambda.min, family = gaussian(link="identity"), q_start = q_start, start = start)
     }
-
-    print(bootstrap_model)
     aa <- summary(bootstrap_model[[1]])$coefficients
     aa <- rownames(aa[aa[,"Estimate"] != 0,])
       

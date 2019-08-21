@@ -114,17 +114,6 @@ summary(m2)
 ```{r simple_model_stent, cache = TRUE, results = "hide", eval = FALSE}
 m3 <- glm(y ~ (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, family = binomial(link = "logit"), data = mydata)
 summary(m3)
-# # ladtreated = 1, num_stents = 5
-# contr <- c(rep(0, 6), 0, 0, 0, 0, 0, rep(0, 5), 1, 0, 0, 5)
-# v1 <- vcov(m1)
-# se1 <- c(sqrt(contr %*% v1 %*% contr))
-# exp(c(contr %*% coef(m1)) + qnorm(c(.025,.50,.975))* c(se1))
-# 
-# # ladtreated = 0, num_stents = 1
-# contr <- c(rep(0, 6), 0, 0, 0, 0, 0, rep(0, 5), 0, 0, 0, 1)
-# v1 <- vcov(m1)
-# se1 <- c(sqrt(contr %*% v1 %*% contr))
-# exp(c(contr %*% coef(m1)) + qnorm(c(.025,.50,.975))* c(se1))
 ```
 
 ## naive step

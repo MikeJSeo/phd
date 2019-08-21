@@ -60,7 +60,7 @@ run.simulation <- function(){
     p.fac <- rep(1, length(col_labels)*2 - 1)
     p.fac[length(col_labels)] <- 0
     
-    cvfit <- cv.glmnet(as.matrix(data[,-1]), as.matrix(data[1]), penalty.factor = p.fac, family = model.type)  
+    cvfit <- cv.glmnet(as.matrix(data[,-1]), as.matrix(data[1]), penalty.factor = p.fac, family = model.type, standardize = FALSE)  
     aa <- coef(cvfit, s = "lambda.min")
     
     mean_values <-  sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
@@ -74,19 +74,29 @@ run.simulation <- function(){
     
     set.seed(i)  
     data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2)
-    colnames(data) <- gsub(":", "_", colnames(data))  
+    
+    #This part is used for setting initial values
+    #if(model.type == "gaussian"){
+    #  PQL <-glmmPQL(pql_formula, random = ~ -1 + treat|studyid, family=gaussian, data=data)  
+    #}
+    #q_start <- as.numeric(VarCorr(PQL)[1,1])
+    #start <- as.numeric(c(PQL$coef$fixed[-which(names(PQL$coef$fixed) == "treat")], PQL$coef$fixed[which(names(PQL$coef$fixed) == "treat")], t(PQL$coef$random$studyid)))
+    q_start <- NULL
+    start <- NULL
+    
+    colnames(data) <- gsub(":", "_", colnames(data)) #glmmLasso doesn't allow colon sign
     
     form.fixed <- glmmLasso_formula 
     form.rnd <- list(studyid =~ -1 + treat)
       
     if(model.type == "gaussian") {
-      cv.fit <- cv.glmmLasso(data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(100, 0, by = -5), family = gaussian(link="identity"))
+      cv.fit <- cv.glmmLasso(data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(100, 0, by = -5), family = gaussian(link="identity"), q_start = q_start, start = start)
     }
     aa <- summary(cv.fit[[1]])$coefficients
     aa <- rownames(aa[aa[,"Estimate"] != 0,])
     
     mean_values <- sapply(col_labels_glmmLasso, function(x) ifelse(x %in% aa, summary(cv.fit[[1]])$coefficients[x,"Estimate"], 0))
-    sd_values <- bootstrap_function_glmmLasso(data, 100, cv.fit[[2]], model.type, form.fixed, form.rnd)
+    sd_values <- bootstrap_function_glmmLasso(data, 100, cv.fit[[2]], model.type, form.fixed, form.rnd, q_start, start)
     
     glmmLasso_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em)
     glmmLasso_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
