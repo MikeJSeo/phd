@@ -25,12 +25,12 @@ library(nlme) # for initial values for glmmLasso
 
 ```{r}
 # Setting directory
-setwd("C:/Users/ms19g661/Desktop")
-#setwd("C:/Users/mike/Desktop")
+#etwd("C:/Users/ms19g661/Desktop")
+setwd("C:/Users/mike/Desktop")
 
 #load/save everything else from/to github
-setwd("~/GitHub/phd/varselect")
-#setwd("C:/Users/mike/Desktop/Github/phd/varselect")
+#setwd("~/GitHub/phd/varselect")
+setwd("C:/Users/mike/Desktop/Github/phd/varselect")
 
 source("run.simulation.functions.R")
 source("helpful.functions.R")
@@ -76,8 +76,8 @@ model.type = "gaussian"
 simulation1.a <- run.simulation()
 ```
 
-```{r simulation1b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
-simulation1.b <- run.simulation2()
+```{r simulation1b, cache = TRUE, result = "hide", include = FALSE}
+#simulation1.b <- run.simulation2()
 ```
 
 ```{r}
@@ -112,7 +112,7 @@ glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5
 model.type = "gaussian"
 ```
 
-```{r simulation2a, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
+```{r simulation2a, cache = TRUE, result = "hide", include = FALSE}
 simulation2.a <- run.simulation()
 ```
 
@@ -121,7 +121,7 @@ simulation2.b <- run.simulation2()
 ```
 
 ```{r}
-#simulation2.a
+simulation2.a
 #simulation2.b
 ```
 

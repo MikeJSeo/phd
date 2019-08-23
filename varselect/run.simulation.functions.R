@@ -109,9 +109,9 @@ run.simulation <- function(){
   step_store_mse_mean <- apply(step_store_mse, 2, mean)
   step_store_sd_mean <- apply(step_store_sd, 2, mean, na.rm = TRUE)
   glmnet_store_mse_mean <- apply(glmnet_store_mse, 2, mean)
-  glmnet_store_sd_mean <- apply(glmnet_store_sd, 2, mean)
+  glmnet_store_sd_mean <- apply(glmnet_store_sd, 2, mean, na.rm = TRUE)
   glmmLasso_store_mse_mean <- apply(glmmLasso_store_mse, 2, mean)
-  glmmLasso_store_sd_mean <- apply(glmmLasso_store_sd, 2, mean)
+  glmmLasso_store_sd_mean <- apply(glmmLasso_store_sd, 2, mean, na.rm = TRUE)
   
   result_matrix_mse <- matrix(NA, nrow = 5, ncol = 3)
   colnames(result_matrix_mse) <- c("false em mse", "true em mse","treatment mse")
