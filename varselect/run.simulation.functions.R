@@ -136,13 +136,19 @@ run.simulation <- function(){
 
 run.simulation2 <- function(){
 
-  bayesLASSO_store_mse <- matrix(NA, nrow = niter, ncol = 3)
-  bayesLASSO_store_sd <- matrix(NA, nrow = niter, ncol = 3)
+  SSVS_store_mse <- bayesLASSO_store_mse <- matrix(NA, nrow = niter, ncol = 3)
+  SSVS_store_sd <- bayesLASSO_store_sd <- matrix(NA, nrow = niter, ncol = 3)
+  
+  ## first find optimal lambda value for on simulation (due to time constraint can't do it for all simulations)
+  set.seed(1)
+  data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2)
+  lambda.min <- cv.bayesLasso(data, model.type = model.type)
   
   for(i in seq(niter)){
     
     set.seed(i)
     data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2)
+    
     data_jags <- with(data,{
       list(Nstudies = length(unique(studyid)),
            X = data[,paste0("X",1:Ncovariate)],
@@ -150,31 +156,26 @@ run.simulation2 <- function(){
            Ncovariate = (dim(data)[2] - 3)/2,
            studyid = studyid,
            treat = treat + 1,
-           y = y)
+           y = y,
+           lambda = lambda.min)
     })
-    
     samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-bayesLASSO.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 2000)
     
     a <- summary(samples)
     
     g_mean <-  a$statistics[grep("g\\[", rownames(a$statistics)), "Mean"]
-    treat_mean <- a$statistics[grep("d\\[", rownames(a$statistics)), "Mean"]
-    treat_mean <- treat_mean["d[2]"]
+    treat_mean <- a$statistics["d[2]", "Mean"]
     names(treat_mean) <- "treat"
     mean_values <- c(g_mean, treat_mean)
     bayesLASSO_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em)
     
     g_sd <-  a$statistics[grep("g\\[", rownames(a$statistics)), "SD"]
-    treat_sd <- a$statistics[grep("d\\[", rownames(a$statistics)), "SD"]
-    treat_sd <- treat_sd["d[2]"]
+    treat_sd <- a$statistics["d[2]", "SD"]
     names(treat_sd) <- "treat"
     sd_values <- c(g_sd, treat_sd)
     bayesLASSO_store_sd[i,] <- find_performance2(sd_values, correct_em)
   }
-  
-  SSVS_store_mse <- matrix(NA, nrow = niter, ncol = 3)
-  SSVS_store_sd <- matrix(NA, nrow = niter, ncol = 3)
-  
+
   for(i in seq(niter)){
     
     set.seed(i)

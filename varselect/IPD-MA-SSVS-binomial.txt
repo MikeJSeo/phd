@@ -28,23 +28,22 @@ for (i in 1:Nstudies){
 for(i in 1:Ncovariate){
 	IndA[i] ~ dcat(Pind[])
 	Ind[i] <- IndA[i] - 1
-	beta[i] ~ dnorm(0, TauM[IndA[i]])
+	beta[i] ~ dnorm(0, tauCov[IndA[i]])
 }
 
 for(i in 1:Ncovariate){
 	IndA2[i] ~ dcat(Pind[])
 	Ind2[i] <- IndA2[i] - 1
-	g[i] ~ dnorm(0, TauM[IndA2[i]])
+	g[i] ~ dnorm(0, tauCov[IndA2[i]])
 }
 
-tauBeta <- pow(sdBeta, -2)
-sdBeta ~ dunif(0, 5)
-TauM[1]<- tauBeta * 100
-TauM[2] <- tauBeta
+zeta <- pow(eta, -2)
+eta ~ dunif(0, 5)
+tauCov[1] <- zeta
+tauCov[2] <- zeta * 0.01  # g = 100
 
-Pind[1] <- 0.5
-Pind[2] <- 0.5
-
+Pind[1] <- 0.5 #P(I_j=1)= 0.5
+Pind[2] <- 0.5 
 
 }
 
