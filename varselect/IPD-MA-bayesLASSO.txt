@@ -26,16 +26,16 @@ for (i in 1:Nstudies){
 	alpha[i] ~ dnorm(0, 0.001)	
 }
 
-eta ~ dgamma(0.001, 0.001)
+tt <- lambda*tau #lambda value has to be specified
 
 for(i in 1:Ncovariate){
-	beta[i] ~ ddexp(0, eta)
+	beta[i] ~ ddexp(0, tt)
 	#Ind1[i] <- step(abs(beta[i]) - 0.05)
 }
 
 for(i in 1:Ncovariate){
-	g[i] ~ ddexp(0, eta)
-	#Ind2[i] <- step(abs(beta[i]) - 0.05)
+	g[i] ~ ddexp(0, tt)
+	#Ind2[i] <- step(abs(g[i]) - 0.05)
 }
 }
 
