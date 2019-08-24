@@ -19,7 +19,6 @@ library(glmnet) #for lasso
 library(glmmLasso) #for glmmLasso
 library(dclone) # for parllel processing of JAGS code
 
-source("helpful.functions.R")
 ```
 
 
@@ -33,6 +32,8 @@ stent <- read.dta13("1_year_stent_data_21092018.dta")
 #load/save everything else from/to github
 setwd("~/GitHub/phd/varselect")
 #setwd("C:/Users/mike/Desktop/Github/phd/varselect")
+
+source("helpful.functions.R")
 ```
 
 
@@ -65,35 +66,15 @@ X[ii] <- lapply(X[ii], as.numeric)
 
 data_stent <- cbind(X, y = data0$a_death_5yr_yn, treat = ifelse(data0$rand == "BMS", 0, 1), studyid = data0$trial_name)
 mydata <- na.omit(data_stent)
+mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")] <- apply(mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")], 2, scale)
 
 X <- mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")]
 
 # Total data: 11433 -> complete cases X: 11106 
 
-data_jags_stent <- with(mydata, {
-        list(Nstudies = length(unique(studyid)),
-        num.continuous = 1,
-        num.discrete = 7,
-        num.count = 1,
-        Ncovariate = 9,
-        X = X,
-        Np = dim(X)[1],
-        studyid = studyid,
-        treat = treat + 1,
-        y = y)})
-
 col_labels_stent <- c("age", "gender", "diabetes", "stable_cad", "multivessel", "ladtreated", "overlap", "m_dia_above_3", "num_stent")
 col_labels_stent_all <- c("(Intercept)", col_labels_stent, paste0(col_labels_stent, ":treat"), "treat", paste0("as.factor(studyid)", 1:length(unique(mydata$studyid))))
 col_labels_stent_glmm <- c("(Intercept)", col_labels_stent, paste0(col_labels_stent, "_treat"), "treat", paste0("as.factor(studyid)", 1:length(unique(mydata$studyid))))
-
-# matrix to store results
-stent_coef <- matrix(NA, nrow = length(col_labels_stent_all), ncol = 8)
-rownames(stent_coef) <- col_labels_stent_all
-colnames(stent_coef) <- c("simple null","simple lm", "naive step", "naive lasso", "glmmLasso", "bayes lasso","SSVS", "SSVS Ind")
-
-stent_sd <- matrix(NA, nrow = length(col_labels_stent_all), ncol = 7)
-rownames(stent_sd) <- col_labels_stent_all
-colnames(stent_sd) <- c("simple null","simple lm", "naive step", "naive lasso", "glmmLasso", "bayes lasso", "SSVS")
 ```
 
 ## glmm_null
@@ -154,7 +135,8 @@ form.rnd <- list(studyid =~ -1 + treat)
 
 cv.fit <- cv.glmmLasso(data_glmmLasso, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(100, 0,
   by = -5), family = binomial(link = "logit"))
-summary(cv.fit)
+summary(cv.fit[[1]])
+cv.fit[[2]]
 ```
 
 
@@ -168,7 +150,21 @@ tmp <- clusterEvalQ(cl, library(dclone))
 ## Bayes Lasso
 
 ```{r bayesianLASSO_stent, cache = TRUE}
-model_bayesLASSO <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta","g", "d", "tauDelta"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 1000, n.iter = 10000)
+data_jags_stent <- with(mydata, {
+        list(Nstudies = length(unique(studyid)),
+        num.continuous = 1,
+        num.discrete = 7,
+        num.count = 1,
+        Ncovariate = 9,
+        X = X,
+        Np = dim(X)[1],
+        studyid = studyid,
+        treat = treat + 1,
+        y = y
+        )})
+lambda.min <- cv.bayesLasso(mydata, model.type = "binary")
+
+model_bayesLASSO <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta","g", "d", "tauDelta"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 100, n.iter = 100)
 summary(model_bayesLASSO)
 ```
 
@@ -176,6 +172,7 @@ summary(model_bayesLASSO)
 ## SSVS
 
 ```{r SSVS_stent, cache = TRUE}
+data_jags_stent$lambda <- NULL
 model_SSVS <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta","g", "d", "tauDelta", "IndA", "IndA2"), model = "IPD-MA-SSVS-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 1000, n.iter = 10000)
 summary(model_SSVS)
 ```
