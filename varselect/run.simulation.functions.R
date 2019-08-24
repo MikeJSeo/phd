@@ -81,8 +81,6 @@ run.simulation <- function(){
     #}
     #q_start <- as.numeric(VarCorr(PQL)[1,1])
     #start <- as.numeric(c(PQL$coef$fixed[-which(names(PQL$coef$fixed) == "treat")], PQL$coef$fixed[which(names(PQL$coef$fixed) == "treat")], t(PQL$coef$random$studyid)))
-    q_start <- NULL
-    start <- NULL
     
     colnames(data) <- gsub(":", "_", colnames(data)) #glmmLasso doesn't allow colon sign
     

@@ -56,7 +56,11 @@ cv.bayesLasso <- function(data, model.type, lambda = seq(20,1,by = -1)){
       pred_y <- rnorm(pred_mean, sqrt(1/tau_mean))
       cv.measure[j,i] <- calc_mse(y_test, pred_y)
     } else if(model.type == "binary"){
-      print("not yet implemented")
+      pred_mean <- alpha_mean[data_test$studyid] + delta_mean[data_test$studyid] + as.matrix(X_test) %*% beta_mean + as.matrix(X_test) %*% g_mean * data_test$treat
+      py <- expit(pred_mean)
+      pred_y <- rbinom(dim(data_train)[1], 1, py)
+      tab <- table(y_test, pred_y)
+      cv.measure[j,i] <- 1-sum(diag(tab))/sum(tab)
     }
   }
   }

@@ -17,8 +17,8 @@ library(readstata13)
 library(lme4) #for fitting glmm
 library(glmnet) #for lasso
 library(glmmLasso) #for glmmLasso
-library(dclone) # for parllel processing of JAGS code
-
+library(rjags) # for bayesian models
+library(dclone) # for parallel processing of JAGS code
 ```
 
 
@@ -33,7 +33,7 @@ stent <- read.dta13("1_year_stent_data_21092018.dta")
 setwd("~/GitHub/phd/varselect")
 #setwd("C:/Users/mike/Desktop/Github/phd/varselect")
 
-source("helpful.functions.R")
+#source("helpful.functions.R")
 ```
 
 
@@ -101,7 +101,7 @@ summary(m3)
 
 ```{r naive_step_stent, cache = TRUE, results = "hide"}
 m1 <- glm(y ~ (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, family = binomial(link = "logit"), data = mydata)
-s1 <- step(m1, scope=list(upper = ~ (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, lower = ~ treat))
+s1 <- step(m1, scope=list(lower = ~ treat))
 ```
 
 ```{r}
@@ -116,11 +116,75 @@ data_glmnet <- model.matrix(y~ -1 + (age + gender + diabetes + stable_cad + mult
 data_glmnet <- cbind(y = mydata$y, data_glmnet = data_glmnet)
 
 p.fac.stent <- c(rep(1, 9), 0, rep(1,9)) #No shrinkage for treatment effect
-cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.stent, family = "binomial", type.measure = "class")
+cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.stent, family = "binomial", type.measure = "class", standardize = FALSE)
 coef(cvfit, s = "lambda.min")
 ```
 
 ## glmmLasso
+
+```{r}
+#function to cross validate glmmLasso
+cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lambda = NULL, family = NULL){
+  
+  N <-dim(data_glmmLasso)[1]
+  ind<-sample(N,N)
+  
+  kk <- 5 # 5 fold cross-validation
+  nk <- floor(N/kk)
+  
+  Devianz_ma<-matrix(Inf,ncol=kk,nrow=length(lambda))
+  
+  if(length(lambda) >1 ){
+  
+  for(j in 1:length(lambda)){
+    print(paste("Iteration ", j,sep=""))
+    
+    for (i in 1:kk)
+    {
+      if (i < kk){
+        indi <- ind[(i-1)*nk+(1:nk)]
+      } else{
+        indi <- ind[((i-1)*nk+1):N]
+      }
+    
+      data_glmmLasso_train <- data_glmmLasso[-indi,]
+      data_glmmLasso_test <- data_glmmLasso[indi,]
+
+      glm2 <- try(glmmLasso(form.fixed, rnd = form.rnd,  
+                            family = family, 
+                            lambda = lambda[j],
+                            data = data_glmmLasso_train,
+                            control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA),
+                                           center = FALSE, standardize = FALSE))
+                  ,silent=TRUE) 
+      if(class(glm2)!="try-error")
+      {  
+        y.hat<-predict(glm2,data_glmmLasso_test)    
+        Devianz_ma[j,i]<-sum(family$dev.resids(data_glmmLasso_test$y,y.hat,wt=rep(1,length(y.hat))))
+      }
+    }
+  }
+  Devianz_vec<-apply(Devianz_ma,1,sum)
+  opt2<-which.min(Devianz_vec)
+  #print(Devianz_vec)
+  #print(paste0("optimal lambda value is ", lambda[opt2]))
+  lambda.min <- lambda[opt2]
+  } else{
+    lambda.min <- lambda  
+  }
+  
+  glm2 <- try(glmmLasso(form.fixed, rnd = form.rnd,  
+                        family = family, 
+                        lambda = lambda.min,
+                        data = data_glmmLasso,
+                        control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA),
+                                       center = FALSE, standardize = FALSE))
+              ,silent=TRUE)
+  list(glm2 = glm2, lambda.min = lambda.min)
+}
+
+```
+
 
 ```{r glmmLasso_stent, cache = TRUE}
 data_glmmLasso <- model.matrix(y~ -1 + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3  + num_stent)*treat, data = mydata)
@@ -140,14 +204,90 @@ cv.fit[[2]]
 ```
 
 
+## Bayes Lasso
+
+```{r}
+#function to cross validate bayesian LASSO
+cv.bayesLasso <- function(data, model.type, X, lambda = seq(20,1,by = -1)){
+  
+  N <- dim(data)[1]
+  ind <- sample(N, N)
+  
+  kk <- 5 # 5 fold cross validation
+  nk <- floor(N/kk)
+  
+  cv.measure <- matrix(Inf, ncol = kk, nrow = length(lambda))
+  
+  for(j in 1:length(lambda)){
+  
+  print(paste("Iteration ", j,sep=""))
+  
+  for (i in 1:kk)
+  {
+    if (i < kk){
+      indi <- ind[(i-1)*nk+(1:nk)]
+    } else{
+      indi <- ind[((i-1)*nk+1):N]
+    }
+    
+    data_train <- data[-indi,]
+    data_test <- data[indi,]
+    
+    data_jags <- with(data_train,{
+      list(Nstudies = length(unique(studyid)),
+           X = data_train[,colnames(X)],
+           Np = dim(data_train)[1],
+           Ncovariate = dim(X)[2],
+           studyid = studyid,
+           treat = treat + 1,
+           y = y,
+           lambda = lambda[j])
+    })
+    
+    model <- jags.model("IPD-MA-bayesLASSO.txt", data = data_jags, n.adapt = 100)
+    samples <- coda.samples(model, variable.names = c("alpha", "beta", "delta", "g", "tau"), 
+                            n.chains = 2, n.update = 200, n.iter = 2000)
+    
+    a <- summary(samples)
+    
+    alpha_mean <-  a$statistics[grep("alpha\\[", rownames(a$statistics)), "Mean"]
+    beta_mean <- a$statistics[grep("beta\\[", rownames(a$statistics)), "Mean"]
+    delta_mean <- a$statistics[grep("delta\\[", rownames(a$statistics)), "Mean"]
+    delta_mean <- delta_mean[delta_mean != 0]
+    g_mean <-  a$statistics[grep("g\\[", rownames(a$statistics)), "Mean"]
+    tau_mean <- a$statistics["tau", "Mean"]
+    
+    X_test <- data_test[,paste0("X",1:((dim(data_train)[2] - 3)/2))]
+    y_test <- data_test$y
+    
+    if(model.type == "gaussian"){
+      pred_mean <- alpha_mean[data_test$studyid] + delta_mean[data_test$studyid] + as.matrix(X_test) %*% beta_mean + as.matrix(X_test) %*% g_mean * data_test$treat
+      pred_y <- rnorm(pred_mean, sqrt(1/tau_mean))
+      cv.measure[j,i] <- calc_mse(y_test, pred_y)
+    } else if(model.type == "binary"){
+      pred_mean <- alpha_mean[data_test$studyid] + delta_mean[data_test$studyid] + as.matrix(X_test) %*% beta_mean + as.matrix(X_test) %*% g_mean * data_test$treat
+      py <- expit(pred_mean)
+      pred_y <- rbinom(dim(data_train)[1], 1, py)
+      tab <- table(y_test, pred_y)
+      cv.measure[j,i] <- 1-sum(diag(tab))/sum(tab)
+    }
+  }
+  }
+  
+  cv.averaged <- apply(cv.measure,1, mean)
+  print(cv.averaged)
+  lambda.min <- lambda[which.min((cv.averaged))]
+  
+  return(lambda.min)
+}
+```
+
 ```{r}
 # setup for parallel computing
-n.cores <- 3
+n.cores <- 2
 cl <- makePSOCKcluster(n.cores)
 tmp <- clusterEvalQ(cl, library(dclone))
 ```
-
-## Bayes Lasso
 
 ```{r bayesianLASSO_stent, cache = TRUE}
 data_jags_stent <- with(mydata, {
@@ -162,9 +302,9 @@ data_jags_stent <- with(mydata, {
         treat = treat + 1,
         y = y
         )})
-lambda.min <- cv.bayesLasso(mydata, model.type = "binary")
+#lambda.min <- cv.bayesLasso(mydata, model.type = "binary", X = X)
 
-model_bayesLASSO <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta","g", "d", "tauDelta"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 100, n.iter = 100)
+model_bayesLASSO <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta","g", "d", "tauDelta"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 100, n.iter = 1000)
 summary(model_bayesLASSO)
 ```
 
