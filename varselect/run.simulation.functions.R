@@ -7,9 +7,11 @@ run.simulation <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
     if(model.type == "gaussian"){
       m1 <- lmer(glmm_null_formula, data = data)
+    } else if(model.type == "binary"){
+      m1 <- glmer(glmm_null_formula, data = data, family = binomial(link = "logit"))
     }
     
     mean_values <- sapply(col_labels_glmm, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
@@ -22,11 +24,13 @@ run.simulation <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
     if(model.type == "gaussian"){
       m1 <- lmer(glmm_full_formula, data = data)
+    } else if(model.type == "binary"){
+      m1 <- glmer(glmm_full_formula, data = data, family = binomial(link = "logit"))
     }
-    
+
     mean_values <- sapply(col_labels_glmm, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
     sd_values <- sapply(col_labels_glmm, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Std. Error"], 0))
     
@@ -37,10 +41,12 @@ run.simulation <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
     
     if(model.type == "gaussian"){
       m1 <- lm(step_full_formula, data = data)  
+    } else if(model.type == "binary"){
+      m1 <- glm(step_full_formula, family = binomial(link = "logit"), data = data)
     }
     s1 <- step(m1, scope=list(lower=~treat))
     
@@ -54,7 +60,7 @@ run.simulation <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
     data$studyid <- NULL
     
     p.fac <- rep(1, length(col_labels)*2 - 1)
@@ -64,7 +70,7 @@ run.simulation <- function(){
     aa <- coef(cvfit, s = "lambda.min")
     
     mean_values <-  sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
-    sd_values <- bootstrap_function_LASSO(data, 100, p.fac)
+    sd_values <- bootstrap_function_LASSO(data, 50, p.fac)
     
     glmnet_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em)
     glmnet_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
@@ -73,7 +79,7 @@ run.simulation <- function(){
   for(i in seq(niter)){
     
     set.seed(i)  
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
     
     #This part is used for setting initial values
     #if(model.type == "gaussian"){
@@ -88,13 +94,15 @@ run.simulation <- function(){
     form.rnd <- list(studyid =~ -1 + treat)
       
     if(model.type == "gaussian") {
-      cv.fit <- cv.glmmLasso(data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(100, 0, by = -5), family = gaussian(link="identity"), q_start = q_start, start = start)
+      cv.fit <- cv.glmmLasso(data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(100, 0, by = -10), family = gaussian(link ="identity"), q_start = q_start, start = start)
+    } else if(model.type == "binary"){
+      cv.fit <- cv.glmmLasso(data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(100, 0, by = -10), family = binomial(link = "logit"), q_start = q_start, start = start)
     }
     aa <- summary(cv.fit[[1]])$coefficients
     aa <- rownames(aa[aa[,"Estimate"] != 0,])
     
     mean_values <- sapply(col_labels_glmmLasso, function(x) ifelse(x %in% aa, summary(cv.fit[[1]])$coefficients[x,"Estimate"], 0))
-    sd_values <- bootstrap_function_glmmLasso(data, 100, cv.fit[[2]], model.type, form.fixed, form.rnd, q_start, start)
+    sd_values <- bootstrap_function_glmmLasso(data, 50, cv.fit[[2]], model.type, form.fixed, form.rnd, q_start, start)
     
     glmmLasso_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em)
     glmmLasso_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
@@ -137,15 +145,10 @@ run.simulation2 <- function(){
   SSVS_store_mse <- bayesLASSO_store_mse <- matrix(NA, nrow = niter, ncol = 3)
   SSVS_store_sd <- bayesLASSO_store_sd <- matrix(NA, nrow = niter, ncol = 3)
   
-  ## first find optimal lambda value for on simulation (due to time constraint can't do it for all simulations)
-  set.seed(1)
-  data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2)
-  lambda.min <- cv.bayesLasso(data, model.type = model.type)
-  
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
     
     data_jags <- with(data,{
       list(Nstudies = length(unique(studyid)),
@@ -154,10 +157,14 @@ run.simulation2 <- function(){
            Ncovariate = (dim(data)[2] - 3)/2,
            studyid = studyid,
            treat = treat + 1,
-           y = y,
-           lambda = lambda.min)
+           y = y)
     })
-    samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-bayesLASSO.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 2000)
+    
+    if(model.type == "gaussian") {
+      samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-bayesLASSO.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 2000)
+    } else if(model.type == "binary"){
+      samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 2000)
+    }
     
     a <- summary(samples)
     
@@ -177,7 +184,7 @@ run.simulation2 <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
     data_jags <- with(data,{
       list(Nstudies = length(unique(studyid)),
            X = data[,paste0("X",1:Ncovariate)],
@@ -188,7 +195,11 @@ run.simulation2 <- function(){
            y = y)
     })
     
-    samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-SSVS.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 2000)
+    if(model.type == "gaussian") {
+      samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-SSVS.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 2000)
+    } else if(model.type == "binary"){
+      samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-SSVS-binomial.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 2000)
+    }
     
     a <- summary(samples)
     

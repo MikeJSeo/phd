@@ -25,6 +25,8 @@ for (i in 1:Nstudies){
 	alpha[i] ~ dnorm(0, 0.001)	
 }
 
+lambda ~ gamma(0.001, 0.001)
+
 for(i in 1:Ncovariate){
 	beta[i] ~ ddexp(0, lambda)
 	#Ind1[i] <- step(abs(beta[i]) - 0.05)

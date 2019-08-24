@@ -1,80 +1,4 @@
 
-## code to do cross validation for bayes LASSO to get optimal lamba value
-
-cv.bayesLasso <- function(data, model.type, lambda = seq(20,1,by = -1)){
-  
-  N <- dim(data)[1]
-  ind <- sample(N, N)
-  
-  kk <- 5 # 5 fold cross validation
-  nk <- floor(N/kk)
-  
-  cv.measure <- matrix(Inf, ncol = kk, nrow = length(lambda))
-  
-  for(j in 1:length(lambda)){
-    
-  print(paste("Iteration ", j,sep=""))
-  
-  for (i in 1:kk)
-  {
-    if (i < kk){
-      indi <- ind[(i-1)*nk+(1:nk)]
-    } else{
-      indi <- ind[((i-1)*nk+1):N]
-    }
-    
-    data_train <- data[-indi,]
-    data_test <- data[indi,]
-    
-    data_jags <- with(data_train,{
-      list(Nstudies = length(unique(studyid)),
-           X = data_train[,paste0("X",1:Ncovariate)],
-           Np = length(X1),
-           Ncovariate = (dim(data_train)[2] - 3)/2,
-           studyid = studyid,
-           treat = treat + 1,
-           y = y,
-           lambda = lambda[j])
-    })
-    
-    samples <- jags.parfit(cl = cl, data = data_jags, params = c("alpha", "beta", "delta", "g", "tau"), model = "IPD-MA-bayesLASSO.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 2000)
-   
-    a <- summary(samples)
-    
-    alpha_mean <-  a$statistics[grep("alpha\\[", rownames(a$statistics)), "Mean"]
-    beta_mean <- a$statistics[grep("beta\\[", rownames(a$statistics)), "Mean"]
-    delta_mean <- a$statistics[grep("delta\\[", rownames(a$statistics)), "Mean"]
-    delta_mean <- delta_mean[delta_mean != 0]
-    g_mean <-  a$statistics[grep("g\\[", rownames(a$statistics)), "Mean"]
-    tau_mean <- a$statistics["tau", "Mean"]
-    
-    X_test <- data_test[,paste0("X",1:((dim(data_train)[2] - 3)/2))]
-    y_test <- data_test$y
-    
-    if(model.type == "gaussian"){
-      pred_mean <- alpha_mean[data_test$studyid] + delta_mean[data_test$studyid] + as.matrix(X_test) %*% beta_mean + as.matrix(X_test) %*% g_mean * data_test$treat
-      pred_y <- rnorm(pred_mean, sqrt(1/tau_mean))
-      cv.measure[j,i] <- calc_mse(y_test, pred_y)
-    } else if(model.type == "binary"){
-      pred_mean <- alpha_mean[data_test$studyid] + delta_mean[data_test$studyid] + as.matrix(X_test) %*% beta_mean + as.matrix(X_test) %*% g_mean * data_test$treat
-      py <- expit(pred_mean)
-      pred_y <- rbinom(dim(data_train)[1], 1, py)
-      tab <- table(y_test, pred_y)
-      cv.measure[j,i] <- 1-sum(diag(tab))/sum(tab)
-    }
-  }
-  }
-  
-  cv.averaged <- apply(cv.measure,1, mean)
-  print(cv.averaged)
-  lambda.min <- lambda[which.min((cv.averaged))]
-  
-  return(lambda.min)
-}
-
-
-
-
 ## code to do cross validation for glmmLasso to get optimal lambda value
 
 cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lambda = NULL, family = NULL, q_start = NULL, start = NULL){
@@ -140,7 +64,7 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
 ## Code to generate simulation
   
 generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.cov = NULL, pf = NULL, em = NULL,
-                                b1 = NULL, b2 = NULL, sampleSize = c(50, 100), model = "continuous"){
+                                b1 = NULL, b2 = NULL, sampleSize = c(50, 100), model.type = "gaussian"){
   
   #treatment effect
   d <- 1
@@ -180,9 +104,9 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   sigmay <- 0.5
   py <- expit(meany)
 
-  if(model == "continuous"){
+  if(model.type == "gaussian"){
     y <- rnorm(length(studyid), meany, sigmay)
-  } else if (model == "binomial"){
+  } else if (model.type == "binary"){
     y <- rbinom(length(studyid), 1, py)
   }
 
@@ -190,7 +114,6 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   data <- as.data.frame(data)
   data$studyid <- as.factor(data$studyid)
   return(data)
-  
 }
 
 
