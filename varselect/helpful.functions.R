@@ -73,7 +73,7 @@ cv.bayesLasso <- function(data, model.type, lambda = seq(20,1,by = -1)){
 
 ## code to do cross validation for glmmLasso to get optimal lambda value
 
-cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lambda = NULL, family = NULL, q_start, start){
+cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lambda = NULL, family = NULL, q_start = NULL, start = NULL){
   
   N <-dim(data_glmmLasso)[1]
   ind<-sample(N,N)
