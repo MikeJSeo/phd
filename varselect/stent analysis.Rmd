@@ -134,8 +134,6 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
   
   Devianz_ma<-matrix(Inf,ncol=kk,nrow=length(lambda))
   
-  if(length(lambda) >1 ){
-  
   for(j in 1:length(lambda)){
     print(paste("Iteration ", j,sep=""))
     
@@ -169,9 +167,6 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
   #print(Devianz_vec)
   #print(paste0("optimal lambda value is ", lambda[opt2]))
   lambda.min <- lambda[opt2]
-  } else{
-    lambda.min <- lambda  
-  }
   
   glm2 <- try(glmmLasso(form.fixed, rnd = form.rnd,  
                         family = family, 
@@ -182,7 +177,6 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
               ,silent=TRUE)
   list(glm2 = glm2, lambda.min = lambda.min)
 }
-
 ```
 
 
@@ -197,7 +191,7 @@ data_glmmLasso$studyid <- as.factor(data_glmmLasso$studyid)
 form.fixed <- as.formula(y ~ as.factor(studyid) + age +  gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent + age_treat +  gender_treat + diabetes_treat + stable_cad_treat + multivessel_treat + ladtreated_treat + overlap_treat + m_dia_above_3_treat + num_stent_treat + treat)
 form.rnd <- list(studyid =~ -1 + treat)
 
-cv.fit <- cv.glmmLasso(data_glmmLasso, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(100, 0,
+cv.fit <- cv.glmmLasso(data_glmmLasso, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(50, 0,
   by = -5), family = binomial(link = "logit"))
 summary(cv.fit[[1]])
 cv.fit[[2]]
@@ -226,15 +220,15 @@ data_jags_stent <- with(mydata, {
         treat = treat + 1,
         y = y
         )})
-model_bayesLASSO <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta","g", "d", "tauDelta", "lambda"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 100, n.iter = 1000)
+model_bayesLASSO <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta", "g", "d", "sdDelta", "lambda"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 2, n.adapt = 100, n.update = 1000, n.iter = 10000)
 summary(model_bayesLASSO)
 ```
 
 
 ## SSVS
 
-```{r SSVS_stent, cache = TRUE}
+```{r SSVS_stent, cache = TRUE, eval = FALSE}
 data_jags_stent$lambda <- NULL
-model_SSVS <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta","g", "d", "tauDelta", "IndA", "IndA2"), model = "IPD-MA-SSVS-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 1000, n.iter = 10000)
+model_SSVS <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha", "beta", "g", "d", "sdDelta", "Ind", "Ind2", "eta"), model = "IPD-MA-SSVS-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 100, n.iter = 1000)
 summary(model_SSVS)
 ```

@@ -27,6 +27,7 @@ for (i in 1:Nstudies){
 }
 
 tt <- lambda*tau #lambda value has to be specified
+lambda ~ dgamma(2,0.1) # this diffuse prior has mean 20, variance 200 
 
 for(i in 1:Ncovariate){
 	beta[i] ~ ddexp(0, tt)

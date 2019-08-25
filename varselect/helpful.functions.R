@@ -11,8 +11,6 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
   
   Devianz_ma<-matrix(Inf,ncol=kk,nrow=length(lambda))
   
-  if(length(lambda) >1 ){
-  
   for(j in 1:length(lambda)){
     print(paste("Iteration ", j,sep=""))
     
@@ -46,9 +44,6 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
   #print(Devianz_vec)
   #print(paste0("optimal lambda value is ", lambda[opt2]))
   lambda.min <- lambda[opt2]
-  } else{
-    lambda.min <- lambda  
-  }
   
   glm2 <- try(glmmLasso(form.fixed, rnd = form.rnd,  
                         family = family, 
