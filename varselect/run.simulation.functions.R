@@ -87,6 +87,8 @@ run.simulation <- function(){
     #}
     #q_start <- as.numeric(VarCorr(PQL)[1,1])
     #start <- as.numeric(c(PQL$coef$fixed[-which(names(PQL$coef$fixed) == "treat")], PQL$coef$fixed[which(names(PQL$coef$fixed) == "treat")], t(PQL$coef$random$studyid)))
+    q_start <- NULL
+    start <- NULL
     
     colnames(data) <- gsub(":", "_", colnames(data)) #glmmLasso doesn't allow colon sign
     
@@ -94,9 +96,9 @@ run.simulation <- function(){
     form.rnd <- list(studyid =~ -1 + treat)
       
     if(model.type == "gaussian") {
-      cv.fit <- cv.glmmLasso(data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(100, 0, by = -10), family = gaussian(link ="identity"), q_start = q_start, start = start)
+      cv.fit <- cv.glmmLasso(data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(50, 0, by = -5), family = gaussian(link ="identity"), q_start = q_start, start = start)
     } else if(model.type == "binary"){
-      cv.fit <- cv.glmmLasso(data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(100, 0, by = -10), family = binomial(link = "logit"), q_start = q_start, start = start)
+      cv.fit <- cv.glmmLasso(data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(50, 0, by = -5), family = binomial(link = "logit"), q_start = q_start, start = start)
     }
     aa <- summary(cv.fit[[1]])$coefficients
     aa <- rownames(aa[aa[,"Estimate"] != 0,])

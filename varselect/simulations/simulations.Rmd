@@ -20,12 +20,12 @@ library(glmnet) #for lasso
 library(glmmLasso) #for glmmLasso
 library(dclone) # for parallel processing of JAGS code
 library(knitr) # for tables
-library(nlme) # for initial values for glmmLasso
+#library(nlme) # for initial values for glmmLasso
 ```
 
 ```{r}
 # Setting directory
-#etwd("C:/Users/ms19g661/Desktop")
+#setwd("C:/Users/ms19g661/Desktop")
 setwd("C:/Users/mike/Desktop")
 
 #load/save everything else from/to github
@@ -76,13 +76,13 @@ model.type = "gaussian"
 simulation1.a <- run.simulation()
 ```
 
-```{r simulation1b, cache = TRUE, result = "hide", include = FALSE}
+```{r simulation1b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
 simulation1.b <- run.simulation2()
 ```
 
 ```{r}
 simulation1.a
-simulation1.b
+#simulation1.b
 ```
 
 ## Simulation 2
@@ -112,17 +112,17 @@ glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5
 model.type = "gaussian"
 ```
 
-```{r simulation2a, cache = TRUE, result = "hide", include = FALSE}
+```{r simulation2a, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
 simulation2.a <- run.simulation()
 ```
 
-```{r simulation2b, cache = TRUE, result = "hide", include = FALSE}
+```{r simulation2b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
 simulation2.b <- run.simulation2()
 ```
 
 ```{r}
-simulation2.a
-simulation2.b
+#simulation2.a
+#simulation2.b
 ```
 
 ## Simulation 3
@@ -152,7 +152,7 @@ glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5
 model.type = "gaussian"
 ```
 
-```{r simulation3a, cache = TRUE, result = "hide", include = FALSE}
+```{r simulation3a, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
 simulation3.a <- run.simulation()
 ```
 
@@ -161,7 +161,7 @@ simulation3.b <- run.simulation()
 ```
 
 ```{r, eval = FALSE}
-simulation3.a
+#simulation3.a
 #simulation3.b
 ```
 
