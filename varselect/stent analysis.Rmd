@@ -66,6 +66,8 @@ X[ii] <- lapply(X[ii], as.numeric)
 
 data_stent <- cbind(X, y = data0$a_death_5yr_yn, treat = ifelse(data0$rand == "BMS", 0, 1), studyid = data0$trial_name)
 mydata <- na.omit(data_stent)
+
+# scale all variables
 mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")] <- apply(mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")], 2, scale)
 
 X <- mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")]
@@ -198,21 +200,14 @@ cv.fit[[2]]
 ```
 
 
-## Bayes Lasso
-
 ```{r}
 # setup for parallel computing
 n.cores <- 2
 cl <- makePSOCKcluster(n.cores)
 tmp <- clusterEvalQ(cl, library(dclone))
-```
 
-```{r bayesianLASSO_stent, cache = TRUE}
 data_jags_stent <- with(mydata, {
         list(Nstudies = length(unique(studyid)),
-        num.continuous = 1,
-        num.discrete = 7,
-        num.count = 1,
         Ncovariate = 9,
         X = X,
         Np = dim(X)[1],
@@ -220,22 +215,33 @@ data_jags_stent <- with(mydata, {
         treat = treat + 1,
         y = y
         )})
-model_bayesLASSO <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta", "g", "d", "sdDelta", "lambda"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 1000, n.iter = 1000)
+```
+
+
+## Bayes Lasso
+
+```{r bayesianLASSO_stent, cache = TRUE}
+model_bayesLASSO <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta", "g", "d", "sdDelta", "lambda"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 2, n.adapt = 100, n.update = 1000, n.iter = 10000)
 summary(model_bayesLASSO)
 ```
 
-```{r}
+```{r, eval = FALSE}
 plot(model_bayesLASSO[,"sdDelta"])
 plot(model_bayesLASSO[,"d[2]"])
 plot(model_bayesLASSO[,"lambda"])
 ```
 
+```{r}
+gelman.diag(model_bayesLASSO, multivariate = FALSE)
+```
+
 ## SSVS
 
 ```{r SSVS_stent, cache = TRUE, eval = FALSE}
-data_jags_stent$lambda <- NULL
 model_SSVS <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha", "beta", "g", "d", "sdDelta", "Ind", "Ind2", "eta"), model = "IPD-MA-SSVS-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 1000, n.iter = 10000)
 summary(model_SSVS)
 ```
 
-
+```{r}
+gelman.diag(model_SSVS, multivariate = FALSE)
+```
