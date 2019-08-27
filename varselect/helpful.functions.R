@@ -164,7 +164,7 @@ bootstrap_function_LASSO  <- function(model_data, ndraws, p.fac) {
     bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
     bootstrap_data <- model_data[bootstrap_ids,]
     
-    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[1]), penalty.factor = p.fac, family = model.type, standardize = FALSE)  
+    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = model.type, standardize = FALSE)  
     aa <- coef(bootstrap_model, s = "lambda.min")
     coeff_mtx[ii,]   <- sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))  
   }
@@ -174,7 +174,7 @@ bootstrap_function_LASSO  <- function(model_data, ndraws, p.fac) {
 }
 
 
-bootstrap_function_glmmLasso  <- function(model_data, ndraws, lambda = NULL, model.type = NULL, form.fixed, form.rnd) {
+bootstrap_function_glmmLasso  <- function(model_data, ndraws, lambda = NULL, model.type = NULL, form.fixed, form.rnd, q_start = NULL, start = NULL) {
   
   if(is.null(model.type)) stop("model type missing")
 
@@ -184,13 +184,6 @@ bootstrap_function_glmmLasso  <- function(model_data, ndraws, lambda = NULL, mod
 
     bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
     bootstrap_data <- model_data[bootstrap_ids,]
-    
-    #This part is used for setting initial values
-    if(model.type == "gaussian"){
-      PQL <-glmmPQL(pql_formula, random = ~ -1 + treat|studyid, family=gaussian, data=bootstrap_data)
-    }
-    q_start <- as.numeric(VarCorr(PQL)[1,1])
-    start <- as.numeric(c(PQL$coef$fixed[-which(names(PQL$coef$fixed) == "treat")], PQL$coef$fixed[which(names(PQL$coef$fixed) == "treat")], t(PQL$coef$random$studyid)))
     
     if(model.type == "gaussian"){
       bootstrap_model <- cv.glmmLasso(bootstrap_data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = lambda, family = gaussian(link="identity"), q_start = q_start, start = start)
