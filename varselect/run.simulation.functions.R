@@ -180,7 +180,7 @@ run.simulation2 <- function(){
     treat_sd <- a$statistics["d[2]", "SD"]
     names(treat_sd) <- "treat"
     sd_values <- c(g_sd, treat_sd)
-    bayesLASSO_store_sd[i,] <- find_performance2(sd_values, correct_em)
+    bayesLASSO_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
   }
 
   for(i in seq(niter)){
@@ -217,7 +217,7 @@ run.simulation2 <- function(){
     treat_sd <- treat_sd["d[2]"]
     names(treat_sd) <- "treat"
     sd_values <- c(g_sd, treat_sd)
-    SSVS_store_sd[i,] <- find_performance2(sd_values, correct_em)
+    SSVS_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
   }
   
   bayesLASSO_store_mse_mean <- apply(bayesLASSO_store_mse, 2, mean)
