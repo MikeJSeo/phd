@@ -9,6 +9,7 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
   kk <- 5 # 5 fold cross-validation
   nk <- floor(N/kk)
   
+  if(length(lambda) > 1){
   Devianz_ma<-matrix(Inf,ncol=kk,nrow=length(lambda))
   
   for(j in 1:length(lambda)){
@@ -44,6 +45,10 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
   #print(Devianz_vec)
   #print(paste0("optimal lambda value is ", lambda[opt2]))
   lambda.min <- lambda[opt2]
+  } else{
+    lambda.min <- lambda
+  }
+
   
   glm2 <- try(glmmLasso(form.fixed, rnd = form.rnd,  
                         family = family, 
@@ -169,7 +174,7 @@ bootstrap_function_LASSO  <- function(model_data, ndraws, p.fac) {
 }
 
 
-bootstrap_function_glmmLasso  <- function(model_data, ndraws, lambda.min = NULL, model.type = NULL, form.fixed, form.rnd, q_start, start) {
+bootstrap_function_glmmLasso  <- function(model_data, ndraws, lambda = NULL, model.type = NULL, form.fixed, form.rnd) {
   
   if(is.null(model.type)) stop("model type missing")
 
@@ -180,8 +185,15 @@ bootstrap_function_glmmLasso  <- function(model_data, ndraws, lambda.min = NULL,
     bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
     bootstrap_data <- model_data[bootstrap_ids,]
     
+    #This part is used for setting initial values
     if(model.type == "gaussian"){
-      bootstrap_model <- cv.glmmLasso(bootstrap_data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = lambda.min, family = gaussian(link="identity"), q_start = q_start, start = start)
+      PQL <-glmmPQL(pql_formula, random = ~ -1 + treat|studyid, family=gaussian, data=bootstrap_data)
+    }
+    q_start <- as.numeric(VarCorr(PQL)[1,1])
+    start <- as.numeric(c(PQL$coef$fixed[-which(names(PQL$coef$fixed) == "treat")], PQL$coef$fixed[which(names(PQL$coef$fixed) == "treat")], t(PQL$coef$random$studyid)))
+    
+    if(model.type == "gaussian"){
+      bootstrap_model <- cv.glmmLasso(bootstrap_data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = lambda, family = gaussian(link="identity"), q_start = q_start, start = start)
     }
     aa <- summary(bootstrap_model[[1]])$coefficients
     aa <- rownames(aa[aa[,"Estimate"] != 0,])
