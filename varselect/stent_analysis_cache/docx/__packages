@@ -9,3 +9,5 @@ coda
 dclone
 knitr
 rjags
+MASS
+nlme

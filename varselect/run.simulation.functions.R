@@ -84,6 +84,8 @@ run.simulation <- function(){
     #This part is used for setting initial values
     if(model.type == "gaussian"){
       PQL <-glmmPQL(pql_formula, random = ~ -1 + treat|studyid, family=gaussian, data=data)
+    } else if(model.type == "binary"){
+      PQL <-glmmPQL(pql_formula, random = ~ -1 + treat|studyid, family=binomial, data=data)
     }
     q_start <- as.numeric(VarCorr(PQL)[1,1])
     start <- as.numeric(c(PQL$coef$fixed[-which(names(PQL$coef$fixed) == "treat")], PQL$coef$fixed[which(names(PQL$coef$fixed) == "treat")], t(PQL$coef$random$studyid)))

@@ -19,6 +19,9 @@ library(glmnet) #for lasso
 library(glmmLasso) #for glmmLasso
 library(rjags) # for bayesian models
 library(dclone) # for parallel processing of JAGS code
+
+library(MASS) # Used for data simulation
+library(nlme) # for initial values for glmmLasso
 ```
 
 
@@ -118,15 +121,39 @@ data_glmnet <- model.matrix(y~ -1 + (age + gender + diabetes + stable_cad + mult
 data_glmnet <- cbind(y = mydata$y, data_glmnet = data_glmnet)
 
 p.fac.stent <- c(rep(1, 9), 0, rep(1,9)) #No shrinkage for treatment effect
-cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.stent, family = "binomial", type.measure = "class", standardize = FALSE)
+cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.stent, family = "binomial", type.measure = "deviance", standardize = FALSE)
 coef(cvfit, s = "lambda.min")
 ```
+
+```{r glmnet_stent_bootstrap, cache = TRUE}
+#bootstrapping LASSO function
+bootstrap_function_LASSO  <- function(model_data, ndraws, p.fac) {
+  
+  coeff_mtx <- matrix(0, nrow = ndraws, ncol = length(colnames(model_data)))
+  colnames(coeff_mtx) <- c("intercept", colnames(model_data)[-1])
+  
+  for (ii in 1:ndraws) {
+
+    bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
+    bootstrap_data <- model_data[bootstrap_ids,]
+    
+    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = "binomial", type.measure = "deviance", standardize = FALSE)  
+    aa <- coef(bootstrap_model, s = "lambda.min")
+    coeff_mtx[ii,] <- aa[,1]
+  }
+  
+  se <- apply(coeff_mtx, 2, sd, na.rm = TRUE)
+  return(se)
+}
+bootstrap_function_LASSO(data_glmnet, 50, p.fac.stent)
+```
+
 
 ## glmmLasso
 
 ```{r}
 #function to cross validate glmmLasso
-cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lambda = NULL, family = NULL){
+cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lambda = NULL, family = NULL, q_start = NULL, start = NULL){
   
   N <-dim(data_glmmLasso)[1]
   ind<-sample(N,N)
@@ -155,7 +182,8 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
                             lambda = lambda[j],
                             data = data_glmmLasso_train,
                             control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA),
-                                           center = FALSE, standardize = FALSE))
+                                           center = FALSE, standardize = FALSE,
+                                           q_start = q_start, start = start))
                   ,silent=TRUE) 
       if(class(glm2)!="try-error")
       {  
@@ -175,7 +203,8 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
                         lambda = lambda.min,
                         data = data_glmmLasso,
                         control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA),
-                                       center = FALSE, standardize = FALSE))
+                                       center = FALSE, standardize = FALSE,
+                                       q_start = q_start, start = start))
               ,silent=TRUE)
   list(glm2 = glm2, lambda.min = lambda.min)
 }
@@ -193,8 +222,13 @@ data_glmmLasso$studyid <- as.factor(data_glmmLasso$studyid)
 form.fixed <- as.formula(y ~ as.factor(studyid) + age +  gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent + age_treat +  gender_treat + diabetes_treat + stable_cad_treat + multivessel_treat + ladtreated_treat + overlap_treat + m_dia_above_3_treat + num_stent_treat + treat)
 form.rnd <- list(studyid =~ -1 + treat)
 
+pql_formula <- as.formula("y ~ studyid +  (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat")
+PQL <-glmmPQL(pql_formula, random = ~ -1 + treat|studyid, family=binomial, data=mydata)
+q_start <- as.numeric(VarCorr(PQL)[1,1])
+start <- as.numeric(c(PQL$coef$fixed[-which(names(PQL$coef$fixed) == "treat")], PQL$coef$fixed[which(names(PQL$coef$fixed) == "treat")], t(PQL$coef$random$studyid)))
+
 cv.fit <- cv.glmmLasso(data_glmmLasso, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(50, 0,
-  by = -5), family = binomial(link = "logit"))
+  by = -5), family = binomial(link = "logit"), q_start = q_start, start = start)
 summary(cv.fit[[1]])
 cv.fit[[2]]
 ```
@@ -237,7 +271,7 @@ gelman.diag(model_bayesLASSO, multivariate = FALSE)
 
 ## SSVS
 
-```{r SSVS_stent, cache = TRUE, eval = FALSE}
+```{r SSVS_stent, cache = TRUE}
 model_SSVS <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha", "beta", "g", "d", "sdDelta", "Ind", "Ind2", "eta"), model = "IPD-MA-SSVS-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 1000, n.iter = 10000)
 summary(model_SSVS)
 ```
