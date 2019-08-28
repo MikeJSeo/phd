@@ -35,8 +35,6 @@ stent <- read.dta13("1_year_stent_data_21092018.dta")
 #load/save everything else from/to github
 setwd("~/GitHub/phd/varselect")
 #setwd("C:/Users/mike/Desktop/Github/phd/varselect")
-
-#source("helpful.functions.R")
 ```
 
 
@@ -80,6 +78,10 @@ X <- mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtrea
 col_labels_stent <- c("age", "gender", "diabetes", "stable_cad", "multivessel", "ladtreated", "overlap", "m_dia_above_3", "num_stent")
 col_labels_stent_all <- c("(Intercept)", col_labels_stent, paste0(col_labels_stent, ":treat"), "treat", paste0("as.factor(studyid)", 1:length(unique(mydata$studyid))))
 col_labels_stent_glmm <- c("(Intercept)", col_labels_stent, paste0(col_labels_stent, "_treat"), "treat", paste0("as.factor(studyid)", 1:length(unique(mydata$studyid))))
+
+expit <- function(x){
+  exp(x)/(1+exp(x))
+}
 ```
 
 ## glmm_null
@@ -94,6 +96,25 @@ summary(m1)
 ```{r glmm_full_stent, cache = TRUE}
 m2 <- glmer(y ~ studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat + (-1 + treat|studyid), data = mydata, family = binomial)
 summary(m2)
+```
+
+```{r}
+# ladtreated = 1 (1.0691515), num_stents = 5 (3.1705418)
+# gender: 
+contr <- c(rep(0, 8), rep(0, 9), 1, rep(0, 5), 1.0691515, 0, 0, 3.1705418)
+v1 <- vcov(m2)
+se1 <- c(sqrt(contr %*% v1 %*% contr))
+mean1 <- c(contr %*% t(coef(m2)$studyid[1,]))
+
+exp(mean1 + qnorm(c(.025,0.5,.975))* as.vector(se1[[1]]))
+
+# ladtreated = 0 (-0.9352369), num_stents = 1 (-0.6300019)
+contr <- c(rep(0, 8), rep(0, 9), 1, rep(0, 5), -0.9352369, 0, 0, -0.6300019)
+v2 <- vcov(m2)
+se2 <- c(sqrt(contr %*% v2 %*% contr))
+mean2 <- c(contr %*% t(coef(m2)$studyid[1,]))
+
+exp(mean2 + qnorm(c(.025,0.5,.975))* as.vector(se2[[1]]))
 ```
 
 
@@ -227,7 +248,7 @@ PQL <-glmmPQL(pql_formula, random = ~ -1 + treat|studyid, family=binomial, data=
 q_start <- as.numeric(VarCorr(PQL)[1,1])
 start <- as.numeric(c(PQL$coef$fixed[-which(names(PQL$coef$fixed) == "treat")], PQL$coef$fixed[which(names(PQL$coef$fixed) == "treat")], t(PQL$coef$random$studyid)))
 
-cv.fit <- cv.glmmLasso(data_glmmLasso, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(50, 0,
+cv.fit <- cv.glmmLasso(data_glmmLasso, form.fixed = form.fixed, form.rnd = form.rnd, lambda = seq(200, 0,
   by = -5), family = binomial(link = "logit"), q_start = q_start, start = start)
 summary(cv.fit[[1]])
 cv.fit[[2]]
@@ -274,6 +295,41 @@ gelman.diag(model_bayesLASSO, multivariate = FALSE)
 ```{r SSVS_stent, cache = TRUE}
 model_SSVS <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha", "beta", "g", "d", "sdDelta", "Ind", "Ind2", "eta"), model = "IPD-MA-SSVS-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 1000, n.iter = 10000)
 summary(model_SSVS)
+```
+
+```{r}
+# ladtreated = 1 (1.0691515), num_stents = 5 (3.1705418)
+mat1 <- do.call(rbind, model_SSVS[,c("d[2]", "g[6]", "g[9]")])
+sum1 <- mat1 %*% c(1, 1.0691515, 3.1705418)
+
+mean1 <- mean(sum1)
+se1 <- sd(sum1)
+exp(mean1 + qnorm(c(.025,0.5,.975))* se1)
+
+# # ladtreated = 0 (-0.9352369), num_stents = 1 (-0.6300019)
+sum2 <- mat1 %*% c(1, -0.9352369, -0.6300019)
+
+mean2 <- mean(sum2)
+se2 <- sd(sum2)
+exp(mean2 + qnorm(c(.025,0.5,.975))* se2)
+
+# 
+# # ladtreated = 1 (1.0691515), num_stents = 5 (3.1705418)
+# contr <- c(rep(0, 8), rep(0, 9), 1, rep(0, 5), 1.0691515, 0, 0, 3.1705418)
+# v1 <- vcov(m2)
+# se1 <- c(sqrt(contr %*% v1 %*% contr))
+# mean1 <- c(contr %*% t(coef(m2)$studyid[1,]))
+# 
+# exp(mean1 + qnorm(c(.025,0.5,.975))* as.vector(se1[[1]]))
+# 
+# # ladtreated = 0 (-0.9352369), num_stents = 1 (-0.6300019)
+# contr <- c(rep(0, 8), rep(0, 9), 1, rep(0, 5), -0.9352369, 0, 0, -0.6300019)
+# v2 <- vcov(m2)
+# se2 <- c(sqrt(contr %*% v2 %*% contr))
+# mean2 <- c(contr %*% t(coef(m2)$studyid[1,]))
+# 
+# exp(mean2 + qnorm(c(.025,0.5,.975))* as.vector(se2[[1]]))
+
 ```
 
 ```{r}
