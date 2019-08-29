@@ -117,17 +117,11 @@ mean2 <- c(contr %*% t(coef(m2)$studyid[1,]))
 exp(mean2 + qnorm(c(.025,0.5,.975))* as.vector(se2[[1]]))
 ```
 
-
-```{r simple_model_stent, cache = TRUE, results = "hide", eval = FALSE}
-m3 <- glm(y ~ (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, family = binomial(link = "logit"), data = mydata)
-summary(m3)
-```
-
 ## naive step
 
 ```{r naive_step_stent, cache = TRUE, results = "hide"}
-m1 <- glm(y ~ (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, family = binomial(link = "logit"), data = mydata)
-s1 <- step(m1, scope=list(lower = ~ treat))
+m3 <- glm(y ~ studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, family = binomial(link = "logit"), data = mydata)
+s1 <- step(m3, scope=list(lower = ~ studyid + treat), direction = "both")
 ```
 
 ```{r}
@@ -138,10 +132,10 @@ summary(s1)
 ## naive lasso
 
 ```{r glmnet_stent, cache = TRUE}
-data_glmnet <- model.matrix(y~ -1 + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, data = mydata)
+data_glmnet <- model.matrix(y~ studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, data = mydata)
 data_glmnet <- cbind(y = mydata$y, data_glmnet = data_glmnet)
 
-p.fac.stent <- c(rep(1, 9), 0, rep(1,9)) #No shrinkage for treatment effect
+p.fac.stent <- c(rep(0, 8), rep(1, 9), 0, rep(1,9)) #No shrinkage for treatment effect and baseline effect
 cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.stent, family = "binomial", type.measure = "deviance", standardize = FALSE)
 coef(cvfit, s = "lambda.min")
 ```
@@ -243,7 +237,7 @@ data_glmmLasso$studyid <- as.factor(data_glmmLasso$studyid)
 form.fixed <- as.formula(y ~ as.factor(studyid) + age +  gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent + age_treat +  gender_treat + diabetes_treat + stable_cad_treat + multivessel_treat + ladtreated_treat + overlap_treat + m_dia_above_3_treat + num_stent_treat + treat)
 form.rnd <- list(studyid =~ -1 + treat)
 
-pql_formula <- as.formula("y ~ studyid +  (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat")
+pql_formula <- as.formula("y ~ studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat")
 PQL <-glmmPQL(pql_formula, random = ~ -1 + treat|studyid, family=binomial, data=mydata)
 q_start <- as.numeric(VarCorr(PQL)[1,1])
 start <- as.numeric(c(PQL$coef$fixed[-which(names(PQL$coef$fixed) == "treat")], PQL$coef$fixed[which(names(PQL$coef$fixed) == "treat")], t(PQL$coef$random$studyid)))
