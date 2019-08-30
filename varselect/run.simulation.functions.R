@@ -61,16 +61,18 @@ run.simulation <- function(){
     
     set.seed(i)
     data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
-    data$studyid <- NULL
     
-    p.fac <- rep(1, length(col_labels)*2 - 1)
-    p.fac[length(col_labels)] <- 0
+    data_glmnet <- model.matrix(step_full_formula, data = data)
+    data_glmnet <- data_glmnet[,-1] 
+    data_glmnet <- cbind(y = data$y, data_glmnet = data_glmnet)  
     
-    cvfit <- cv.glmnet(as.matrix(data[,-1]), as.matrix(data[,1]), penalty.factor = p.fac, family = model.type, standardize = FALSE)  
+    p.fac <- c(rep(0, Nstudies - 1), rep(1, Ncovariate), 0, rep(1, Ncovariate))
+    
+    cvfit <- cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac, family = model.type, standardize = FALSE, type.measure = "deviance")  
     aa <- coef(cvfit, s = "lambda.min")
     
     mean_values <-  sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
-    sd_values <- bootstrap_function_LASSO(data, 50, p.fac)
+    sd_values <- bootstrap_function_LASSO(data_glmnet, 50, p.fac)
     
     glmnet_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em)
     glmnet_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
@@ -83,9 +85,9 @@ run.simulation <- function(){
     
     #This part is used for setting initial values
     if(model.type == "gaussian"){
-      PQL <-glmmPQL(pql_formula, random = ~ -1 + treat|studyid, family=gaussian, data=data)
+      PQL <-glmmPQL(step_full_formula, random = ~ -1 + treat|studyid, family=gaussian, data=data)
     } else if(model.type == "binary"){
-      PQL <-glmmPQL(pql_formula, random = ~ -1 + treat|studyid, family=binomial, data=data)
+      PQL <-glmmPQL(step_full_formula, random = ~ -1 + treat|studyid, family=binomial, data=data)
     }
     q_start <- as.numeric(VarCorr(PQL)[1,1])
     start <- as.numeric(c(PQL$coef$fixed[-which(names(PQL$coef$fixed) == "treat")], PQL$coef$fixed[which(names(PQL$coef$fixed) == "treat")], t(PQL$coef$random$studyid)))

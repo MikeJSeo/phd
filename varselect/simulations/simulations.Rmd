@@ -24,10 +24,6 @@ library(nlme) # for initial values for glmmLasso
 ```
 
 ```{r}
-# Setting directory
-#setwd("C:/Users/ms19g661/Desktop")
-setwd("C:/Users/mike/Desktop")
-
 #load/save everything else from/to github
 #setwd("~/GitHub/phd/varselect")
 setwd("C:/Users/mike/Desktop/Github/phd/varselect")
@@ -64,10 +60,9 @@ b1 <- c(0.1, 0.5, 0.1)
 b2 <- 0.1
 
 glmm_null_formula <- as.formula("y ~ studyid + treat + (-1 + treat|studyid)")
-glmm_full_formula <- as.formula("y ~ studyid + treat + (X1 + X2 + X3 + X4 + X5)*treat + (-1 + treat|studyid)")
-step_full_formula <-  as.formula("y ~ (X1 + X2 + X3 + X4 + X5)*treat")
+glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5)*treat + (-1 + treat|studyid)")
+step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5)*treat")
 glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + treat")
-pql_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5)*treat")
 
 model.type = "gaussian"
 ```
@@ -105,10 +100,9 @@ b1 <- c(0.1, 0.5, 0.1)
 b2 <- 0.5
 
 glmm_null_formula <- as.formula("y ~ studyid + treat + (-1 + treat|studyid)")
-glmm_full_formula <- as.formula("y ~ studyid + treat + (X1 + X2 + X3 + X4 + X5)*treat + (-1 + treat|studyid)")
-step_full_formula <-  as.formula("y ~ (X1 + X2 + X3 + X4 + X5)*treat")
+glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5)*treat + (-1 + treat|studyid)")
+step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5)*treat")
 glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + treat")
-pql_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5)*treat")
 
 model.type = "gaussian"
 ```
@@ -146,10 +140,9 @@ b1 <- c(0.1, 0.1, 0.5, 0.1, 0.5)
 b2 <- c(0.1, 0.2)
 
 glmm_null_formula <- as.formula("y ~ studyid + treat + (-1 + treat|studyid)")
-glmm_full_formula <- as.formula("y ~ studyid + treat + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
-step_full_formula <-  as.formula("y ~ (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
+glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
+step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
 glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat")
-pql_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
 
 model.type = "gaussian"
 ```
@@ -187,10 +180,9 @@ b1 <- c(0.1, 0.1, 0.5, 0.1, 0.5)
 b2 <- c(0.5, 1.0)
 
 glmm_null_formula <- as.formula("y ~ studyid + treat + (-1 + treat|studyid)")
-glmm_full_formula <- as.formula("y ~ studyid + treat + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
-step_full_formula <-  as.formula("y ~ (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
+glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
+step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
 glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat")
-pql_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
 
 model.type = "gaussian"
 ```
@@ -230,10 +222,9 @@ b1 <- c(rep(0.1, 4), rep(0.5, 2), rep(0.1, 2), rep(0.5, 2))
 b2 <- c(0.1, 0.1, 0.2, 0.2)
 
 glmm_null_formula <- as.formula("y ~ studyid + treat + (-1 + treat|studyid)")
-glmm_full_formula <- as.formula("y ~ studyid + treat + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20)*treat + (-1 + treat|studyid)")
-step_full_formula <-  as.formula("y ~ (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20)*treat")
+glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20)*treat + (-1 + treat|studyid)")
+step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20)*treat")
 glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + X11_treat + X12_treat + X13_treat + X14_treat + X15_treat + X16_treat + X17_treat + X18_treat + X19_treat + X20_treat + treat")
-pql_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20)*treat")
 
 model.type = "gaussian"
 ```

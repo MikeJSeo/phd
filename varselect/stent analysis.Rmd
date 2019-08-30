@@ -133,9 +133,10 @@ summary(s1)
 
 ```{r glmnet_stent, cache = TRUE}
 data_glmnet <- model.matrix(y~ studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, data = mydata)
+data_glmnet <- data_glmnet[,-1]
 data_glmnet <- cbind(y = mydata$y, data_glmnet = data_glmnet)
 
-p.fac.stent <- c(rep(0, 8), rep(1, 9), 0, rep(1,9)) #No shrinkage for treatment effect and baseline effect
+p.fac.stent <- c(rep(0, 7), rep(1, 9), 0, rep(1,9)) #No shrinkage for treatment effect and baseline effect
 cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.stent, family = "binomial", type.measure = "deviance", standardize = FALSE)
 coef(cvfit, s = "lambda.min")
 ```
