@@ -155,7 +155,7 @@ simulation3.b <- run.simulation2()
 
 ```{r, eval = FALSE}
 simulation3.a
-simulation3.b
+#simulation3.b
 ```
 
 ## Simulation 4
