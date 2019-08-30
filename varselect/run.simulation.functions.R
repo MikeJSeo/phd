@@ -14,8 +14,8 @@ run.simulation <- function(){
       m1 <- glmer(glmm_null_formula, data = data, family = binomial(link = "logit"))
     }
     
-    mean_values <- sapply(col_labels_glmm, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
-    sd_values <- sapply(col_labels_glmm, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Std. Error"], 0))
+    mean_values <- sapply(col_labels, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
+    sd_values <- sapply(col_labels, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Std. Error"], 0))
     
     glmm_null_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em)
     glmm_null_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
@@ -31,8 +31,8 @@ run.simulation <- function(){
       m1 <- glmer(glmm_full_formula, data = data, family = binomial(link = "logit"))
     }
 
-    mean_values <- sapply(col_labels_glmm, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
-    sd_values <- sapply(col_labels_glmm, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Std. Error"], 0))
+    mean_values <- sapply(col_labels, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
+    sd_values <- sapply(col_labels, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Std. Error"], 0))
     
     glmm_full_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em)
     glmm_full_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)

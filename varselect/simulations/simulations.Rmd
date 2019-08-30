@@ -37,7 +37,7 @@ cl <- makePSOCKcluster(n.cores)
 tmp <- clusterEvalQ(cl, library(dclone))
 
 # number of simulation to run
-niter <- 1000
+niter <- 100
 ```
 
 ## Simulation 1
@@ -84,7 +84,6 @@ simulation1.b
 
 ```{r, simulation2}
 ### parameters to change ###
-col_labels_glmm <- c(paste0("treat:", "X", 1:5), "treat")
 col_labels <- c(paste0("X", 1:5, ":treat"), "treat")
 col_labels_glmmLasso <- c(paste0("X", 1:5, "_treat"), "treat")
 
@@ -124,7 +123,6 @@ simulation2.b
 
 ```{r, simulation3}
 ### parameters to change ###
-col_labels_glmm <- c(paste0("treat:", "X", 1:10), "treat")
 col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
 col_labels_glmmLasso <- c(paste0("X", 1:10, "_treat"), "treat")
 
@@ -151,11 +149,11 @@ model.type = "gaussian"
 simulation3.a <- run.simulation()
 ```
 
-```{r simulation3b, cache = TRUE, result = "hide", include = FALSE}
+```{r simulation3b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
 simulation3.b <- run.simulation2()
 ```
 
-```{r}
+```{r, eval = FALSE}
 simulation3.a
 simulation3.b
 ```
@@ -164,7 +162,6 @@ simulation3.b
 
 ```{r, simulation4}
 ### parameters to change ###
-col_labels_glmm <- c(paste0("treat:", "X", 1:10), "treat")
 col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
 col_labels_glmmLasso <- c(paste0("X", 1:10, "_treat"), "treat")
 
@@ -195,45 +192,8 @@ simulation4.a <- run.simulation()
 simulation4.b <- run.simulation2()
 ```
 
-```{r}
-#simulation4.a
-#simulation4.b
-```
-
-## Simulation 5
-
-## Simulation 11
-
-```{r, simulation11}
-### parameters to change ###
-col_labels_glmm <- c(paste0("treat:", "X", 1:20), "treat")
-col_labels <- c(paste0("X", 1:20, ":treat"), "treat")
-col_labels_glmmLasso <- c(paste0("X", 1:20, "_treat"), "treat")
-
-correct_em <- c(rep(0, 6), rep(1, 4), rep(0, 10))
-correct_em_values <- c(rep(0, 6), c(0.1, 0.1, 0.2, 0.2), rep(0, 10))
-  
-Nstudies <- 10
-Ncovariate <- 20
-continuous.cov <- c(1,2,3,4,7,8,11,12,13,14,15,16)
-pf <- c(1,2,3,4,5,6,7,8,9,10)
-em <- c(7,8,9,10)
-b1 <- c(rep(0.1, 4), rep(0.5, 2), rep(0.1, 2), rep(0.5, 2))
-b2 <- c(0.1, 0.1, 0.2, 0.2)
-
-glmm_null_formula <- as.formula("y ~ studyid + treat + (-1 + treat|studyid)")
-glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20)*treat + (-1 + treat|studyid)")
-step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20)*treat")
-glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + X16 + X17 + X18 + X19 + X20 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + X11_treat + X12_treat + X13_treat + X14_treat + X15_treat + X16_treat + X17_treat + X18_treat + X19_treat + X20_treat + treat")
-
-model.type = "gaussian"
-```
-
-```{r simulation11a, cache = TRUE, result = "hide", include = FALSE}
-simulation11.a <- run.simulation()
-```
-
-```{r simulation11b, cache = TRUE, result = "hide", include = FALSE}
-simulation11.b <- run.simulation2()
+```{r, eval = FALSE}
+simulation4.a
+simulation4.b
 ```
 

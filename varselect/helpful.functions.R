@@ -68,7 +68,7 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   
   #treatment effect
   d <- 1
-  sd <- 0.2
+  sd <- 0.5
   delta <- rnorm(Nstudies, d, sd)
   
   studyid <- NULL
