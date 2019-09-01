@@ -153,7 +153,7 @@ simulation3.a <- run.simulation()
 simulation3.b <- run.simulation2()
 ```
 
-```{r, eval = FALSE}
+```{r}
 simulation3.a
 simulation3.b
 ```
