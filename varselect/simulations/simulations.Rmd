@@ -37,7 +37,7 @@ cl <- makePSOCKcluster(n.cores)
 tmp <- clusterEvalQ(cl, library(dclone))
 
 # number of simulation to run
-niter <- 100
+niter <- 1000
 ```
 
 ## Simulation 1
@@ -149,13 +149,13 @@ model.type = "gaussian"
 simulation3.a <- run.simulation()
 ```
 
-```{r simulation3b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
+```{r simulation3b, cache = TRUE, result = "hide", include = FALSE}
 simulation3.b <- run.simulation2()
 ```
 
 ```{r, eval = FALSE}
 simulation3.a
-#simulation3.b
+simulation3.b
 ```
 
 ## Simulation 4
@@ -184,15 +184,15 @@ glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5
 model.type = "gaussian"
 ```
 
-```{r simulation4a, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
+```{r simulation4a, cache = TRUE, result = "hide", include = FALSE}
 simulation4.a <- run.simulation()
 ```
 
-```{r simulation4b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
+```{r simulation4b, cache = TRUE, result = "hide", include = FALSE}
 simulation4.b <- run.simulation2()
 ```
 
-```{r, eval = FALSE}
+```{r}
 simulation4.a
 simulation4.b
 ```
