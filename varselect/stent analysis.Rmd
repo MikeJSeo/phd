@@ -40,6 +40,7 @@ setwd("~/GitHub/phd/varselect")
 
 ```{r Stent_data_processing}
 # "age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "gpi", "new_p2y12", "num_stent"
+# gender=1 is men, gender=0 is female
 # dropped gpi, new_p2y12
 # dropped study 19: too big
 study_inclusion <- c(3, 4, 5, 12, 13, 14, 15, 17)
@@ -52,9 +53,6 @@ for(i in 1:dim(data0)[1]){
 data0$trial_name <- as.factor(data0$trial_name)
 
 X <-  data0[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")]
-
-#standardized numerical variables
-X["age"] <- lapply(X["age"], scale)
 
 #recode categorical variables
 ii <- sapply(X, is.factor)
@@ -91,6 +89,16 @@ m1 <- glmer(y ~ studyid + treat + (-1 + treat|studyid), data = mydata, family = 
 summary(m1)
 ```
 
+```{r}
+coef(m1)$studyid[1,]
+contr <- c(rep(0, 8), 1)
+v0 <- vcov(m1)
+se0 <- c(sqrt(contr %*% v0 %*% contr))
+mean0 <- c(contr %*% t(coef(m1)$studyid[1,]))
+
+exp(mean0 + qnorm(c(.025,0.5,.975))* as.vector(se0[[1]]))
+```
+
 ## glmm_full
 
 ```{r glmm_full_stent, cache = TRUE}
@@ -99,17 +107,16 @@ summary(m2)
 ```
 
 ```{r}
-# ladtreated = 1 (1.0691515), num_stents = 5 (3.1705418)
-# gender: 
-contr <- c(rep(0, 8), rep(0, 9), 1, rep(0, 5), 1.0691515, 0, 0, 3.1705418)
+# 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5 (3.1705418)
+contr <- c(rep(0, 8), rep(0, 9), 1, 0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418)
 v1 <- vcov(m2)
 se1 <- c(sqrt(contr %*% v1 %*% contr))
 mean1 <- c(contr %*% t(coef(m2)$studyid[1,]))
 
 exp(mean1 + qnorm(c(.025,0.5,.975))* as.vector(se1[[1]]))
 
-# ladtreated = 0 (-0.9352369), num_stents = 1 (-0.6300019)
-contr <- c(rep(0, 8), rep(0, 9), 1, rep(0, 5), -0.9352369, 0, 0, -0.6300019)
+# 50 years: -1.522422, male(gender =1): 0.606939, diabetes=0: -0.5525687, stable_cad=1: 1.3948883, multivessel=0: -0.9276506, ladtreated=0: -0.9352369, overlap=0: -0.425849, m_dia_above_3=1: 0.1858944, num_stents = 1: -0.6300019
+contr <- c(rep(0, 8), rep(0, 9), 1, -1.522422, 0.606939, -0.5525687, 1.3948883, -0.9276506, -0.9352369, -0.425849, 0.1858944, -0.6300019)
 v2 <- vcov(m2)
 se2 <- c(sqrt(contr %*% v2 %*% contr))
 mean2 <- c(contr %*% t(coef(m2)$studyid[1,]))
@@ -126,6 +133,24 @@ s1 <- step(m3, scope=list(lower = ~ studyid + treat), direction = "both")
 
 ```{r}
 summary(s1)
+```
+
+```{r}
+# ladtreated = 1: 1.0691515, num_stents = 5: 3.1705418
+contr <- c(rep(0, 8), rep(0, 7), 1, 1.0691515, 3.1705418)
+v1 <- vcov(s1)
+se1 <- c(sqrt(contr %*% v1 %*% contr))
+mean1 <- c(contr %*% coef(s1))
+
+exp(mean1 + qnorm(c(.025,0.5,.975))* as.vector(se1[[1]]))
+
+# ladtreated=0: -0.9352369, num_stents = 1: -0.6300019
+contr <- c(rep(0, 8), rep(0, 7), 1, -0.9352369, -0.6300019)
+v2 <- vcov(s1)
+se2 <- c(sqrt(contr %*% v2 %*% contr))
+mean2 <-  c(contr %*% coef(s1))
+
+exp(mean2 + qnorm(c(.025,0.5,.975))* as.vector(se2[[1]]))
 ```
 
 
@@ -162,6 +187,19 @@ bootstrap_function_LASSO  <- function(model_data, ndraws, p.fac) {
   return(se)
 }
 bootstrap_function_LASSO(data_glmnet, 50, p.fac.stent)
+```
+
+
+```{r}
+# aa[aa[,1] != 0,1]
+# maybe needs fixing 
+# ladtreated = 1: 1.0691515, num_stents = 5 (3.1705418)
+mean1 <- c(1,  1.0691515, 3.1705418) %*% c(-0.096078318, -0.033438580, -0.004171182)
+exp(mean1)
+
+# ladtreated=0: -0.9352369, num_stents = 1: -0.6300019
+mean2 <- c(1,  -0.9352369, -0.6300019) %*% c(-0.096078318, -0.033438580, -0.004171182)
+exp(mean2)
 ```
 
 
@@ -249,6 +287,20 @@ summary(cv.fit[[1]])
 cv.fit[[2]]
 ```
 
+```{r}
+# 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5 (3.1705418)
+contr <- c(0, rep(0, 9), c(0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418), rep(0, 7), 1)
+
+mean1 <- contr %*% cv.fit$glm2$coefficients
+exp(mean1)
+
+# 50 years: -1.522422, male(gender =1): 0.606939, diabetes=0: -0.5525687, stable_cad=1: 1.3948883, multivessel=0: -0.9276506, ladtreated=0: -0.9352369, overlap=0: -0.425849, m_dia_above_3=1: 0.1858944, num_stents = 1: -0.6300019
+contr <- c(0, rep(0, 9), c(-1.522422, 0.606939, -0.5525687, 1.3948883, -0.9276506, -0.9352369, -0.425849, 0.1858944, -0.6300019), rep(0, 7), 1)
+
+mean2 <- contr %*% cv.fit$glm2$coefficients
+exp(mean2)
+```
+
 
 ```{r}
 # setup for parallel computing
@@ -285,6 +337,24 @@ plot(model_bayesLASSO[,"lambda"])
 gelman.diag(model_bayesLASSO, multivariate = FALSE)
 ```
 
+```{r}
+# 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5: 3.1705418
+mat1 <- do.call(rbind, model_bayesLASSO[,c("d[2]", "g[1]", "g[2]", "g[3]", "g[4]", "g[5]", "g[6]", "g[7]", "g[8]", "g[9]")])
+sum1 <- mat1 %*% c(1, 0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418)
+
+mean1 <- mean(sum1)
+se1 <- sd(sum1)
+exp(mean1 + qnorm(c(.025,0.5,.975))* se1)
+
+# 50 years: -1.522422, male(gender =1): 0.606939, diabetes=0: -0.5525687, stable_cad=1: 1.3948883, multivessel=0: -0.9276506, ladtreated=0: -0.9352369, overlap=0: -0.425849, m_dia_above_3=1: 0.1858944, num_stents = 1: -0.6300019
+sum2 <- mat1 %*% c(1, -1.522422, 0.606939, -0.5525687, 1.3948883, -0.9276506, -0.9352369, -0.425849, 0.1858944, -0.6300019)
+
+mean2 <- mean(sum2)
+se2 <- sd(sum2)
+exp(mean2 + qnorm(c(.025,0.5,.975))* se2)
+```
+
+
 ## SSVS
 
 ```{r SSVS_stent, cache = TRUE}
@@ -293,38 +363,20 @@ summary(model_SSVS)
 ```
 
 ```{r}
-# ladtreated = 1 (1.0691515), num_stents = 5 (3.1705418)
-mat1 <- do.call(rbind, model_SSVS[,c("d[2]", "g[6]", "g[9]")])
-sum1 <- mat1 %*% c(1, 1.0691515, 3.1705418)
+# 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5: 3.1705418
+mat1 <- do.call(rbind, model_SSVS[,c("d[2]", "g[1]", "g[2]", "g[3]", "g[4]", "g[5]", "g[6]", "g[7]", "g[8]", "g[9]")])
+sum1 <- mat1 %*% c(1, 0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418)
 
 mean1 <- mean(sum1)
 se1 <- sd(sum1)
 exp(mean1 + qnorm(c(.025,0.5,.975))* se1)
 
-# # ladtreated = 0 (-0.9352369), num_stents = 1 (-0.6300019)
-sum2 <- mat1 %*% c(1, -0.9352369, -0.6300019)
+# 50 years: -1.522422, male(gender =1): 0.606939, diabetes=0: -0.5525687, stable_cad=1: 1.3948883, multivessel=0: -0.9276506, ladtreated=0: -0.9352369, overlap=0: -0.425849, m_dia_above_3=1: 0.1858944, num_stents = 1: -0.6300019
+sum2 <- mat1 %*% c(1, -1.522422, 0.606939, -0.5525687, 1.3948883, -0.9276506, -0.9352369, -0.425849, 0.1858944, -0.6300019)
 
 mean2 <- mean(sum2)
 se2 <- sd(sum2)
 exp(mean2 + qnorm(c(.025,0.5,.975))* se2)
-
-# 
-# # ladtreated = 1 (1.0691515), num_stents = 5 (3.1705418)
-# contr <- c(rep(0, 8), rep(0, 9), 1, rep(0, 5), 1.0691515, 0, 0, 3.1705418)
-# v1 <- vcov(m2)
-# se1 <- c(sqrt(contr %*% v1 %*% contr))
-# mean1 <- c(contr %*% t(coef(m2)$studyid[1,]))
-# 
-# exp(mean1 + qnorm(c(.025,0.5,.975))* as.vector(se1[[1]]))
-# 
-# # ladtreated = 0 (-0.9352369), num_stents = 1 (-0.6300019)
-# contr <- c(rep(0, 8), rep(0, 9), 1, rep(0, 5), -0.9352369, 0, 0, -0.6300019)
-# v2 <- vcov(m2)
-# se2 <- c(sqrt(contr %*% v2 %*% contr))
-# mean2 <- c(contr %*% t(coef(m2)$studyid[1,]))
-# 
-# exp(mean2 + qnorm(c(.025,0.5,.975))* as.vector(se2[[1]]))
-
 ```
 
 ```{r}
