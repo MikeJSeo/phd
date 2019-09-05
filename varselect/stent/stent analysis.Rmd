@@ -33,8 +33,8 @@ setwd("C:/Users/ms19g661/Desktop")
 stent <- read.dta13("1_year_stent_data_21092018.dta")
 
 #load/save everything else from/to github
-setwd("~/GitHub/phd/varselect/stent")
-#setwd("C:/Users/mike/Desktop/Github/phd/varselect/stent")
+setwd("~/GitHub/phd/varselect")
+#setwd("C:/Users/mike/Desktop/Github/phd/varselect")
 ```
 
 
