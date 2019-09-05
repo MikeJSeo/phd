@@ -67,7 +67,7 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
                                 b1 = NULL, b2 = NULL, sampleSize = c(50, 100), model.type = "gaussian"){
   
   #treatment effect
-  d <- 1
+  d <- 0.3
   sd <- 0.2
   delta <- rnorm(Nstudies, d, sd)
   
