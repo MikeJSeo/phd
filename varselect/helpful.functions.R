@@ -64,12 +64,12 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
 ## Code to generate simulation
   
 generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.cov = NULL, pf = NULL, em = NULL,
-                                b1 = NULL, b2 = NULL, sampleSize = c(50, 100), model.type = "gaussian"){
+                                b1 = NULL, b2 = NULL, sampleSize = c(20, 30), model.type = "gaussian"){
   
   #treatment effect
-  d <- 0.3
+  d <- 1
   sd <- 0.2
-  delta <- rnorm(Nstudies, d, sd)
+  delta <- rep(d, Nstudies)#rnorm(Nstudies, d, sd)
   
   studyid <- NULL
   for(i in 1:Nstudies){
@@ -77,7 +77,11 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   }
   
   #study baseline effect
-  alpha <- runif(Nstudies, -1, 1)
+  if(model.type == "gaussian"){
+    alpha <- runif(Nstudies, -1, 1)
+  } else{
+    alpha <- runif(Nstudies, -4, -3)
+  }
   treat <- rbinom(length(studyid), 1, 0.5)
   
   #generating data
