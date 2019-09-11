@@ -80,7 +80,7 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   if(model.type == "gaussian"){
     alpha <- runif(Nstudies, -1, 1)
   } else{
-    alpha <- runif(Nstudies, -3, -2)
+    alpha <- runif(Nstudies, -2, -1) #around 26% event rate
   }
   treat <- rbinom(length(studyid), 1, 0.5)
   
