@@ -64,12 +64,12 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
 ## Code to generate simulation
   
 generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.cov = NULL, pf = NULL, em = NULL,
-                                b1 = NULL, b2 = NULL, sampleSize = c(20, 30), model.type = "gaussian"){
+                                b1 = NULL, b2 = NULL, sampleSize = c(50, 100), model.type = "gaussian"){
   
   #treatment effect
   d <- 1
   sd <- 0.2
-  delta <- rep(d, Nstudies)#rnorm(Nstudies, d, sd)
+  delta <- rnorm(Nstudies, d, sd)
   
   studyid <- NULL
   for(i in 1:Nstudies){
@@ -80,7 +80,7 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   if(model.type == "gaussian"){
     alpha <- runif(Nstudies, -1, 1)
   } else{
-    alpha <- runif(Nstudies, -4, -3)
+    alpha <- runif(Nstudies, -3, -2)
   }
   treat <- rbinom(length(studyid), 1, 0.5)
   
@@ -159,7 +159,7 @@ find_performance2 <- function(val, correct_em, continuous.cov){
 }
 
 
-bootstrap_function_LASSO  <- function(model_data, ndraws, p.fac) {
+bootstrap_function_LASSO  <- function(model_data, ndraws, p.fac, family) {
   
   coeff_mtx <- matrix(0, nrow = ndraws, ncol = length(col_labels))
   
@@ -168,7 +168,7 @@ bootstrap_function_LASSO  <- function(model_data, ndraws, p.fac) {
     bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
     bootstrap_data <- model_data[bootstrap_ids,]
     
-    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = model.type, standardize = FALSE)  
+    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = family, standardize = FALSE)  
     aa <- coef(bootstrap_model, s = "lambda.min")
     coeff_mtx[ii,]   <- sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))  
   }

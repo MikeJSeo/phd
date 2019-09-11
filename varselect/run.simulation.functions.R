@@ -68,11 +68,12 @@ run.simulation <- function(){
     
     p.fac <- c(rep(0, Nstudies - 1), rep(1, Ncovariate), 0, rep(1, Ncovariate))
     
-    cvfit <- cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac, family = model.type, standardize = FALSE, type.measure = "deviance")  
+    family <- ifelse(model.type == "gaussian", "gaussian", "binomial")
+    cvfit <- cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac, family = family, standardize = FALSE, type.measure = "deviance")  
     aa <- coef(cvfit, s = "lambda.min")
     
     mean_values <-  sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
-    sd_values <- bootstrap_function_LASSO(data_glmnet, 50, p.fac)
+    sd_values <- bootstrap_function_LASSO(data_glmnet, 50, p.fac, family)
     
     glmnet_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em)
     glmnet_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
