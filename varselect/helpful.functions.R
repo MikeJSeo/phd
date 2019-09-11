@@ -64,7 +64,7 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
 ## Code to generate simulation
   
 generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.cov = NULL, pf = NULL, em = NULL,
-                                b1 = NULL, b2 = NULL, sampleSize = c(50, 100), model.type = "gaussian"){
+                                b1 = NULL, b2 = NULL, sampleSize = c(100, 150), model.type = "gaussian"){
   
   #treatment effect
   d <- 1
@@ -102,7 +102,6 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   
   # standardize X: binary and continuous variables in same scale
   X <- apply(X, 2, scale)
-  data <- model.matrix(~ -1 +  X*treat)
   
   meany <- alpha[studyid] + delta[studyid] * treat + X[,pf, drop = FALSE] %*% b1 + X[,em, drop = FALSE] %*% b2 * treat
   sigmay <- 0.5
