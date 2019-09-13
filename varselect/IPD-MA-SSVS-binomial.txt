@@ -15,7 +15,7 @@ for(i in 1:Nstudies){
 
 ## prior distribution for heterogeneity of the treatment effect
 tauDelta <- pow(sdDelta, -2)
-sdDelta ~ dunif(0, 5)
+sdDelta ~ dunif(0, 2)
 
 ## prior distribution for treatment effect
 d[1] <- 0
