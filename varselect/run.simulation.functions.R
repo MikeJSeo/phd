@@ -1,24 +1,24 @@
 
 run.simulation <- function(){
   
-  glmmLasso_store_mse <- glmnet_store_mse <- step_store_mse <- glmm_full_store_mse <- glmm_null_store_mse <- matrix(NA, nrow = niter, ncol = 3)
-  glmmLasso_store_sd <- glmnet_store_sd <- step_store_sd <- glmm_full_store_sd <- glmm_null_store_sd <- matrix(NA, nrow = niter, ncol = 3)
+  glmmLasso_store_mse <- glmnet_store_mse <- step_store_mse <- glmm_full_store_mse <- glmm_oracle_store_mse <- matrix(NA, nrow = niter, ncol = 3)
+  glmmLasso_store_sd <- glmnet_store_sd <- step_store_sd <- glmm_full_store_sd <- glmm_oracle_store_sd <- matrix(NA, nrow = niter, ncol = 3)
   
   for(i in seq(niter)){
     
     set.seed(i)
     data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
     if(model.type == "gaussian"){
-      m1 <- lmer(glmm_null_formula, data = data)
+      m1 <- lmer(glmm_oracle_formula, data = data)
     } else if(model.type == "binary"){
-      m1 <- glmer(glmm_null_formula, data = data, family = binomial(link = "logit"))
+      m1 <- glmer(glmm_oracle_formula, data = data, family = binomial(link = "logit"))
     }
     
     mean_values <- sapply(col_labels, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
     sd_values <- sapply(col_labels, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Std. Error"], 0))
     
-    glmm_null_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em)
-    glmm_null_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
+    glmm_oracle_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em)
+    glmm_oracle_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
   }
 
   for(i in seq(niter)){
@@ -114,8 +114,8 @@ run.simulation <- function(){
     #glmmLasso_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
   }
   
-  glmm_null_store_mse_mean <- apply(glmm_null_store_mse, 2, mean)
-  glmm_null_store_sd_mean <- apply(glmm_null_store_sd, 2, mean, na.rm = TRUE)
+  glmm_oracle_store_mse_mean <- apply(glmm_oracle_store_mse, 2, mean)
+  glmm_oracle_store_sd_mean <- apply(glmm_oracle_store_sd, 2, mean, na.rm = TRUE)
   glmm_full_store_mse_mean <- apply(glmm_full_store_mse, 2, mean)
   glmm_full_store_sd_mean <- apply(glmm_full_store_sd, 2, mean, na.rm = TRUE)
   step_store_mse_mean <- apply(step_store_mse, 2, mean)
@@ -127,8 +127,8 @@ run.simulation <- function(){
   
   result_matrix_mse <- matrix(NA, nrow = 5, ncol = 3)
   colnames(result_matrix_mse) <- c("false em mse", "true em mse","treatment mse")
-  rownames(result_matrix_mse) <-  c("glmm null", "glmm full","naive step", "naive lasso", "glmmLasso")
-  result_matrix_mse[1,] <- glmm_null_store_mse_mean
+  rownames(result_matrix_mse) <-  c("glmm oracle", "glmm full","naive step", "naive lasso", "glmmLasso")
+  result_matrix_mse[1,] <- glmm_oracle_store_mse_mean
   result_matrix_mse[2,] <- glmm_full_store_mse_mean
   result_matrix_mse[3,] <- step_store_mse_mean
   result_matrix_mse[4,] <- glmnet_store_mse_mean
@@ -136,8 +136,8 @@ run.simulation <- function(){
   
   result_matrix_sd <- matrix(NA, nrow = 5, ncol = 3)
   colnames(result_matrix_sd) <- c("continuous EM se", "binary EM se","treatment se")
-  rownames(result_matrix_sd) <-  c("glmm null", "glmm full","naive step", "naive lasso", "glmmLasso")
-  result_matrix_sd[1,] <- glmm_null_store_sd_mean
+  rownames(result_matrix_sd) <-  c("glmm oracle", "glmm full","naive step", "naive lasso", "glmmLasso")
+  result_matrix_sd[1,] <- glmm_oracle_store_sd_mean
   result_matrix_sd[2,] <- glmm_full_store_sd_mean
   result_matrix_sd[3,] <- step_store_sd_mean
   result_matrix_sd[4,] <- glmnet_store_sd_mean

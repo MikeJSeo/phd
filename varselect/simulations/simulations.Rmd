@@ -44,25 +44,24 @@ niter <- 1000
 
 ```{r, simulation1}
 ### parameters to change ###
-col_labels_glmm <- c(paste0("treat:", "X", 1:5), "treat")
-col_labels <- c(paste0("X", 1:5, ":treat"), "treat")
-col_labels_glmmLasso <- c(paste0("X", 1:5, "_treat"), "treat")
+col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
+col_labels_glmmLasso <- c(paste0("X", 1:10, "_treat"), "treat")
 
-correct_em <- c(0, 0, 1, 0, 0)
-correct_em_values <- c(0, 0, 0.1, 0, 0)
+correct_em <- c(0, 0, 0, 1, 1, 0, 0, 0, 0, 0)
+correct_em_values <- c(0, 0, 0, 0.3, 0.5, 0, 0, 0, 0, 0)
 
 Nstudies <- 5
-Ncovariate <- 5
-continuous.cov <- c(1, 3, 4)
-pf <- c(1,2,3)
-em <- 3
-b1 <- c(0.1, 0.5, 0.1)
-b2 <- 0.1
+Ncovariate <- 10
+continuous.cov <- c(1, 2, 4, 6, 7, 8)
+pf <- c(1,2,3,4,5)
+em <- c(4,5)
+b1 <- c(0.1, 0.1, 0.5, 0.3, 0.5)
+b2 <- c(0.3, 0.5)
 
-glmm_null_formula <- as.formula("y ~ studyid + treat + (-1 + treat|studyid)")
-glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5)*treat + (-1 + treat|studyid)")
-step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5)*treat")
-glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + treat")
+glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X4 * treat + X5 * treat + treat + (-1 + treat|studyid)")
+glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
+step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
+glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat")
 
 model.type = "gaussian"
 ```
@@ -84,24 +83,24 @@ simulation1.b
 
 ```{r, simulation2}
 ### parameters to change ###
-col_labels <- c(paste0("X", 1:5, ":treat"), "treat")
-col_labels_glmmLasso <- c(paste0("X", 1:5, "_treat"), "treat")
+col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
+col_labels_glmmLasso <- c(paste0("X", 1:10, "_treat"), "treat")
 
-correct_em <- c(0, 0, 1, 0, 0)
-correct_em_values <- c(0, 0, 0.5, 0, 0)
+correct_em <- c(0, 0, 0, 1, 1, 0, 0, 0, 0, 0)
+correct_em_values <- c(0, 0, 0, 0.6, 1.0, 0, 0, 0, 0, 0)
 
 Nstudies <- 5
-Ncovariate <- 5
-continuous.cov <- c(1, 3, 4)
-pf <- c(1,2,3)
-em <- 3
-b1 <- c(0.1, 0.5, 0.1)
-b2 <- 0.5
+Ncovariate <- 10
+continuous.cov <- c(1, 2, 4, 6, 7, 8)
+pf <- c(1,2,3,4,5)
+em <- c(4,5)
+b1 <- c(0.1, 0.1, 0.5, 0.3, 0.5)
+b2 <- c(0.6, 1.0)
 
-glmm_null_formula <- as.formula("y ~ studyid + treat + (-1 + treat|studyid)")
-glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5)*treat + (-1 + treat|studyid)")
-step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5)*treat")
-glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + treat")
+glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X4 * treat + X5 * treat + treat + (-1 + treat|studyid)")
+glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
+step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
+glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat")
 
 model.type = "gaussian"
 ```
@@ -127,22 +126,22 @@ col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
 col_labels_glmmLasso <- c(paste0("X", 1:10, "_treat"), "treat")
 
 correct_em <- c(0, 0, 0, 1, 1, 0, 0, 0, 0, 0)
-correct_em_values <- c(0, 0, 0, 0.1, 0.2, 0, 0, 0, 0, 0)
+correct_em_values <- c(0, 0, 0, 0.3, 0.5, 0, 0, 0, 0, 0)
 
 Nstudies <- 5
 Ncovariate <- 10
 continuous.cov <- c(1, 2, 4, 6, 7, 8)
 pf <- c(1,2,3,4,5)
 em <- c(4,5)
-b1 <- c(0.1, 0.1, 0.5, 0.1, 0.5)
-b2 <- c(0.1, 0.2)
+b1 <- c(0.1, 0.1, 0.5, 0.3, 0.5)
+b2 <- c(0.3, 0.5)
 
-glmm_null_formula <- as.formula("y ~ studyid + treat + (-1 + treat|studyid)")
+glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X4 * treat + X5 * treat + treat + (-1 + treat|studyid)")
 glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
 step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
 glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat")
 
-model.type = "gaussian"
+model.type = "binary"
 ```
 
 ```{r simulation3a, cache = TRUE, result = "hide", include = FALSE}
@@ -158,6 +157,7 @@ simulation3.a
 simulation3.b
 ```
 
+
 ## Simulation 4
 
 ```{r, simulation4}
@@ -166,22 +166,22 @@ col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
 col_labels_glmmLasso <- c(paste0("X", 1:10, "_treat"), "treat")
 
 correct_em <- c(0, 0, 0, 1, 1, 0, 0, 0, 0, 0)
-correct_em_values <- c(0, 0, 0, 0.5, 1.0, 0, 0, 0, 0, 0)
+correct_em_values <- c(0, 0, 0, 0.6, 1.0, 0, 0, 0, 0, 0)
 
 Nstudies <- 5
 Ncovariate <- 10
 continuous.cov <- c(1, 2, 4, 6, 7, 8)
 pf <- c(1,2,3,4,5)
 em <- c(4,5)
-b1 <- c(0.1, 0.1, 0.5, 0.1, 0.5)
-b2 <- c(0.5, 1.0)
+b1 <- c(0.1, 0.1, 0.5, 0.3, 0.5)
+b2 <- c(0.6, 1.0)
 
-glmm_null_formula <- as.formula("y ~ studyid + treat + (-1 + treat|studyid)")
+glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X4 * treat + X5 * treat + treat + (-1 + treat|studyid)")
 glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
 step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
 glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat")
 
-model.type = "gaussian"
+model.type = "binary"
 ```
 
 ```{r simulation4a, cache = TRUE, result = "hide", include = FALSE}
@@ -195,166 +195,4 @@ simulation4.b <- run.simulation2()
 ```{r}
 simulation4.a
 simulation4.b
-```
-
-
-## Simulation 5
-
-```{r, simulation5}
-### parameters to change ###
-col_labels_glmm <- c(paste0("treat:", "X", 1:5), "treat")
-col_labels <- c(paste0("X", 1:5, ":treat"), "treat")
-col_labels_glmmLasso <- c(paste0("X", 1:5, "_treat"), "treat")
-
-correct_em <- c(0, 0, 1, 0, 0)
-correct_em_values <- c(0, 0, 0.1, 0, 0)
-
-Nstudies <- 5
-Ncovariate <- 5
-continuous.cov <- c(1, 3, 4)
-pf <- c(1,2,3)
-em <- 3
-b1 <- c(0.1, 0.5, 0.1)
-b2 <- 0.1
-
-glmm_null_formula <- as.formula("y ~ studyid + treat + (-1 + treat|studyid)")
-glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5)*treat + (-1 + treat|studyid)")
-step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5)*treat")
-glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + treat")
-
-model.type = "binary"
-```
-
-```{r simulation5a, cache = TRUE, result = "hide", include = FALSE}
-simulation5.a <- run.simulation()
-```
-
-```{r simulation5b, cache = TRUE, result = "hide", include = FALSE}
-simulation5.b <- run.simulation2()
-```
-
-```{r}
-simulation5.a
-simulation5.b
-```
-
-
-
-## Simulation 6
-
-```{r, simulation6}
-### parameters to change ###
-col_labels <- c(paste0("X", 1:5, ":treat"), "treat")
-col_labels_glmmLasso <- c(paste0("X", 1:5, "_treat"), "treat")
-
-correct_em <- c(0, 0, 1, 0, 0)
-correct_em_values <- c(0, 0, 0.5, 0, 0)
-
-Nstudies <- 5
-Ncovariate <- 5
-continuous.cov <- c(1, 3, 4)
-pf <- c(1,2,3)
-em <- 3
-b1 <- c(0.1, 0.5, 0.1)
-b2 <- 0.5
-
-glmm_null_formula <- as.formula("y ~ studyid + treat + (-1 + treat|studyid)")
-glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5)*treat + (-1 + treat|studyid)")
-step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5)*treat")
-glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + treat")
-
-model.type = "binary"
-```
-
-```{r simulation6a, cache = TRUE, result = "hide", include = FALSE}
-simulation6.a <- run.simulation()
-```
-
-```{r simulation6b, cache = TRUE, result = "hide", include = FALSE}
-simulation6.b <- run.simulation2()
-```
-
-```{r}
-simulation6.a
-simulation6.b
-```
-
-
-## Simulation 7
-
-```{r, simulation7}
-### parameters to change ###
-col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
-col_labels_glmmLasso <- c(paste0("X", 1:10, "_treat"), "treat")
-
-correct_em <- c(0, 0, 0, 1, 1, 0, 0, 0, 0, 0)
-correct_em_values <- c(0, 0, 0, 0.1, 0.2, 0, 0, 0, 0, 0)
-
-Nstudies <- 5
-Ncovariate <- 10
-continuous.cov <- c(1, 2, 4, 6, 7, 8)
-pf <- c(1,2,3,4,5)
-em <- c(4,5)
-b1 <- c(0.1, 0.1, 0.5, 0.1, 0.5)
-b2 <- c(0.1, 0.2)
-
-glmm_null_formula <- as.formula("y ~ studyid + treat + (-1 + treat|studyid)")
-glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
-step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
-glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat")
-
-model.type = "binary"
-```
-
-```{r simulation7a, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
-simulation7.a <- run.simulation()
-```
-
-```{r simulation7b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
-simulation7.b <- run.simulation2()
-```
-
-```{r}
-#simulation7.a
-#simulation7.b
-```
-
-
-## Simulation 8
-
-```{r, simulation8}
-### parameters to change ###
-col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
-col_labels_glmmLasso <- c(paste0("X", 1:10, "_treat"), "treat")
-
-correct_em <- c(0, 0, 0, 1, 1, 0, 0, 0, 0, 0)
-correct_em_values <- c(0, 0, 0, 0.5, 1.0, 0, 0, 0, 0, 0)
-
-Nstudies <- 5
-Ncovariate <- 10
-continuous.cov <- c(1, 2, 4, 6, 7, 8)
-pf <- c(1,2,3,4,5)
-em <- c(4,5)
-b1 <- c(0.1, 0.1, 0.5, 0.1, 0.5)
-b2 <- c(0.5, 1.0)
-
-glmm_null_formula <- as.formula("y ~ studyid + treat + (-1 + treat|studyid)")
-glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
-step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
-glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat")
-
-model.type = "binary"
-```
-
-```{r simulation8a, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
-simulation8.a <- run.simulation()
-```
-
-```{r simulation8b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
-simulation8.b <- run.simulation2()
-```
-
-```{r}
-#simulation8.a
-#simulation8.b
 ```
