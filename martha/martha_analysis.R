@@ -3,8 +3,8 @@ library("readxl")
 library(netmeta)
 library(meta)
 
-#setwd("C:/Users/ms19g661/Desktop") #change working directory
-setwd("C:/Users/mike/Desktop")
+setwd("C:/Users/ms19g661/Desktop") #change working directory
+#setwd("C:/Users/mike/Desktop")
 
 original <- read_excel("martha.xlsx", sheet = "DATA", col_names = FALSE)
 original <- as.data.frame(original)
@@ -110,7 +110,7 @@ settings.meta(digits = 2, digits.pval = 2)
 #### suicidal ideation
 suicidal <- split_data(original, "SUICIDAL IDEATION/BEHAVIOUR or SELF HARM") #total number of events is 365
 model1 <- do_meta_analysis(suicidal)
-model2 <- do_MH_NMA(suicidal) 
+model2 <- do_MH_NMA(suicidal)
 model3 <- do_MH_NMA(suicidal, method = "Inverse")
 model4 <- do_MH_NMA(suicidal, method = "Inverse", random.effects = TRUE)
 
