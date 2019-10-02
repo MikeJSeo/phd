@@ -1,0 +1,11 @@
+base
+MASS
+Matrix
+lme4
+foreach
+glmnet
+glmmLasso
+coda
+dclone
+knitr
+nlme

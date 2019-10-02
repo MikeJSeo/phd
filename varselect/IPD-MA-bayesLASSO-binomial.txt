@@ -27,6 +27,8 @@ for (i in 1:Nstudies){
 
 #lambda ~ dgamma(0.001, 0.001)
 lambda ~ dgamma(2, 0.1)
+lambda2 ~ dgamma(2, 0.1)
+
 
 for(i in 1:Ncovariate){
 	beta[i] ~ ddexp(0, lambda)
@@ -34,7 +36,7 @@ for(i in 1:Ncovariate){
 }
 
 for(i in 1:Ncovariate){
-	g[i] ~ ddexp(0, lambda)
+	g[i] ~ ddexp(0, lambda2)
 	#Ind2[i] <- step(abs(g[i]) - 0.05)
 }
 }

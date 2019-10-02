@@ -129,13 +129,15 @@ calc_mse <- function(a, b){
   mean((a - b)^2)
 }
 
-find_performance <- function(val, correct_values, correct_em){
+find_performance <- function(val, correct_values, correct_em, data_subset){
   
   val_without_treat <- val[-length(val)]
   val_treat <- val[length(val)]
   c(calc_mse(val_without_treat[correct_em != 1], correct_values[correct_em != 1]),
     calc_mse(val_without_treat[correct_em == 1], correct_values[correct_em == 1]),
-    calc_mse(val_treat, 1))
+    calc_mse(val_treat, 1),
+    mean((data_subset %*% val - data_subset %*% c(correct_values, 1))^2)
+    )
 }
 
 
@@ -156,6 +158,12 @@ find_performance2 <- function(val, correct_em, continuous.cov){
   c(ifelse(length(true_em_value_continuous) == 0, NA, mean(true_em_value_continuous)),
     ifelse(length(true_em_value_binary) == 0, NA, mean(true_em_value_binary)),
     val_treat)
+}
+
+# calculates patient specific treatment effect MSE
+find_performance3 <- function(data_subset, val, correct_values){
+  #treatment effect is assumed to be always 1 in the data generating mechanism
+  mean((data_subset %*% val - data_subset %*% c(correct_values, 1))^2) 
 }
 
 
