@@ -30,7 +30,7 @@ tt <- lambda*tau #lambda value has to be specified
 lambda ~ dgamma(2,0.1) # this diffuse prior has mean 20, variance 200 
 
 for(i in 1:Ncovariate){
-	beta[i] ~ ddexp(0, tt)
+	beta[i] ~ dnorm(0, 0.001) #ddexp(0, tt)
 	#Ind1[i] <- step(abs(beta[i]) - 0.05)
 }
 

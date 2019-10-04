@@ -26,11 +26,12 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
       data_glmmLasso_train <- data_glmmLasso[-indi,]
       data_glmmLasso_test <- data_glmmLasso[indi,]
 
+      #1:((dim(data_glmmLasso)[2] - 3))
       glm2 <- try(glmmLasso(form.fixed, rnd = form.rnd,  
                             family = family, 
                             lambda = lambda[j],
                             data = data_glmmLasso_train,
-                            control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA), q_start = q_start, start = start,
+                            control = list(index = c(NA, rep(NA, (dim(data_glmmLasso)[2]-3)/2), 1:((dim(data_glmmLasso)[2]-3)/2), NA), q_start = NULL, start = NULL,
                                            center = FALSE, standardize = FALSE))
                   ,silent=TRUE) 
       if(class(glm2)!="try-error")
@@ -54,7 +55,7 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
                         family = family, 
                         lambda = lambda.min,
                         data = data_glmmLasso,
-                        control = list(index = c(NA, 1:((dim(data_glmmLasso)[2] - 3)), NA), q_start = q_start, start = start,
+                        control = list(index = c(NA, rep(NA, (dim(data_glmmLasso)[2]-3)/2), 1:((dim(data_glmmLasso)[2]-3)/2), NA), q_start = NULL, start = NULL,
                                        center = FALSE, standardize = FALSE))
               ,silent=TRUE)
   list(glm2 = glm2, lambda.min = lambda.min)

@@ -1,8 +1,8 @@
 
 run.simulation.modified <- function(){
   
-  glmmLasso_store_mse <- glmnet_store_mse <- step_store_mse <- glmm_full_store_mse <- glmm_oracle_store_mse <- matrix(NA, nrow = niter, ncol = 4)
-  glmmLasso_store_sd <- glmnet_store_sd <- step_store_sd <- glmm_full_store_sd <- glmm_oracle_store_sd <- matrix(NA, nrow = niter, ncol = 3)
+  glmmLasso_store_mse <- glmnet_store_mse <- ridge_store_mse <- step_store_mse <- glmm_full_store_mse <- glmm_oracle_store_mse <- matrix(NA, nrow = niter, ncol = 4)
+  glmmLasso_store_sd <- glmnet_store_sd <- ridge_store_sd <- step_store_sd <- glmm_full_store_sd <- glmm_oracle_store_sd <- matrix(NA, nrow = niter, ncol = 3)
 
   for(i in seq(niter)){
     
@@ -66,7 +66,7 @@ run.simulation.modified <- function(){
     data_glmnet <- data_glmnet[,-1] 
     data_glmnet <- cbind(y = data$y, data_glmnet = data_glmnet)  
     
-    p.fac <- c(rep(0, Nstudies - 1), rep(1, Ncovariate), 0, rep(1, Ncovariate))
+    p.fac <- c(rep(0, Nstudies - 1), rep(0, Ncovariate), 0, rep(1, Ncovariate))
     
     family <- ifelse(model.type == "gaussian", "gaussian", "binomial")
     cvfit <- cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac, family = family, standardize = FALSE, type.measure = "deviance")  
@@ -79,6 +79,30 @@ run.simulation.modified <- function(){
     #glmnet_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
       
   }
+  
+  for(i in seq(niter)){
+    
+    set.seed(i)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
+    
+    data_glmnet <- model.matrix(step_full_formula, data = data)
+    data_glmnet <- data_glmnet[,-1] 
+    data_glmnet <- cbind(y = data$y, data_glmnet = data_glmnet)  
+    
+    p.fac <- c(rep(0, Nstudies - 1), rep(0, Ncovariate), 0, rep(1, Ncovariate))
+    
+    family <- ifelse(model.type == "gaussian", "gaussian", "binomial")
+    cvfit <- cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac, family = family, standardize = FALSE, type.measure = "deviance", alpha = 0)  
+    aa <- coef(cvfit, s = "lambda.min")
+    
+    mean_values <-  sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
+    #sd_values <- bootstrap_function_LASSO(data_glmnet, 50, p.fac, family)
+    
+    ridge_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em, data_glmnet[,col_labels])
+    #glmnet_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
+    
+  }
+  
   
   for(i in seq(niter)){
     
@@ -123,27 +147,31 @@ run.simulation.modified <- function(){
   step_store_sd_mean <- apply(step_store_sd, 2, mean, na.rm = TRUE)
   glmnet_store_mse_mean <- apply(glmnet_store_mse, 2, mean)
   glmnet_store_sd_mean <- apply(glmnet_store_sd, 2, mean, na.rm = TRUE)
+  ridge_store_mse_mean <- apply(ridge_store_mse, 2, mean)
+  ridge_store_sd_mean <- apply(ridge_store_sd, 2, mean, na.rm = TRUE)
   glmmLasso_store_mse_mean <- apply(glmmLasso_store_mse, 2, mean)
   glmmLasso_store_sd_mean <- apply(glmmLasso_store_sd, 2, mean, na.rm = TRUE)
-  
-  result_matrix_mse <- matrix(NA, nrow = 5, ncol = 4)
+
+  result_matrix_mse <- matrix(NA, nrow = 6, ncol = 4)
   colnames(result_matrix_mse) <- c("false em mse", "true em mse","treatment mse", "patient specific trt mse")
-  rownames(result_matrix_mse) <-  c("glmm oracle", "glmm full","naive step", "naive lasso", "glmmLasso")
+  rownames(result_matrix_mse) <-  c("glmm oracle", "glmm full","naive step", "naive lasso", "ridge", "glmmLasso")
   result_matrix_mse[1,] <- glmm_oracle_store_mse_mean
   result_matrix_mse[2,] <- glmm_full_store_mse_mean
   result_matrix_mse[3,] <- step_store_mse_mean
   result_matrix_mse[4,] <- glmnet_store_mse_mean
-  result_matrix_mse[5,] <- glmmLasso_store_mse_mean
-  
-  result_matrix_sd <- matrix(NA, nrow = 5, ncol = 3)
+  result_matrix_mse[5,] <- ridge_store_mse_mean
+  result_matrix_mse[6,] <- glmmLasso_store_mse_mean
+
+  result_matrix_sd <- matrix(NA, nrow = 6, ncol = 3)
   colnames(result_matrix_sd) <- c("continuous EM se", "binary EM se","treatment se")
-  rownames(result_matrix_sd) <-  c("glmm oracle", "glmm full","naive step", "naive lasso", "glmmLasso")
+  rownames(result_matrix_sd) <-  c("glmm oracle", "glmm full","naive step", "naive lasso", "ridge","glmmLasso")
   result_matrix_sd[1,] <- glmm_oracle_store_sd_mean
   result_matrix_sd[2,] <- glmm_full_store_sd_mean
   result_matrix_sd[3,] <- step_store_sd_mean
   result_matrix_sd[4,] <- glmnet_store_sd_mean
-  result_matrix_sd[5,] <- glmmLasso_store_sd_mean
-  
+  result_matrix_sd[5,] <- ridge_store_sd_mean
+  result_matrix_sd[6,] <- glmmLasso_store_sd_mean
+
   cbind(result_matrix_mse, result_matrix_sd)
 }
 

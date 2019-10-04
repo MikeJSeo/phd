@@ -28,7 +28,7 @@ library(nlme) # for initial values for glmmLasso
 #setwd("~/GitHub/phd/varselect")
 setwd("C:/Users/mike/Desktop/Github/phd/varselect")
 
-source("run.simulation.functions.modified.R")
+source("run.simulation.functions.modified2.R")
 source("helpful.functions.R")
 
 # setup for parallel computing
