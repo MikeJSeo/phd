@@ -161,12 +161,12 @@ data_glmnet <- model.matrix(y~ studyid + (age + gender + diabetes + stable_cad +
 data_glmnet <- data_glmnet[,-1]
 data_glmnet <- cbind(y = mydata$y, data_glmnet = data_glmnet)
 
-p.fac.stent <- c(rep(0, 7), rep(1, 9), 0, rep(1,9)) #No shrinkage for treatment effect and baseline effect
+p.fac.stent <- c(rep(0, 7), rep(0, 9), 0, rep(1,9)) #No shrinkage for treatment effect and baseline effect
 cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.stent, family = "binomial", type.measure = "deviance", standardize = FALSE)
 coef(cvfit, s = "lambda.min")
 ```
 
-```{r glmnet_stent_bootstrap, cache = TRUE}
+```{r glmnet_stent_bootstrap, cache = TRUE, eval = FALSE}
 #bootstrapping LASSO function
 bootstrap_function_LASSO  <- function(model_data, ndraws, p.fac) {
   
@@ -190,7 +190,7 @@ bootstrap_function_LASSO(data_glmnet, 50, p.fac.stent)
 ```
 
 
-```{r}
+```{r, eval = FALSE}
 # aa[aa[,1] != 0,1]
 # maybe needs fixing 
 # ladtreated = 1: 1.0691515, num_stents = 5 (3.1705418)
@@ -205,7 +205,7 @@ exp(mean2)
 
 ## glmmLasso
 
-```{r}
+```{r, eval = FALSE}
 #function to cross validate glmmLasso
 cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lambda = NULL, family = NULL, q_start = NULL, start = NULL){
   
@@ -265,7 +265,7 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
 ```
 
 
-```{r glmmLasso_stent, cache = TRUE}
+```{r glmmLasso_stent, cache = TRUE, eval = FALSE}
 data_glmmLasso <- model.matrix(y~ -1 + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3  + num_stent)*treat, data = mydata)
 data_glmmLasso <- cbind(y = mydata$y, data_glmmLasso = data_glmmLasso, studyid = mydata$studyid)
 
@@ -287,7 +287,7 @@ summary(cv.fit[[1]])
 cv.fit[[2]]
 ```
 
-```{r}
+```{r, eval = FALSE}
 # 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5 (3.1705418)
 contr <- c(0, rep(0, 9), c(0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418), rep(0, 7), 1)
 
@@ -333,11 +333,11 @@ plot(model_bayesLASSO[,"d[2]"])
 plot(model_bayesLASSO[,"lambda"])
 ```
 
-```{r}
+```{r, eval = FALSE}
 gelman.diag(model_bayesLASSO, multivariate = FALSE)
 ```
 
-```{r}
+```{r, eval = FALSE}
 # 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5: 3.1705418
 mat1 <- do.call(rbind, model_bayesLASSO[,c("d[2]", "g[1]", "g[2]", "g[3]", "g[4]", "g[5]", "g[6]", "g[7]", "g[8]", "g[9]")])
 sum1 <- mat1 %*% c(1, 0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418)
@@ -357,12 +357,12 @@ exp(mean2 + qnorm(c(.025,0.5,.975))* se2)
 
 ## SSVS
 
-```{r SSVS_stent, cache = TRUE}
+```{r SSVS_stent, cache = TRUE, eval = FALSE}
 model_SSVS <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha", "beta", "g", "d", "sdDelta", "Ind", "Ind2", "eta"), model = "IPD-MA-SSVS-binomial.txt", n.chains = 3, n.adapt = 100, n.update = 1000, n.iter = 10000)
 summary(model_SSVS)
 ```
 
-```{r}
+```{r, eval = FALSE}
 # 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5: 3.1705418
 mat1 <- do.call(rbind, model_SSVS[,c("d[2]", "g[1]", "g[2]", "g[3]", "g[4]", "g[5]", "g[6]", "g[7]", "g[8]", "g[9]")])
 sum1 <- mat1 %*% c(1, 0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418)
@@ -379,6 +379,6 @@ se2 <- sd(sum2)
 exp(mean2 + qnorm(c(.025,0.5,.975))* se2)
 ```
 
-```{r}
+```{r, eval = FALSE}
 gelman.diag(model_SSVS, multivariate = FALSE)
 ```

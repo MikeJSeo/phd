@@ -25,8 +25,8 @@ library(nlme) # for initial values for glmmLasso
 
 ```{r}
 #load/save everything else from/to github
-#setwd("~/GitHub/phd/varselect")
-setwd("C:/Users/mike/Desktop/Github/phd/varselect")
+setwd("~/GitHub/phd/varselect")
+#setwd("C:/Users/mike/Desktop/Github/phd/varselect")
 
 source("run.simulation.functions.modified.R")
 source("helpful.functions.R")
@@ -37,7 +37,7 @@ cl <- makePSOCKcluster(n.cores)
 tmp <- clusterEvalQ(cl, library(dclone))
 
 # number of simulation to run
-niter <- 1000
+niter <- 10
 ```
 
 ## Simulation 1

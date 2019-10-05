@@ -26,9 +26,10 @@ for (i in 1:Nstudies){
 }
 
 for(i in 1:Ncovariate){
-	IndA[i] ~ dcat(Pind[])
-	Ind[i] <- IndA[i] - 1
-	beta[i] ~ dnorm(0, tauCov[IndA[i]])
+	#IndA[i] ~ dcat(Pind[])
+	#Ind[i] <- IndA[i] - 1
+	#beta[i] ~ dnorm(0, tauCov[IndA[i]])
+	beta[i] ~ dnorm(0, 0.001)
 }
 
 for(i in 1:Ncovariate){
