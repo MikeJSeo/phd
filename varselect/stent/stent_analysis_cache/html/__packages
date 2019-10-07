@@ -1,0 +1,12 @@
+base
+readstata13
+Matrix
+lme4
+foreach
+glmnet
+glmmLasso
+coda
+rjags
+dclone
+MASS
+nlme

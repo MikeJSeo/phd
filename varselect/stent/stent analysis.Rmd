@@ -2,7 +2,9 @@
 title: "Variable selection in individual patient data meta-analysis - stent dataset"
 author: "Michael Seo"
 date: "5 August 2019"
-output: word_document
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -323,7 +325,7 @@ data_jags_stent <- with(mydata, {
 ## Bayes Lasso
 
 ```{r bayesianLASSO_stent, cache = TRUE}
-model_bayesLASSO <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta", "g", "d", "sdDelta", "lambda", "lambda2"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 2, n.adapt = 100, n.update = 1000, n.iter = 10000)
+model_bayesLASSO <- jags.parfit(cl = cl, data = data_jags_stent, params = c("alpha","beta", "g", "d", "sdDelta"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 2, n.adapt = 100, n.update = 1000, n.iter = 10000)
 summary(model_bayesLASSO)
 ```
 

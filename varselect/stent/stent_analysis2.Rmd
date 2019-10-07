@@ -1,0 +1,397 @@
+---
+title: "Variable selection in individual patient data meta-analysis - stent dataset"
+author: "Michael Seo"
+date: "5 August 2019"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(tidy = TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), warning = FALSE, message=FALSE, echo = FALSE)
+```
+
+
+```{r}
+# load packages needed
+library(readstata13)
+
+library(lme4) #for fitting glmm
+library(glmnet) #for lasso
+library(R2jags)# for Bayesian models
+
+library(MASS) # Used for data simulation
+
+library(selectiveInference)
+```
+
+
+```{r}
+# Setting directory
+setwd("C:/Users/ms19g661/Desktop")
+#setwd("C:/Users/mike/Desktop")
+#stent <- read.dta13("stent.dta")
+stent <- read.dta13("1_year_stent_data_21092018.dta")
+
+#load/save everything else from/to github
+setwd("~/GitHub/phd/varselect")
+#setwd("C:/Users/mike/Desktop/Github/phd/varselect")
+```
+
+
+```{r Stent_data_processing}
+# "age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "gpi", "new_p2y12", "num_stent"
+# gender=1 is men, gender=0 is female
+# dropped gpi, new_p2y12
+# dropped study 19: too big
+study_inclusion <- c(3, 4, 5, 12, 13, 14, 15, 17)
+data0 <- stent[stent$trial_name %in% study_inclusion,]
+
+#rename study
+for(i in 1:dim(data0)[1]){
+  data0$trial_name[i] <- which(data0$trial_name[i] == study_inclusion)
+}
+data0$trial_name <- as.factor(data0$trial_name)
+
+X <-  data0[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")]
+
+#recode categorical variables
+ii <- sapply(X, is.factor)
+X[ii] <- lapply(X[ii], as.character)
+X[X == "Yes"] <- 1
+X[X == "Male"] <- 1
+X[X == "No"] <- 0
+X[X == "Female"] <- 0
+X[ii] <- lapply(X[ii], as.numeric)
+
+data_stent <- cbind(X, y = data0$a_death_5yr_yn, treat = ifelse(data0$rand == "BMS", 0, 1), studyid = data0$trial_name)
+mydata <- na.omit(data_stent)
+
+# scale all variables
+mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")] <- apply(mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")], 2, scale)
+
+X <- mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")]
+
+# Total data: 11433 -> complete cases X: 11106 
+
+col_labels_stent <- c("age", "gender", "diabetes", "stable_cad", "multivessel", "ladtreated", "overlap", "m_dia_above_3", "num_stent")
+col_labels_stent_all <- c("(Intercept)", col_labels_stent, paste0(col_labels_stent, ":treat"), "treat", paste0("as.factor(studyid)", 1:length(unique(mydata$studyid))))
+col_labels_stent_glmm <- c("(Intercept)", col_labels_stent, paste0(col_labels_stent, "_treat"), "treat", paste0("as.factor(studyid)", 1:length(unique(mydata$studyid))))
+
+expit <- function(x){
+  exp(x)/(1+exp(x))
+}
+```
+
+## glmm_null
+
+```{r glmm_null_stent, cache = TRUE}
+m1 <- glmer(y ~ studyid + treat + (-1 + treat|studyid), data = mydata, family = binomial)
+summary(m1)
+```
+
+```{r}
+coef(m1)$studyid[1,]
+contr <- c(rep(0, 8), 1)
+v0 <- vcov(m1)
+se0 <- c(sqrt(contr %*% v0 %*% contr))
+mean0 <- c(contr %*% t(coef(m1)$studyid[1,]))
+
+exp(mean0 + qnorm(c(.025,0.5,.975))* as.vector(se0[[1]]))
+```
+
+## glmm_full
+
+```{r glmm_full_stent, cache = TRUE}
+m2 <- glmer(y ~ studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat + (-1 + treat|studyid), data = mydata, family = binomial)
+summary(m2)
+```
+
+```{r}
+# 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5 (3.1705418)
+contr <- c(rep(0, 8), rep(0, 9), 1, 0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418)
+v1 <- vcov(m2)
+se1 <- c(sqrt(contr %*% v1 %*% contr))
+mean1 <- c(contr %*% t(coef(m2)$studyid[1,]))
+
+exp(mean1 + qnorm(c(.025,0.5,.975))* as.vector(se1[[1]]))
+
+# 50 years: -1.522422, male(gender =1): 0.606939, diabetes=0: -0.5525687, stable_cad=1: 1.3948883, multivessel=0: -0.9276506, ladtreated=0: -0.9352369, overlap=0: -0.425849, m_dia_above_3=1: 0.1858944, num_stents = 1: -0.6300019
+contr <- c(rep(0, 8), rep(0, 9), 1, -1.522422, 0.606939, -0.5525687, 1.3948883, -0.9276506, -0.9352369, -0.425849, 0.1858944, -0.6300019)
+v2 <- vcov(m2)
+se2 <- c(sqrt(contr %*% v2 %*% contr))
+mean2 <- c(contr %*% t(coef(m2)$studyid[1,]))
+
+exp(mean2 + qnorm(c(.025,0.5,.975))* as.vector(se2[[1]]))
+```
+
+## naive step
+
+```{r naive_step_stent, cache = TRUE, results = "hide"}
+m3 <- glm(y ~ studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, family = binomial(link = "logit"), data = mydata)
+s1 <- step(m3, scope=list(lower = ~ studyid + treat), direction = "both")
+```
+
+```{r}
+summary(s1)
+```
+
+```{r}
+# ladtreated = 1: 1.0691515, num_stents = 5: 3.1705418
+contr <- c(rep(0, 8), rep(0, 7), 1, 1.0691515, 3.1705418)
+v1 <- vcov(s1)
+se1 <- c(sqrt(contr %*% v1 %*% contr))
+mean1 <- c(contr %*% coef(s1))
+
+exp(mean1 + qnorm(c(.025,0.5,.975))* as.vector(se1[[1]]))
+
+# ladtreated=0: -0.9352369, num_stents = 1: -0.6300019
+contr <- c(rep(0, 8), rep(0, 7), 1, -0.9352369, -0.6300019)
+v2 <- vcov(s1)
+se2 <- c(sqrt(contr %*% v2 %*% contr))
+mean2 <-  c(contr %*% coef(s1))
+
+exp(mean2 + qnorm(c(.025,0.5,.975))* as.vector(se2[[1]]))
+```
+
+
+## naive lasso
+
+```{r glmnet_stent, cache = TRUE}
+set.seed(1)
+data_glmnet <- model.matrix(y~ studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, data = mydata)
+data_glmnet <- data_glmnet[,-1]
+data_glmnet <- cbind(y = mydata$y, data_glmnet = data_glmnet)
+
+p.fac.stent <- c(rep(0, 7), rep(0, 9), 0, rep(1,9)) #No shrinkage for treatment effect and baseline effect
+cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.stent, family = "binomial", type.measure = "deviance", standardize = FALSE)
+coef(cvfit, s = "lambda.min")
+```
+
+```{r}
+y = as.matrix(data_glmnet[,1])
+x = as.matrix(data_glmnet[,-1])
+
+set.seed(1)
+p.fac.stent <- c(rep(0.1, 7), rep(0.1, 9), 0.1, rep(1,9)) #define penalty factors
+p <- length(p.fac.stent)
+pf=p*p.fac.stent/sum(p.fac.stent) # penalty factors should be rescaled so they sum to p
+xs=scale(x,FALSE,pf) #scale cols of x by penalty factors
+
+cvfit = cv.glmnet(xs, y, family = "binomial", standardize = FALSE)
+coef(cvfit, s = "lambda.min")
+
+#finding confidence interval
+gfit = glmnet(xs,y,standardize=FALSE, family = "binomial")
+
+n = length(y)
+lambda = cvfit$lambda.min * n
+#lambda = 0.8
+beta = coef(gfit, x=xs, y=y, s=lambda/n, exact=TRUE)
+
+# compute fixed lambda p-values and selection intervals
+out = fixedLassoInf(x =xs,y = y, beta =beta,lambda=lambda, family = "binomial")
+
+#rescale conf points to undo the penalty factor
+out$ci=t(scale(t(out$ci),FALSE,pf[out$vars]))
+out
+```
+
+
+```{r, eval = FALSE}
+# aa[aa[,1] != 0,1]
+# maybe needs fixing 
+# ladtreated = 1: 1.0691515, num_stents = 5 (3.1705418)
+mean1 <- c(1,  1.0691515, 3.1705418) %*% c(-0.096078318, -0.033438580, -0.004171182)
+exp(mean1)
+
+# ladtreated=0: -0.9352369, num_stents = 1: -0.6300019
+mean2 <- c(1,  -0.9352369, -0.6300019) %*% c(-0.096078318, -0.033438580, -0.004171182)
+exp(mean2)
+```
+
+
+```{r}
+data_jags_stent <- with(mydata, {
+        list(Nstudies = length(unique(studyid)),
+        Ncovariate = 9,
+        X = X,
+        Np = dim(X)[1],
+        studyid = studyid,
+        treat = treat + 1,
+        y = y
+        )})
+```
+
+
+## Bayes Lasso
+
+```{r}
+modelBayesLasso <- function(){
+
+########## IPD-MA model
+for (i in 1:Np){
+	y[i] ~ dbern(p[i])  
+	logit(p[i]) <- alpha[studyid[i]] + inprod(beta[], X[i,]) + 
+	delta[studyid[i],treat[i]] + (1 - equals(treat[i],1)) * inprod(g[], X[i,])
+}
+
+#####treatment effect
+for(i in 1:Nstudies){
+	delta[i,1] <- 0
+	delta[i,2] ~ dnorm(d[2], tauDelta)
+}
+
+## prior distribution for heterogeneity of the treatment effect
+tauDelta <- pow(sdDelta, -2)
+sdDelta ~ dnorm(0, 1);T(0,)
+
+## prior distribution for treatment effect
+d[1] <- 0
+d[2] ~ dnorm(0, 0.001)
+
+for (i in 1:Nstudies){
+	alpha[i] ~ dnorm(0, 0.001)	
+}
+
+#lambda ~ dgamma(0.001, 0.001)
+lambda ~ dgamma(2, 0.1)
+lambda2 ~ dgamma(2, 0.1)
+
+
+for(i in 1:Ncovariate){
+	beta[i] ~ dnorm(0, 0.001) #ddexp(0, lambda)
+	#Ind1[i] <- step(abs(beta[i]) - 0.05)
+}
+
+for(i in 1:Ncovariate){
+	g[i] ~ ddexp(0, lambda2)
+	#Ind2[i] <- step(abs(g[i]) - 0.05)
+}  
+  
+}
+```
+
+```{r bayesianLASSO_stent, cache = TRUE}
+model_bayesLASSO<- jags(data = data_jags_stent, inits = NULL,
+                 parameters.to.save =  c("alpha","beta", "g", "d", "sdDelta", "lambda"),
+                 n.chains = 2, n.iter = 10000,
+                 n.burnin = 1000,DIC=F,
+                 model.file = modelBayesLasso)
+```
+
+```{r}
+print(model_bayesLASSO)
+model_bayesLASSO$BUGSoutput
+```
+
+
+```{r, eval = FALSE}
+plot(model_bayesLASSO[,"sdDelta"])
+plot(model_bayesLASSO[,"d[2]"])
+plot(model_bayesLASSO[,"lambda"])
+```
+
+```{r, eval = FALSE}
+gelman.diag(model_bayesLASSO, multivariate = FALSE)
+```
+
+```{r, eval = FALSE}
+# 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5: 3.1705418
+mat1 <- do.call(rbind, model_bayesLASSO[,c("d[2]", "g[1]", "g[2]", "g[3]", "g[4]", "g[5]", "g[6]", "g[7]", "g[8]", "g[9]")])
+sum1 <- mat1 %*% c(1, 0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418)
+
+mean1 <- mean(sum1)
+se1 <- sd(sum1)
+exp(mean1 + qnorm(c(.025,0.5,.975))* se1)
+
+# 50 years: -1.522422, male(gender =1): 0.606939, diabetes=0: -0.5525687, stable_cad=1: 1.3948883, multivessel=0: -0.9276506, ladtreated=0: -0.9352369, overlap=0: -0.425849, m_dia_above_3=1: 0.1858944, num_stents = 1: -0.6300019
+sum2 <- mat1 %*% c(1, -1.522422, 0.606939, -0.5525687, 1.3948883, -0.9276506, -0.9352369, -0.425849, 0.1858944, -0.6300019)
+
+mean2 <- mean(sum2)
+se2 <- sd(sum2)
+exp(mean2 + qnorm(c(.025,0.5,.975))* se2)
+```
+
+
+## SSVS
+
+```{r}
+modelSSVS <- function(){
+
+########## IPD-MA model
+for (i in 1:Np){
+	y[i] ~ dbern(p[i])
+	logit(p[i]) <- alpha[studyid[i]] + inprod(beta[], X[i,]) + 
+	delta[studyid[i],treat[i]] + (1 - equals(treat[i],1)) * inprod(g[], X[i,])
+}
+
+#####treatment effect
+for(i in 1:Nstudies){
+	delta[i,1] <- 0
+	delta[i,2] ~ dnorm(d[2], tauDelta)
+}
+
+## prior distribution for heterogeneity of the treatment effect
+tauDelta <- pow(sdDelta, -2)
+sdDelta ~ dnorm(0, 1);T(0,)
+
+## prior distribution for treatment effect
+d[1] <- 0
+d[2] ~ dnorm(0, 0.001)
+
+for (i in 1:Nstudies){
+	alpha[i] ~ dnorm(0, 0.001)	
+}
+
+for(i in 1:Ncovariate){
+	#IndA[i] ~ dcat(Pind[])
+	#Ind[i] <- IndA[i] - 1
+	#beta[i] ~ dnorm(0, tauCov[IndA[i]])
+	beta[i] ~ dnorm(0, 0.001)
+}
+
+for(i in 1:Ncovariate){
+	IndA2[i] ~ dcat(Pind[])
+	Ind2[i] <- IndA2[i] - 1
+	g[i] ~ dnorm(0, tauCov[IndA2[i]])
+}
+
+zeta <- pow(eta, -2)
+eta ~ dunif(0, 5)
+tauCov[1] <- zeta
+tauCov[2] <- zeta * 0.01  # g = 100
+
+Pind[1] <- 0.5 #P(I_j=1)= 0.5
+Pind[2] <- 0.5 
+
+}
+
+```
+
+
+```{r SSVS_stent, cache = TRUE}
+model_SSVS <- jags(data = data_jags_stent, inits = NULL,
+                 parameters.to.save =  c("alpha","beta", "g", "d", "sdDelta", "lambda"),
+                 n.chains = 2, n.iter = 10000,
+                 n.burnin = 1000, DIC=F,
+                 model.file = modelSSVS)
+```
+
+```{r, eval = FALSE}
+# 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5: 3.1705418
+mat1 <- do.call(rbind, model_SSVS[,c("d[2]", "g[1]", "g[2]", "g[3]", "g[4]", "g[5]", "g[6]", "g[7]", "g[8]", "g[9]")])
+sum1 <- mat1 %*% c(1, 0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418)
+
+mean1 <- mean(sum1)
+se1 <- sd(sum1)
+exp(mean1 + qnorm(c(.025,0.5,.975))* se1)
+
+# 50 years: -1.522422, male(gender =1): 0.606939, diabetes=0: -0.5525687, stable_cad=1: 1.3948883, multivessel=0: -0.9276506, ladtreated=0: -0.9352369, overlap=0: -0.425849, m_dia_above_3=1: 0.1858944, num_stents = 1: -0.6300019
+sum2 <- mat1 %*% c(1, -1.522422, 0.606939, -0.5525687, 1.3948883, -0.9276506, -0.9352369, -0.425849, 0.1858944, -0.6300019)
+
+mean2 <- mean(sum2)
+se2 <- sd(sum2)
+exp(mean2 + qnorm(c(.025,0.5,.975))* se2)
+```
+
