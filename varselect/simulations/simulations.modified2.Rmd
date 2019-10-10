@@ -126,7 +126,7 @@ col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
 col_labels_glmmLasso <- c(paste0("X", 1:10, "_treat"), "treat")
 
 correct_em <- c(0, 0, 0, 1, 1, 0, 0, 0, 0, 0)
-correct_em_values <- c(0, 0, 0, 0.3, 0.5, 0, 0, 0, 0, 0)
+correct_em_values <- c(0, 0, 0, 0.1, 0.1, 0, 0, 0, 0, 0)
 
 Nstudies <- 5
 Ncovariate <- 10
@@ -134,7 +134,7 @@ continuous.cov <- c(1, 2, 4, 6, 7, 8)
 pf <- c(1,2,3,4,5)
 em <- c(4,5)
 b1 <- c(0.1, 0.1, 0.5, 0.3, 0.5)
-b2 <- c(0.3, 0.5)
+b2 <- c(0.1, 0.1)
 
 glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X4 * treat + X5 * treat + treat + (-1 + treat|studyid)")
 glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
@@ -144,17 +144,17 @@ glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5
 model.type = "binary"
 ```
 
-```{r simulation3a, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
-simulation3.a <- run.simulation()
+```{r simulation3a, cache = TRUE, result = "hide", include = FALSE}
+simulation3.a <- run.simulation.modified()
 ```
 
-```{r simulation3b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
-simulation3.b <- run.simulation2()
+```{r simulation3b, cache = TRUE, result = "hide", include = FALSE}
+simulation3.b <- run.simulation2.modified()
 ```
 
 ```{r}
-#simulation3.a
-#simulation3.b
+simulation3.a
+simulation3.b
 ```
 
 
@@ -184,15 +184,15 @@ glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5
 model.type = "binary"
 ```
 
-```{r simulation4a, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
-simulation4.a <- run.simulation()
+```{r simulation4a, cache = TRUE, result = "hide", include = FALSE}
+simulation4.a <- run.simulation.modified()
 ```
 
-```{r simulation4b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
-simulation4.b <- run.simulation2()
+```{r simulation4b, cache = TRUE, result = "hide", include = FALSE}
+simulation4.b <- run.simulation2.modified()
 ```
 
 ```{r}
-#simulation4.a
-#simulation4.b
+simulation4.a
+simulation4.b
 ```
