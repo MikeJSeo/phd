@@ -65,7 +65,7 @@ cv.glmmLasso <- function(data_glmmLasso, form.fixed = NULL, form.rnd = NULL, lam
 ## Code to generate simulation
   
 generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.cov = NULL, pf = NULL, em = NULL,
-                                b1 = NULL, b2 = NULL, sampleSize = c(50, 100), model.type = "gaussian"){
+                                b1 = NULL, b2 = NULL, sampleSize = c(100, 150), model.type = "gaussian"){
   
   #treatment effect
   d <- 1
@@ -81,7 +81,7 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   if(model.type == "gaussian"){
     alpha <- runif(Nstudies, -1, 1)
   } else{
-    alpha <- runif(Nstudies, -2, -1) #around 14% event rate
+    alpha <- runif(Nstudies, -1, 0) 
   }
   treat <- rbinom(length(studyid), 1, 0.5)
   

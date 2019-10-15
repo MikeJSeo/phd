@@ -184,15 +184,15 @@ glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5
 model.type = "binary"
 ```
 
-```{r simulation4a, cache = TRUE, result = "hide", include = FALSE}
+```{r simulation4a, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
 simulation4.a <- run.simulation.modified()
 ```
 
-```{r simulation4b, cache = TRUE, result = "hide", include = FALSE}
+```{r simulation4b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
 simulation4.b <- run.simulation2.modified()
 ```
 
 ```{r}
-simulation4.a
-simulation4.b
+#simulation4.a
+#simulation4.b
 ```
