@@ -83,7 +83,7 @@ do_meta_analysis <- function(data){
   meta <- aggregate(data[,c("No_randomised", "martha_outcome")], list(Drug = data[,"Drug"], StudyID = data[,"StudyID"]), sum) 
 
   p1 = pairwise(treat = Drug, event = martha_outcome, n = No_randomised, studlab = StudyID, data = meta, sm = "OR")
-  model1 = metabin(event.e = martha_outcome2, n.e = No_randomised2, event.c = martha_outcome1, n.c = No_randomised1, data = p1, studlab = StudyID, sm = "OR")
+  model1 = metabin(event.e = martha_outcome2, n.e = No_randomised2, event.c = martha_outcome1, n.c = No_randomised1, data = p1, studlab = StudyID, sm = "OR", prediction = TRUE)
   return(model1)
 }
 
@@ -167,9 +167,16 @@ forest(model3, sortvar = model3$TE.fixed[,which(colnames(model3$TE.fixed)=="plac
 ```{r results='hide', message=FALSE, warning=FALSE, echo = FALSE, cache = TRUE}
 nausea <- split_data(original, "NAUSEA") 
 nausea <- nausea[!(nausea["No_randomised"] < nausea["martha_outcome"]),]
+
+aa <- table(nausea["StudyID"])
 nausea <- nausea[!apply(nausea["StudyID"], 2, trimws) %in% names(aa[aa == 1]),]
 
 sum(nausea$martha_outcome[nausea$Drug == "placebo"])
+sum(nausea$No_randomised[nausea$Drug == "placebo"])
+sum(nausea$martha_outcome[nausea$Drug != "placebo"])
+sum(nausea$No_randomised[nausea$Drug != "placebo"])
+
+
 model5 <- do_meta_analysis(nausea)
 model6 <- do_MH_NMA(nausea, method = "Inverse", random.effects = TRUE)
 ```
