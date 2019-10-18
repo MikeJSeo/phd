@@ -3,7 +3,7 @@ model{
 ########## IPD-MA model
 for (i in 1:Np){
 	y[i] ~ dnorm(mu[i], tau)  
-	mu[i]<-alpha[studyid[i]] + inprod(beta[], X[i,]) + 
+	mu[i]<-alpha[studyid[i]] + inprod(beta0[studyid[i],], X[i,]) +
 	delta[studyid[i],treat[i]] + (1 - equals(treat[i],1)) * inprod(b[studyid[i],], X[i,])
 }
 tau ~ dgamma(0.001, 0.001)
@@ -16,6 +16,12 @@ for(j in 1:Nstudies){
 
 for(j in 1:Nstudies){
 	for(k in 1:Ncovariate){
+		beta0[j,k] ~ dnorm(beta[k], tauB)
+	}
+}
+
+for(j in 1:Nstudies){
+	for(k in 1:Ncovariate){
 		b[j,k] ~ dnorm(g[k], tauB)
 	}
 }
@@ -24,9 +30,16 @@ for(j in 1:Nstudies){
 tauDelta <- pow(sdDelta, -2)
 sdDelta ~ dnorm(0,1)T(0,)
 
+
 ## prior distribution for heterogeneity of the effect modifiers and covariates
 tauB <- pow(sdB, -2)
 sdB ~ dnorm(0,1)T(0,)
+
+#for(k in 1:Ncovariate){
+#	tauB[k] <- pow(sdB[k], -2)
+#	sdB[k] ~ dnorm(0,1)T(0,) #ddexp(0, tt2)T(0,)
+#}
+#tt2 ~ dgamma(2,0.1)
 
 
 ## prior distribution for average treatment effect

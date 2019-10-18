@@ -156,7 +156,7 @@ run.simulation2 <- function(){
     })
     
     if(model.type == "gaussian") {
-      samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d", "b", "sdB", "lambda", "tau"), model = "IPD-MA-bayesLASSO.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 20000)
+      samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d", "b", "sdB", "lambda", "lambda2", "tt2"), model = "IPD-MA-bayesLASSO.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 20000)
     } else if(model.type == "binary"){
       samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 2000)
     }
