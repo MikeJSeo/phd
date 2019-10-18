@@ -9,7 +9,7 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   
   #effect modification
   b <- matrix(NA, nrow = Nstudies, ncol = length(em))
-  for(i in 2:length(b2)){
+  for(i in 1:length(b2)){
     b[,i] <- rnorm(Nstudies, b2[i], phi)
   }
   
