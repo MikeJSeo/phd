@@ -2,65 +2,66 @@ model{
 
 ########## IPD-MA model
 for (i in 1:Np){
-	y[i] ~ dnorm(mu[i], tau)  
-	mu[i]<-alpha[studyid[i]] + inprod(beta0[studyid[i],], X[i,]) +
-	delta[studyid[i],treat[i]] + (1 - equals(treat[i],1)) * inprod(b[studyid[i],], X[i,])
+	y[i] ~ dnorm(mu[i], sigma)  
+	mu[i]<-a[studyid[i]] + inprod(b[studyid[i],], X[i,]) +
+	 (1 - equals(treat[i],1)) * inprod(c[studyid[i],], X[i,]) + d[studyid[i],treat[i]] 
 }
-tau ~ dgamma(0.001, 0.001)
+sigma ~ dgamma(0.001, 0.001)
 
 #####treatment effect
 for(j in 1:Nstudies){
-	delta[j,1] <- 0
-	delta[j,2] ~ dnorm(d[2], tauDelta)
+	d[j,1] <- 0
+	d[j,2] ~ dnorm(delta[2], tau)
 }
 
+## random effects for prognostic effect
 for(j in 1:Nstudies){
 	for(k in 1:Ncovariate){
-		beta0[j,k] ~ dnorm(beta[k], tauB)
+		b[j,k] ~ dnorm(beta[k], taustar)
 	}
 }
 
+## random effects for effect modification
 for(j in 1:Nstudies){
 	for(k in 1:Ncovariate){
-		b[j,k] ~ dnorm(g[k], tauB)
+		c[j,k] ~ dnorm(gamma[k], taustar)
 	}
 }
 
 ## prior distribution for heterogeneity of the treatment effect
-tauDelta <- pow(sdDelta, -2)
-sdDelta ~ dnorm(0,1)T(0,)
-
+tau <- pow(sd, -2)
+sd ~ dnorm(0,1)T(0,)
 
 ## prior distribution for heterogeneity of the effect modifiers and covariates
-tauB <- pow(sdB, -2)
-sdB ~ dnorm(0,1)T(0,)
+taustar <- pow(sdstar, -2)
+sdstar ~ dnorm(0,1)T(0,)
 
 #for(k in 1:Ncovariate){
-#	tauB[k] <- pow(sdB[k], -2)
-#	sdB[k] ~ dnorm(0,1)T(0,) #ddexp(0, tt2)T(0,)
+#	taustar[k] <- pow(sdstar[k], -2)
+#	sdstar[k] ~ dnorm(0,1)T(0,) #ddexp(0, tt2)T(0,)
 #}
 #tt2 ~ dgamma(2,0.1)
 
 
 ## prior distribution for average treatment effect
-d[1] <- 0
-d[2] ~ dnorm(0, 0.001)
+delta[1] <- 0
+delta[2] ~ dnorm(0, 0.001)
 
 
 ## prior distribution for baseline effect
-for (i in 1:Nstudies){
-	alpha[i] ~ dnorm(0, 0.001)	
+for (j in 1:Nstudies){
+	a[j] ~ dnorm(0, 0.001)	
 }
-
-tt <- lambda #*tau # uses conditional prior
-lambda ~ dgamma(2, 0.1) #dgamma(2, 0.1)# this diffuse prior has mean 20, variance 200 
 
 for(k in 1:Ncovariate){
 	beta[k] ~ dnorm(0, 0.001)
 }
 
+tt <- lambda * sigma  # uses conditional prior
+lambda ~ dgamma(2, 0.1) # this diffuse prior has mean 20, variance 200 
+
 for(k in 1:Ncovariate){
-	g[k] ~ ddexp(0, tt)
+	gamma[k] ~ ddexp(0, tt) # penalization is only on gamma
 }
 }
 

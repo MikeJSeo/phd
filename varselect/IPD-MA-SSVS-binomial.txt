@@ -3,39 +3,55 @@ model{
 ########## IPD-MA model
 for (i in 1:Np){
 	y[i] ~ dbern(p[i])
-	logit(p[i]) <- alpha[studyid[i]] + inprod(beta[], X[i,]) + 
-	delta[studyid[i],treat[i]] + (1 - equals(treat[i],1)) * inprod(g[], X[i,])
+	logit(p[i]) <- a[studyid[i]] + inprod(b[studyid[i],], X[i,]) +
+	 (1 - equals(treat[i],1)) * inprod(c[studyid[i],], X[i,]) + d[studyid[i],treat[i]] 
 }
 
 #####treatment effect
-for(i in 1:Nstudies){
-	delta[i,1] <- 0
-	delta[i,2] ~ dnorm(d[2], tauDelta)
+for(j in 1:Nstudies){
+	d[j,1] <- 0
+	d[j,2] ~ dnorm(delta[2], tau)
+}
+
+## random effects for prognostic effect
+for(j in 1:Nstudies){
+	for(k in 1:Ncovariate){
+		b[j,k] ~ dnorm(beta[k], taustar)
+	}
+}
+
+## random effects for effect modification
+for(j in 1:Nstudies){
+	for(k in 1:Ncovariate){
+		c[j,k] ~ dnorm(gamma[k], taustar)
+	}
 }
 
 ## prior distribution for heterogeneity of the treatment effect
-tauDelta <- pow(sdDelta, -2)
-sdDelta ~ dnorm(0, 1)T(0,)
+tau <- pow(sd, -2)
+sd ~ dnorm(0,1)T(0,)
 
-## prior distribution for treatment effect
-d[1] <- 0
-d[2] ~ dnorm(0, 0.001)
+## prior distribution for heterogeneity of the effect modifiers and covariates
+taustar <- pow(sdstar, -2)
+sdstar ~ dnorm(0,1)T(0,)
 
-for (i in 1:Nstudies){
-	alpha[i] ~ dnorm(0, 0.001)	
+## prior distribution for average treatment effect
+delta[1] <- 0
+delta[2] ~ dnorm(0, 0.001)
+
+## prior distribution for baseline effect
+for (j in 1:Nstudies){
+	a[j] ~ dnorm(0, 0.001)	
 }
 
-for(i in 1:Ncovariate){
-	#IndA[i] ~ dcat(Pind[])
-	#Ind[i] <- IndA[i] - 1
-	#beta[i] ~ dnorm(0, tauCov[IndA[i]])
-	beta[i] ~ dnorm(0, 0.001)
+for(k in 1:Ncovariate){
+	beta[k] ~ dnorm(0, 0.001)
 }
 
-for(i in 1:Ncovariate){
-	IndA2[i] ~ dcat(Pind[])
-	Ind2[i] <- IndA2[i] - 1
-	g[i] ~ dnorm(0, tauCov[IndA2[i]])
+for(k in 1:Ncovariate){
+	IndA[k] ~ dcat(Pind[])
+	Ind[k] <- IndA[k] - 1
+	gamma[k] ~ dnorm(0, tauCov[IndA[k]])
 }
 
 zeta <- pow(eta, -2)

@@ -21,12 +21,12 @@ library(lme4) #for fitting glmm
 library(glmnet) #for lasso
 library(dclone) # for parallel processing of JAGS code
 
-library(xlsx) # for excel output
+library(writexl)
 ```
 
 ```{r}
-#setwd("C:/Users/mike/Desktop/Github/phd/varselect/")
-setwd("~/GitHub/phd/varselect/")
+setwd("C:/Users/mike/Desktop/Github/phd/varselect/")
+#setwd("~/GitHub/phd/varselect/")
 
 source("run.simulation.functions.final.R")
 source("helpful.functions.final.R")
@@ -44,25 +44,25 @@ niter <- 1000
 
 ```{r, simulation1}
 ### parameters to change ###
-col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
+col_labels <- c(paste0("X", 1:15, ":treat"), "treat")
 col_labels_glmmLasso <- c(paste0("X", 1:10, "_treat"), "treat")
 
-correct_em <- c(0, 0, 0, 1, 1, 0, 0, 0, 0, 0)
-correct_em_values <- c(0, 0, 0, 0.1, 0.9, 0, 0, 0, 0, 0)
+correct_em <- c(0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+correct_em_values <- c(0, 0, 0, 0, 0.1, 0.1, 0.9, 0, 0, 0, 0, 0, 0, 0, 0)
 
 Nstudies <- 5
-Ncovariate <- 10
-continuous.cov <- c(1, 2, 4, 6, 7, 8)
-pf <- c(1,2,3,4,5)
-em <- c(4,5)
-b1 <- c(0.1, 0.1, 0.5, 0.3, 0.5)
-b2 <- c(0.1, 0.9)
+Ncovariate <- 15
+continuous.cov <- c(1, 2, 5, 6, 8, 9, 10, 11, 12)
+pf <- c(1,2,3,4,5,6,7)
+em <- c(5,6,7)
+beta <- c(0.3, 0.3, 0.3, 0.3, 0.2, 0.2, 0.2)
+gamma <- c(0.1, 0.1, 0.9)
 
-glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X4 * treat + X5 * treat + treat + (-1 + I(X4 * treat)|studyid) + (-1 + I(X5 * treat)|studyid) + (-1 + treat|studyid)")
-glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + I(X1 * treat)|studyid) + (-1 + I(X2 * treat)|studyid) + (-1 + I(X3 * treat)|studyid) + (-1 + I(X4 * treat)|studyid) + (-1 + I(X5 * treat)|studyid) + (-1 + I(X6 * treat)|studyid) + (-1 + I(X7 * treat)|studyid) + (-1 + I(X8 * treat)|studyid) + (-1 + I(X9 * treat)|studyid) + (-1 + I(X10 * treat)|studyid) + (-1 + treat|studyid)")
-step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
+glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X5 * treat + X6 * treat + X7 * treat + treat + (-1 + X1|studyid) +  (-1 + X2|studyid) +  (-1 + X3|studyid) +  (-1 + X4|studyid) +  (-1 + X5|studyid) + (-1 + X6|studyid) + (-1 + X7|studyid) + (-1 + I(X5 * treat)|studyid) + (-1 + I(X6 * treat)|studyid) + (-1 + I(X7 * treat)|studyid) + (-1 + treat|studyid)")
+glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15)*treat + (-1 + X1|studyid) +  (-1 + X2|studyid) +  (-1 + X3|studyid) +  (-1 + X4|studyid) + (-1 + X5|studyid) +  (-1 + X6|studyid) +  (-1 + X7|studyid) +  (-1 + X8|studyid) + (-1 + X9|studyid) +  (-1 + X10|studyid) + (-1 + X10|studyid) +  (-1 + X11|studyid) +  (-1 + X12|studyid) + (-1 + X13|studyid)  +  (-1 + X14|studyid) +  (-1 + X15|studyid) +  (-1 + I(X1 * treat)|studyid) + (-1 + I(X2 * treat)|studyid) + (-1 + I(X3 * treat)|studyid) + (-1 + I(X4 * treat)|studyid) + (-1 + I(X5 * treat)|studyid) + (-1 + I(X6 * treat)|studyid) + (-1 + I(X7 * treat)|studyid) + (-1 + I(X8 * treat)|studyid) + (-1 + I(X9 * treat)|studyid) + (-1 + I(X10 * treat)|studyid) + (-1 + I(X11 * treat)|studyid) + (-1 + I(X12 * treat)|studyid) + (-1 + I(X13 * treat)|studyid) + (-1 + I(X14 * treat)|studyid) + (-1 + I(X15 * treat)|studyid) + (-1 + treat|studyid)")
+step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15)*treat")
 
-model.type = "gaussian"
+model.type = "binary"
 ```
 
 ```{r simulation1a, cache = TRUE, result = "hide", include = FALSE}
@@ -76,123 +76,5 @@ simulation1.b <- run.simulation2()
 ```{r}
 simulation1.result <- rbind(simulation1.a, simulation1.b)
 simulation1.result
-write.xlsx(round(simulation1.result,3), "simulation1.result.xlsx")
-```
-
-## Simulation 2
-
-```{r, simulation2}
-### parameters to change ###
-col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
-col_labels_glmmLasso <- c(paste0("X", 1:10, "_treat"), "treat")
-
-correct_em <- c(0, 0, 0, 1, 1, 0, 0, 0, 0, 0)
-correct_em_values <- c(0, 0, 0, 0.6, 1.0, 0, 0, 0, 0, 0)
-
-Nstudies <- 5
-Ncovariate <- 10
-continuous.cov <- c(1, 2, 4, 6, 7, 8)
-pf <- c(1,2,3,4,5)
-em <- c(4,5)
-b1 <- c(0.1, 0.1, 0.5, 0.3, 0.5)
-b2 <- c(0.6, 1.0)
-
-glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X4 * treat + X5 * treat + treat + (-1 + treat|studyid)")
-glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
-step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
-glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat")
-
-model.type = "gaussian"
-```
-
-```{r simulation2a, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
-simulation2.a <- run.simulation.modified()
-```
-
-```{r simulation2b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
-simulation2.b <- run.simulation2.modified()
-```
-
-```{r}
-#simulation2.a
-#simulation2.b
-```
-
-## Simulation 3
-
-```{r, simulation3}
-### parameters to change ###
-col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
-col_labels_glmmLasso <- c(paste0("X", 1:10, "_treat"), "treat")
-
-correct_em <- c(0, 0, 0, 1, 1, 0, 0, 0, 0, 0)
-correct_em_values <- c(0, 0, 0, 0.1, 0.1, 0, 0, 0, 0, 0)
-
-Nstudies <- 5
-Ncovariate <- 10
-continuous.cov <- c(1, 2, 4, 6, 7, 8)
-pf <- c(1,2,3,4,5)
-em <- c(4,5)
-b1 <- c(0.1, 0.1, 0.5, 0.3, 0.5)
-b2 <- c(0.1, 0.1)
-
-glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X4 * treat + X5 * treat + treat + (-1 + treat|studyid)")
-glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
-step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
-glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat")
-
-model.type = "binary"
-```
-
-```{r simulation3a, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
-simulation3.a <- run.simulation.modified()
-```
-
-```{r simulation3b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
-simulation3.b <- run.simulation2.modified()
-```
-
-```{r}
-#simulation3.a
-#simulation3.b
-```
-
-
-## Simulation 4
-
-```{r, simulation4}
-### parameters to change ###
-col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
-col_labels_glmmLasso <- c(paste0("X", 1:10, "_treat"), "treat")
-
-correct_em <- c(0, 0, 0, 1, 1, 0, 0, 0, 0, 0)
-correct_em_values <- c(0, 0, 0, 0.6, 1.0, 0, 0, 0, 0, 0)
-
-Nstudies <- 5
-Ncovariate <- 10
-continuous.cov <- c(1, 2, 4, 6, 7, 8)
-pf <- c(1,2,3,4,5)
-em <- c(4,5)
-b1 <- c(0.1, 0.1, 0.5, 0.3, 0.5)
-b2 <- c(0.6, 1.0)
-
-glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X4 * treat + X5 * treat + treat + (-1 + treat|studyid)")
-glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
-step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
-glmmLasso_formula <- as.formula("y ~ as.factor(studyid) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X1_treat + X2_treat + X3_treat + X4_treat + X5_treat + X6_treat + X7_treat + X8_treat + X9_treat + X10_treat + treat")
-
-model.type = "binary"
-```
-
-```{r simulation4a, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
-simulation4.a <- run.simulation.modified()
-```
-
-```{r simulation4b, cache = TRUE, result = "hide", include = FALSE, eval = FALSE}
-simulation4.b <- run.simulation2.modified()
-```
-
-```{r}
-#simulation4.a
-#simulation4.b
+write_xlsx(as.data.frame(round(simulation1.result,3)), "simulation1.result.xlsx")
 ```

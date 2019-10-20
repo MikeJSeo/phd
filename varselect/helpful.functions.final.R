@@ -1,16 +1,23 @@
 ## Code to generate simulation
   
 generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.cov = NULL, pf = NULL, em = NULL,
-                                b1 = NULL, b2 = NULL, sampleSize = c(50, 100), model.type = "gaussian", tau = 0.2, phi = 0.2){
+                                beta = NULL, gamma = NULL, sampleSize = c(50, 100), model.type = "gaussian", 
+                                tau = 0.2, tau_beta = 0.2, tau_gamma = 0.3){
   
   #treatment effect
-  d <- 1
-  delta <- rnorm(Nstudies, d, tau)
+  delta <- 1
+  d <- rnorm(Nstudies, delta, tau)
   
-  #effect modification
-  b <- matrix(NA, nrow = Nstudies, ncol = length(em))
-  for(i in 1:length(b2)){
-    b[,i] <- rnorm(Nstudies, b2[i], phi)
+  # prognostic effect (covariate effect)
+  b <- matrix(NA, nrow = Nstudies, ncol = length(beta))
+  for(i in 1:length(beta)){
+    b[,i] <- rnorm(Nstudies, beta[i], tau_beta)
+  }
+  
+  # effect modification (treatment-covariate interaction)
+  c <- matrix(NA, nrow = Nstudies, ncol = length(gamma))
+  for(i in 1:length(gamma)){
+    c[,i] <- rnorm(Nstudies, gamma[i], tau_gamma)
   }
   
   studyid <- NULL
@@ -46,7 +53,8 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   X <- apply(X, 2, scale)
   data <- model.matrix(~ -1 + X*treat)
   
-  meany <- alpha[studyid] + delta[studyid] * treat + X[,pf, drop = FALSE] %*% b1 + apply(X[,em, drop = FALSE] * b[studyid,] * treat,1,sum)
+  meany <- alpha[studyid] + d[studyid] * treat + apply(X[,pf, drop = FALSE] * b[studyid,], 1, sum) +
+           apply(X[,em, drop = FALSE] * c[studyid,] * treat, 1, sum)
   sigmay <- 0.5
   py <- expit(meany)
 
@@ -103,11 +111,6 @@ find_performance2 <- function(val, correct_em, continuous.cov){
     val_treat)
 }
 
-# calculates patient specific treatment effect MSE
-find_performance3 <- function(data_subset, val, correct_values){
-  #treatment effect is assumed to be always 1 in the data generating mechanism
-  mean((data_subset %*% val - data_subset %*% c(correct_values, 1))^2) 
-}
 
 
 bootstrap_function_LASSO  <- function(model_data, ndraws, p.fac, family) {
@@ -122,31 +125,6 @@ bootstrap_function_LASSO  <- function(model_data, ndraws, p.fac, family) {
     bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = family, standardize = FALSE)  
     aa <- coef(bootstrap_model, s = "lambda.min")
     coeff_mtx[ii,]   <- sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))  
-  }
-  
-  se <- apply(coeff_mtx, 2, sd, na.rm = TRUE)
-  return(se)
-}
-
-
-bootstrap_function_glmmLasso  <- function(model_data, ndraws, lambda = NULL, model.type = NULL, form.fixed, form.rnd, q_start = NULL, start = NULL) {
-  
-  if(is.null(model.type)) stop("model type missing")
-
-  coeff_mtx <- matrix(0, nrow = ndraws, ncol = length(col_labels))
-  
-  for (ii in 1:ndraws) {
-
-    bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
-    bootstrap_data <- model_data[bootstrap_ids,]
-    
-    if(model.type == "gaussian"){
-      bootstrap_model <- cv.glmmLasso(bootstrap_data, form.fixed = form.fixed, form.rnd = form.rnd, lambda = lambda, family = gaussian(link="identity"), q_start = q_start, start = start)
-    }
-    aa <- summary(bootstrap_model[[1]])$coefficients
-    aa <- rownames(aa[aa[,"Estimate"] != 0,])
-      
-    coeff_mtx[ii,] <- sapply(col_labels_glmmLasso, function(x) ifelse(x %in% aa, summary(bootstrap_model[[1]])$coefficients[x,"Estimate"], 0))
   }
   
   se <- apply(coeff_mtx, 2, sd, na.rm = TRUE)

@@ -7,12 +7,13 @@ run.simulation <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type)
     if(model.type == "gaussian"){
       m1 <- lmer(glmm_oracle_formula, data = data)
     } else if(model.type == "binary"){
       m1 <- glmer(glmm_oracle_formula, data = data, family = binomial(link = "logit"))
     }
+    summary(m1)
     
     mean_values <- sapply(col_labels, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Estimate"], 0))
     sd_values <- sapply(col_labels, function(x) ifelse(x %in% names(fixef(m1)), summary(m1)$coef[x,"Std. Error"], 0))
@@ -24,7 +25,7 @@ run.simulation <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type)
     if(model.type == "gaussian"){
       m1 <- lmer(glmm_full_formula, data = data)
     } else if(model.type == "binary"){
@@ -41,7 +42,7 @@ run.simulation <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type)
     
     if(model.type == "gaussian"){
       m1 <- lm(step_full_formula, data = data)  
@@ -60,7 +61,7 @@ run.simulation <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type)
     
     data_glmnet <- model.matrix(step_full_formula, data = data)
     data_glmnet <- data_glmnet[,-1] 
@@ -83,7 +84,7 @@ run.simulation <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type)
     
     data_glmnet <- model.matrix(step_full_formula, data = data)
     data_glmnet <- data_glmnet[,-1] 
@@ -100,7 +101,6 @@ run.simulation <- function(){
     
     ridge_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em, data_glmnet[,col_labels])
     #glmnet_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
-    
   }
   
   glmm_oracle_store_mse_mean <- apply(glmm_oracle_store_mse, 2, mean)
@@ -143,7 +143,7 @@ run.simulation2 <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type)
     
     data_jags <- with(data,{
       list(Nstudies = length(unique(studyid)),
@@ -156,21 +156,21 @@ run.simulation2 <- function(){
     })
     
     if(model.type == "gaussian") {
-      samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d", "b", "sdB", "lambda", "lambda2", "tt2"), model = "IPD-MA-bayesLASSO.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 20000)
+      samples <- jags.parfit(cl = cl, data = data_jags, params = c("gamma", "delta", "beta"), model = "IPD-MA-bayesLASSO.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 2000)
     } else if(model.type == "binary"){
-      samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 2000)
+      samples <- jags.parfit(cl = cl, data = data_jags, params = c("gamma", "delta", "beta"), model = "IPD-MA-bayesLASSO-binomial.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 2000)
     }
     
     a <- summary(samples)
     
-    g_mean <-  a$statistics[grep("g\\[", rownames(a$statistics)), "Mean"]
-    treat_mean <- a$statistics["d[2]", "Mean"]
+    g_mean <-  a$statistics[grep("gamma\\[", rownames(a$statistics)), "Mean"]
+    treat_mean <- a$statistics["delta[2]", "Mean"]
     names(treat_mean) <- "treat"
     mean_values <- c(g_mean, treat_mean)
     bayesLASSO_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em, as.matrix(data[,col_labels]))
     
-    g_sd <-  a$statistics[grep("g\\[", rownames(a$statistics)), "SD"]
-    treat_sd <- a$statistics["d[2]", "SD"]
+    g_sd <-  a$statistics[grep("gamma\\[", rownames(a$statistics)), "SD"]
+    treat_sd <- a$statistics["delta[2]", "SD"]
     names(treat_sd) <- "treat"
     sd_values <- c(g_sd, treat_sd)
     bayesLASSO_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
@@ -179,7 +179,7 @@ run.simulation2 <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, b1 = b1, b2 = b2, model.type = model.type)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type)
     data_jags <- with(data,{
       list(Nstudies = length(unique(studyid)),
            X = data[,paste0("X",1:Ncovariate)],
@@ -191,23 +191,21 @@ run.simulation2 <- function(){
     })
     
     if(model.type == "gaussian") {
-      samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-SSVS.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 2000)
+      samples <- jags.parfit(cl = cl, data = data_jags, params = c("gamma", "delta", "beta"), model = "IPD-MA-SSVS.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 2000)
     } else if(model.type == "binary"){
-      samples <- jags.parfit(cl = cl, data = data_jags, params = c("g", "d"), model = "IPD-MA-SSVS-binomial.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 2000)
+      samples <- jags.parfit(cl = cl, data = data_jags, params = c("gamma", "delta", "beta"), model = "IPD-MA-SSVS-binomial.txt", n.chains = 2, n.adapt = 100, n.update = 200, n.iter = 2000)
     }
     
     a <- summary(samples)
     
-    g_mean <-  a$statistics[grep("g\\[", rownames(a$statistics)), "Mean"]
-    treat_mean <- a$statistics[grep("d\\[", rownames(a$statistics)), "Mean"]
-    treat_mean <- treat_mean["d[2]"]
+    g_mean <-  a$statistics[grep("gamma\\[", rownames(a$statistics)), "Mean"]
+    treat_mean <- a$statistics["delta[2]", "Mean"]
     names(treat_mean) <- "treat"
     mean_values <- c(g_mean, treat_mean)
     SSVS_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em, as.matrix(data[,col_labels]))
     
-    g_sd <-  a$statistics[grep("g\\[", rownames(a$statistics)), "SD"]
-    treat_sd <- a$statistics[grep("d\\[", rownames(a$statistics)), "SD"]
-    treat_sd <- treat_sd["d[2]"]
+    g_sd <-  a$statistics[grep("gamma\\[", rownames(a$statistics)), "SD"]
+    treat_sd <- a$statistics["delta[2]", "SD"]
     names(treat_sd) <- "treat"
     sd_values <- c(g_sd, treat_sd)
     SSVS_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
