@@ -29,7 +29,7 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   if(model.type == "gaussian"){
     alpha <- runif(Nstudies, -1, 1)
   } else{
-    alpha <- runif(Nstudies, -1, 0) 
+    alpha <- runif(Nstudies, -2, -1) 
   }
   treat <- rbinom(length(studyid), 1, 0.5)
   
