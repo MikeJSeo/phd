@@ -22,9 +22,7 @@ library(glmnet) #for lasso
 library(dclone) # for parallel processing of JAGS code
 
 library(writexl)
-```
 
-```{r}
 setwd("C:/Users/mike/Desktop/Github/phd/varselect/")
 #setwd("~/GitHub/phd/varselect/")
 
@@ -61,6 +59,7 @@ gamma <- c(0.1, 0.1, 0.9)
 glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X5 * treat + X6 * treat + X7 * treat + treat + (-1 + X1|studyid) +  (-1 + X2|studyid) +  (-1 + X3|studyid) +  (-1 + X4|studyid) +  (-1 + X5|studyid) + (-1 + X6|studyid) + (-1 + X7|studyid) + (-1 + I(X5 * treat)|studyid) + (-1 + I(X6 * treat)|studyid) + (-1 + I(X7 * treat)|studyid) + (-1 + treat|studyid)")
 glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15)*treat + (-1 + X1|studyid) +  (-1 + X2|studyid) +  (-1 + X3|studyid) +  (-1 + X4|studyid) + (-1 + X5|studyid) +  (-1 + X6|studyid) +  (-1 + X7|studyid) +  (-1 + X8|studyid) + (-1 + X9|studyid) +  (-1 + X10|studyid) + (-1 + X10|studyid) +  (-1 + X11|studyid) +  (-1 + X12|studyid) + (-1 + X13|studyid)  +  (-1 + X14|studyid) +  (-1 + X15|studyid) +  (-1 + I(X1 * treat)|studyid) + (-1 + I(X2 * treat)|studyid) + (-1 + I(X3 * treat)|studyid) + (-1 + I(X4 * treat)|studyid) + (-1 + I(X5 * treat)|studyid) + (-1 + I(X6 * treat)|studyid) + (-1 + I(X7 * treat)|studyid) + (-1 + I(X8 * treat)|studyid) + (-1 + I(X9 * treat)|studyid) + (-1 + I(X10 * treat)|studyid) + (-1 + I(X11 * treat)|studyid) + (-1 + I(X12 * treat)|studyid) + (-1 + I(X13 * treat)|studyid) + (-1 + I(X14 * treat)|studyid) + (-1 + I(X15 * treat)|studyid) + (-1 + treat|studyid)")
 step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15)*treat")
+step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + treat")
 
 model.type = "binary"
 ```

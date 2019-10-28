@@ -49,7 +49,7 @@ run.simulation <- function(){
     } else if(model.type == "binary"){
       m1 <- glm(step_full_formula, family = binomial(link = "logit"), data = data)
     }
-    s1 <- step(m1, scope=list(lower=~ studyid + treat))
+    s1 <- step(m1, scope=list(lower= step_lower_formula))
     
     mean_values <- sapply(col_labels, function(x) ifelse(x %in% variable.names(s1), summary(s1)$coef[x,"Estimate"], 0))
     sd_values <- sapply(col_labels, function(x) ifelse(x %in% variable.names(s1), summary(s1)$coef[x,"Std. Error"], 0))
