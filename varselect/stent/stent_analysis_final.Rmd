@@ -247,7 +247,7 @@ for(k in 1:Ncovariate){
 
 ```{r bayesianLASSO_stent, cache = TRUE}
 model_bayesLASSO<- jags(data = data_jags_stent, inits = NULL,
-                 parameters.to.save =  c("gamma", "delta", "beta"),
+                 parameters.to.save =  c("gamma", "delta", "beta", "sd"),
                  n.chains = 2, n.iter = 10000,
                  n.burnin = 1000,DIC=F,
                  model.file = modelBayesLasso)
@@ -259,16 +259,16 @@ model_bayesLASSO$BUGSoutput
 ```
 
 
-```{r, eval = FALSE}
+```{r}
 # 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5: 3.1705418
-mat1 <- do.call(rbind, model_bayesLASSO[,c("delta[2]", "gamma[1]", "gamma[2]", "gamma[3]", "gamma[4]", "gamma[5]", "gamma[6]", "gamma[7]", "gamma[8]", "gamma[9]")])
+mat1 <- model_bayesLASSO$BUGSoutput$sims.matrix[,c("delta[2]", "gamma[1]", "gamma[2]", "gamma[3]", "gamma[4]", "gamma[5]", "gamma[6]", "gamma[7]", "gamma[8]", "gamma[9]")]
 sum1 <- mat1 %*% c(1, 0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418)
 
 mean1 <- mean(sum1)
 se1 <- sd(sum1)
 exp(mean1 + qnorm(c(.025,0.5,.975))* se1)
 
-# 50 years: -1.522422, male(gender =1): 0.606939, diabetes=0: -0.5525687, stable_cad=1: 1.3948883, multivessel=0: -0.9276506, ladtreated=0: -0.9352369, overlap=0: -0.425849, m_dia_above_3=1: 0.1858944, num_stents = 1: -0.6300019
+# # 50 years: -1.522422, male(gender =1): 0.606939, diabetes=0: -0.5525687, stable_cad=1: 1.3948883, multivessel=0: -0.9276506, ladtreated=0: -0.9352369, overlap=0: -0.425849, m_dia_above_3=1: 0.1858944, num_stents = 1: -0.6300019
 sum2 <- mat1 %*% c(1, -1.522422, 0.606939, -0.5525687, 1.3948883, -0.9276506, -0.9352369, -0.425849, 0.1858944, -0.6300019)
 
 mean2 <- mean(sum2)
@@ -333,7 +333,7 @@ Pind[2] <- 0.5
 
 ```{r SSVS_stent, cache = TRUE}
 model_SSVS <- jags(data = data_jags_stent, inits = NULL,
-                 parameters.to.save =  c("gamma", "delta", "beta"),
+                 parameters.to.save =  c("gamma", "delta", "beta", "sd", "Ind"),
                  n.chains = 2, n.iter = 10000,
                  n.burnin = 1000, DIC=F,
                  model.file = modelSSVS)
@@ -347,7 +347,7 @@ model_SSVS$BUGSoutput
 
 ```{r}
 # 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5: 3.1705418
-mat1 <- do.call(rbind, model_SSVS[,c("delta[2]", "gamma[1]", "gamma[2]", "gamma[3]", "gamma[4]", "gamma[5]", "gamma[6]", "gamma[7]", "gamma[8]", "gamma[9]")])
+mat1 <- model_SSVS$BUGSoutput$sims.matrix[,c("delta[2]", "gamma[1]", "gamma[2]", "gamma[3]", "gamma[4]", "gamma[5]", "gamma[6]", "gamma[7]", "gamma[8]", "gamma[9]")]
 sum1 <- mat1 %*% c(1, 0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418)
 
 mean1 <- mean(sum1)

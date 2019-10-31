@@ -1,0 +1,10 @@
+base
+readstata13
+Matrix
+lme4
+foreach
+glmnet
+coda
+rjags
+R2jags
+MASS
