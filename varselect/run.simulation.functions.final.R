@@ -78,7 +78,6 @@ run.simulation <- function(){
     
     glmnet_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em, data_glmnet[,col_labels])
     #glmnet_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
-      
   }
   
   for(i in seq(niter)){

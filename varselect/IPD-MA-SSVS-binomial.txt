@@ -3,8 +3,8 @@ model{
 ########## IPD-MA model
 for (i in 1:Np){
 	y[i] ~ dbern(p[i])
-	logit(p[i]) <- a[studyid[i]] + inprod(b[studyid[i],], X[i,]) +
-	 (1 - equals(treat[i],1)) * inprod(c[studyid[i],], X[i,]) + d[studyid[i],treat[i]] 
+	logit(p[i]) <- a[studyid[i]] + inprod(beta[], X[i,]) +
+	 (1 - equals(treat[i],1)) * inprod(gamma[], X[i,]) + d[studyid[i],treat[i]] 
 }
 
 #####treatment effect
@@ -13,27 +13,9 @@ for(j in 1:Nstudies){
 	d[j,2] ~ dnorm(delta[2], tau)
 }
 
-## random effects for prognostic effect
-for(j in 1:Nstudies){
-	for(k in 1:Ncovariate){
-		b[j,k] ~ dnorm(beta[k], taustar)
-	}
-}
-
-## random effects for effect modification
-for(j in 1:Nstudies){
-	for(k in 1:Ncovariate){
-		c[j,k] ~ dnorm(gamma[k], taustar)
-	}
-}
-
 ## prior distribution for heterogeneity of the treatment effect
 tau <- pow(sd, -2)
 sd ~ dnorm(0,1)T(0,)
-
-## prior distribution for heterogeneity of the effect modifiers and covariates
-taustar <- pow(sdstar, -2)
-sdstar ~ dnorm(0,1)T(0,)
 
 ## prior distribution for average treatment effect
 delta[1] <- 0

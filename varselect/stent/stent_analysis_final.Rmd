@@ -207,49 +207,47 @@ modelBayesLasso <- function(){
 ########## IPD-MA model
 for (i in 1:Np){
 	y[i] ~ dbern(p[i])  
-	logit(p[i]) <- alpha[studyid[i]] + inprod(beta[], X[i,]) + 
-	delta[studyid[i],treat[i]] + (1 - equals(treat[i],1)) * inprod(g[], X[i,])
+	logit(p[i]) <- a[studyid[i]] + inprod(beta[], X[i,]) +
+	 (1 - equals(treat[i],1)) * inprod(gamma[], X[i,]) + d[studyid[i],treat[i]] 
 }
 
 #####treatment effect
-for(i in 1:Nstudies){
-	delta[i,1] <- 0
-	delta[i,2] ~ dnorm(d[2], tauDelta)
+for(j in 1:Nstudies){
+	d[j,1] <- 0
+	d[j,2] ~ dnorm(delta[2], tau)
 }
 
 ## prior distribution for heterogeneity of the treatment effect
-tauDelta <- pow(sdDelta, -2)
-sdDelta ~ dnorm(0, 1);T(0,)
+tau <- pow(sd, -2)
+sd ~ dnorm(0,1);T(0,)
 
-## prior distribution for treatment effect
-d[1] <- 0
-d[2] ~ dnorm(0, 0.001)
+## prior distribution for average treatment effect
+delta[1] <- 0
+delta[2] ~ dnorm(0, 0.001)
 
-for (i in 1:Nstudies){
-	alpha[i] ~ dnorm(0, 0.001)	
+## prior distribution for baseline effect
+for (j in 1:Nstudies){
+	a[j] ~ dnorm(0, 0.001)	
 }
 
+## prior distribution for penalization parameter
 #lambda ~ dgamma(0.001, 0.001)
 lambda ~ dgamma(2, 0.1)
-lambda2 ~ dgamma(2, 0.1)
 
-
-for(i in 1:Ncovariate){
-	beta[i] ~ dnorm(0, 0.001) #ddexp(0, lambda)
-	#Ind1[i] <- step(abs(beta[i]) - 0.05)
+for(k in 1:Ncovariate){
+	beta[k] ~ dnorm(0, 0.001)
 }
 
-for(i in 1:Ncovariate){
-	g[i] ~ ddexp(0, lambda2)
-	#Ind2[i] <- step(abs(g[i]) - 0.05)
-}  
-  
+for(k in 1:Ncovariate){
+	gamma[k] ~ ddexp(0, lambda) 
+}
+
 }
 ```
 
 ```{r bayesianLASSO_stent, cache = TRUE}
 model_bayesLASSO<- jags(data = data_jags_stent, inits = NULL,
-                 parameters.to.save =  c("alpha","beta", "g", "d", "sdDelta", "lambda"),
+                 parameters.to.save =  c("gamma", "delta", "beta"),
                  n.chains = 2, n.iter = 10000,
                  n.burnin = 1000,DIC=F,
                  model.file = modelBayesLasso)
@@ -262,18 +260,8 @@ model_bayesLASSO$BUGSoutput
 
 
 ```{r, eval = FALSE}
-plot(model_bayesLASSO[,"sdDelta"])
-plot(model_bayesLASSO[,"d[2]"])
-plot(model_bayesLASSO[,"lambda"])
-```
-
-```{r, eval = FALSE}
-gelman.diag(model_bayesLASSO, multivariate = FALSE)
-```
-
-```{r, eval = FALSE}
 # 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5: 3.1705418
-mat1 <- do.call(rbind, model_bayesLASSO[,c("d[2]", "g[1]", "g[2]", "g[3]", "g[4]", "g[5]", "g[6]", "g[7]", "g[8]", "g[9]")])
+mat1 <- do.call(rbind, model_bayesLASSO[,c("delta[2]", "gamma[1]", "gamma[2]", "gamma[3]", "gamma[4]", "gamma[5]", "gamma[6]", "gamma[7]", "gamma[8]", "gamma[9]")])
 sum1 <- mat1 %*% c(1, 0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418)
 
 mean1 <- mean(sum1)
@@ -297,39 +285,37 @@ modelSSVS <- function(){
 ########## IPD-MA model
 for (i in 1:Np){
 	y[i] ~ dbern(p[i])
-	logit(p[i]) <- alpha[studyid[i]] + inprod(beta[], X[i,]) + 
-	delta[studyid[i],treat[i]] + (1 - equals(treat[i],1)) * inprod(g[], X[i,])
+	logit(p[i]) <- a[studyid[i]] + inprod(beta[], X[i,]) +
+	 (1 - equals(treat[i],1)) * inprod(gamma[], X[i,]) + d[studyid[i],treat[i]] 
 }
 
 #####treatment effect
-for(i in 1:Nstudies){
-	delta[i,1] <- 0
-	delta[i,2] ~ dnorm(d[2], tauDelta)
+for(j in 1:Nstudies){
+	d[j,1] <- 0
+	d[j,2] ~ dnorm(delta[2], tau)
 }
 
 ## prior distribution for heterogeneity of the treatment effect
-tauDelta <- pow(sdDelta, -2)
-sdDelta ~ dnorm(0, 1);T(0,)
+tau <- pow(sd, -2)
+sd ~ dnorm(0,1);T(0,)
 
-## prior distribution for treatment effect
-d[1] <- 0
-d[2] ~ dnorm(0, 0.001)
+## prior distribution for average treatment effect
+delta[1] <- 0
+delta[2] ~ dnorm(0, 0.001)
 
-for (i in 1:Nstudies){
-	alpha[i] ~ dnorm(0, 0.001)	
+## prior distribution for baseline effect
+for (j in 1:Nstudies){
+	a[j] ~ dnorm(0, 0.001)	
 }
 
-for(i in 1:Ncovariate){
-	#IndA[i] ~ dcat(Pind[])
-	#Ind[i] <- IndA[i] - 1
-	#beta[i] ~ dnorm(0, tauCov[IndA[i]])
-	beta[i] ~ dnorm(0, 0.001)
+for(k in 1:Ncovariate){
+	beta[k] ~ dnorm(0, 0.001)
 }
 
-for(i in 1:Ncovariate){
-	IndA2[i] ~ dcat(Pind[])
-	Ind2[i] <- IndA2[i] - 1
-	g[i] ~ dnorm(0, tauCov[IndA2[i]])
+for(k in 1:Ncovariate){
+	IndA[k] ~ dcat(Pind[])
+	Ind[k] <- IndA[k] - 1
+	gamma[k] ~ dnorm(0, tauCov[IndA[k]])
 }
 
 zeta <- pow(eta, -2)
@@ -347,15 +333,21 @@ Pind[2] <- 0.5
 
 ```{r SSVS_stent, cache = TRUE}
 model_SSVS <- jags(data = data_jags_stent, inits = NULL,
-                 parameters.to.save =  c("alpha","beta", "g", "d", "sdDelta", "lambda"),
+                 parameters.to.save =  c("gamma", "delta", "beta"),
                  n.chains = 2, n.iter = 10000,
                  n.burnin = 1000, DIC=F,
                  model.file = modelSSVS)
 ```
 
-```{r, eval = FALSE}
+```{r}
+print(model_SSVS)
+model_SSVS$BUGSoutput
+```
+
+
+```{r}
 # 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5: 3.1705418
-mat1 <- do.call(rbind, model_SSVS[,c("d[2]", "g[1]", "g[2]", "g[3]", "g[4]", "g[5]", "g[6]", "g[7]", "g[8]", "g[9]")])
+mat1 <- do.call(rbind, model_SSVS[,c("delta[2]", "gamma[1]", "gamma[2]", "gamma[3]", "gamma[4]", "gamma[5]", "gamma[6]", "gamma[7]", "gamma[8]", "gamma[9]")])
 sum1 <- mat1 %*% c(1, 0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418)
 
 mean1 <- mean(sum1)
