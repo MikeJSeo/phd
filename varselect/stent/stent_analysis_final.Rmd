@@ -150,17 +150,30 @@ coef(cvfit, s = "lambda.min")
 ```
 
 
-```{r, eval = FALSE}
-# aa[aa[,1] != 0,1]
-# multivessel disease: 1.0778950, ladtreated = 1: 1.0691515, m_dia less than 3: -5.3789130, num_stents = 5 (3.1705418)
-mean1 <- c(1, 1.0778950, 1.0691515, -5.3789130, 3.1705418) %*% c(-0.074123784, -0.003832965, -0.095091303, 0.025749350, -0.044570843)
-exp(mean1)
+```{r}
+bootstrap_function  <- function(model_data, ndraws, p.fac, family, alpha = 1, col_labels) {
+  
+  coeff_mtx <- matrix(0, nrow = ndraws, ncol = length(col_labels))
+  
+  for (ii in 1:ndraws) {
 
-# no multivessel disease: -0.9276506,ladtreated=0: -0.9352369, m_dia_above_3: 0.1858944, num_stents = 1: -0.6300019
-mean2 <- c(1, -0.9276506, -0.9352369, 0.1858944, -0.6300019) %*% c(-0.074123784, -0.003832965, -0.095091303, 0.025749350, -0.044570843)
-exp(mean2)
+    bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
+    bootstrap_data <- model_data[bootstrap_ids,]
+    
+    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = family, type.measure = "deviance", standardize = FALSE, alpha = alpha)  
+    aa <- coef(bootstrap_model, s = "lambda.min")
+    coeff_mtx[ii,] <- sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))  
+  }
+  se <- apply(coeff_mtx, 2, sd, na.rm = TRUE)
+  return(se)
+}
 ```
 
+```{r lasso_se, cache = TRUE}
+col_labels <- c("age:treat", "gender:treat", "diabetes:treat", "stable_cad:trea", "multivessel:treat", "ladtreated:treat", "overlap:treat", "m_dia_above_3:treat", "num_stent:treat", "treat")
+sd_values <- bootstrap_function(model_data = data_glmnet, ndraws = 50, p.fac = p.fac.stent, family = "binomial", alpha = 1, col_labels)
+sd_values
+```
 
 ## RIDGE
 
@@ -175,16 +188,13 @@ cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penal
 coef(cvfit, s = "lambda.min")
 ```
 
-```{r, eval = FALSE}
-# 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5 (3.1705418)
-mean1 <- c(1, 0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418) %*% coef(cvfit, s = "lambda.min")[18:27]
-exp(mean1)
-
-# 50 years: -1.522422, male(gender =1): 0.606939, diabetes=0: -0.5525687, stable_cad=1: 1.3948883, multivessel=0: -0.9276506, ladtreated=0: -0.9352369, overlap=0: -0.425849, m_dia_above_3=1: 0.1858944, num_stents = 1: -0.6300019
-mean2 <- c(1, -1.522422, 0.606939, -0.5525687, 1.3948883, -0.9276506, -0.9352369, -0.425849, 0.1858944, -0.6300019) %*% coef(cvfit, s = "lambda.min")[18:27]
-exp(mean2)
+```{r ridge_sd, cache = TRUE}
+sd_values2 <- bootstrap_function(model_data = data_glmnet, ndraws = 50, p.fac = p.fac.stent, family = "binomial", alpha = 0, col_labels)
+sd_values2
 ```
 
+
+## Bayesian
 
 ```{r}
 data_jags_stent <- with(mydata, {

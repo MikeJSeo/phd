@@ -112,23 +112,20 @@ find_performance2 <- function(val, correct_em, continuous.cov){
 }
 
 
-
-bootstrap_function_LASSO  <- function(model_data, ndraws, p.fac, family) {
+bootstrap_function  <- function(model_data, ndraws, p.fac, family, alpha = 1) {
   
   coeff_mtx <- matrix(0, nrow = ndraws, ncol = length(col_labels))
   
   for (ii in 1:ndraws) {
-
+    
     bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
     bootstrap_data <- model_data[bootstrap_ids,]
     
-    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = family, standardize = FALSE)  
+    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = family, standardize = FALSE, type.measure = "deviance", alpha = alpha)  
     aa <- coef(bootstrap_model, s = "lambda.min")
     coeff_mtx[ii,]   <- sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))  
   }
-  
   se <- apply(coeff_mtx, 2, sd, na.rm = TRUE)
   return(se)
 }
-
 
