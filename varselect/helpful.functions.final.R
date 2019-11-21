@@ -15,9 +15,11 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   }
   
   # effect modification (treatment-covariate interaction)
-  c <- matrix(NA, nrow = Nstudies, ncol = length(gamma))
-  for(i in 1:length(gamma)){
-    c[,i] <- rnorm(Nstudies, gamma[i], tau_gamma)
+  if(!is.null(gamma)){
+    c <- matrix(NA, nrow = Nstudies, ncol = length(gamma))
+    for(i in 1:length(gamma)){
+      c[,i] <- rnorm(Nstudies, gamma[i], tau_gamma)
+    }   
   }
   
   studyid <- NULL
@@ -53,8 +55,12 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   X <- apply(X, 2, scale)
   data <- model.matrix(~ -1 + X*treat)
   
-  meany <- alpha[studyid] + d[studyid] * treat + apply(X[,pf, drop = FALSE] * b[studyid,], 1, sum) +
-           apply(X[,em, drop = FALSE] * c[studyid,] * treat, 1, sum)
+  meany <- alpha[studyid] + d[studyid] * treat + apply(X[,pf, drop = FALSE] * b[studyid,], 1, sum)
+    
+  if(!is.null(em)){
+    meany <- meany + apply(X[,em, drop = FALSE] * c[studyid,] * treat, 1, sum)
+  }
+      
   sigmay <- 0.5
   py <- expit(meany)
 
