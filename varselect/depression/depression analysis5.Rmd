@@ -1,0 +1,285 @@
+---
+title: "analysis"
+author: "Michael Seo"
+date: "31 Juli 2019"
+output:
+  word_document: default
+---
+
+
+```{r}
+# load packages needed
+library(lme4) #for fitting glmm
+library(glmnet) #for lasso
+library(R2jags)# for Bayesian models
+```
+
+```{r}
+#setwd("C:/Users/ms19g661/Desktop")
+#data <- read.csv("database.csv", sep = ";")
+
+#setwd("C:/Users/Toshi A. Furukawa/Desktop/seo")
+#data <- read.csv("database.csv")
+
+setwd("C:/Rworkspace")
+data <- read.csv("database.csv")
+```
+
+
+```{r}
+# exclude trials that are not one of these 4 trials
+unique_studyid = c("LY248686A203C", "MLD55-11MDD21", "MLD5511M31", "Org3770-1")
+data <- data[data$stduid %in% unique_studyid,] 
+
+# Rename the study into numeric sequence
+# 1 - LY248686A203C, 2 - MLD55-11MDD21, 3 - MLD5511M31, 4 - Org3770-1
+studyid <- factor(data$stduid, levels = unique_studyid) 
+studyid <- as.numeric(studyid)
+
+# Define outcome measure
+# The end point is 6wk for the study LY248686A203C and Org3770-1 and 8wk for other two studies.
+y <- rep(NA, length(studyid))
+y[studyid %in% c(1, 4)] <- data$hamd_total_wk6[studyid %in% c(1, 4)]
+y[studyid %in% c(2, 3)] <- data$hamd_total_wk8[studyid %in% c(2, 3)]
+
+# Define treatment
+treat <- ifelse(data$allocation == 0, 0, 1)
+
+# Covariates
+# continuous variables: "baseseverity.hamd_total_start.", "age", "onset", "episode_duration_wk", "gilty_agitationHAM10_11_12_15_17", "body_symptoms_HAM9_13_14", "sleep_problems", "anhedonia_redardationHAM1_2_3_16", "appetiteHAM4_5"
+# dichotomous variables: "sex_m1_f2", "episode_frequency_1_2_3over"
+
+X <- data[,c("baseseverity.hamd_total_start.", "age", "sex_m1_f2", "onset",  "episode_frequency_1_2_3over", "episode_duration_wk", "gilty_agitationHAM10_11_12_15_17", "body_symptoms_HAM9_13_14", "sleep_problems", "anhedonia_redardationHAM1_2_3_16", "appetiteHAM4_5")]
+
+# recode episode_frequency 3over - 1, under3 - 0
+X$episode_frequency_1_2_3over <- ifelse(X$episode_frequency_1_2_3over == 3, 1, 0)
+
+# recode sex variable m0_f1
+X$sex <- ifelse(X$sex_m1_f2 == 1, 0, 1)
+
+# scale variable
+#scale_vars <- c("baseseverity.hamd_total_start.", "age", "onset", "episode_duration_wk", "gilty_agitationHAM10_11_12_15_17", "body_symptoms_HAM9_13_14",  "sleep_problems", "anhedonia_redardationHAM1_2_3_16", "appetiteHAM4_5")
+
+#scale_vars <- c("baseseverity.hamd_total_start.", "age", "onset", "episode_duration_wk")
+#X[,scale_vars] <- apply(X[,scale_vars], 2, scale)
+
+X$onset <- as.numeric(paste0(X$onset))
+
+data2 <- cbind(y = y, X, treat = treat, studyid = as.factor(studyid))
+mydata <- na.omit(data2)
+
+scale_vars <- c("baseseverity.hamd_total_start.", "age", "sex_m1_f2", "onset",  "episode_frequency_1_2_3over", "episode_duration_wk", "gilty_agitationHAM10_11_12_15_17", "body_symptoms_HAM9_13_14", "sleep_problems", "anhedonia_redardationHAM1_2_3_16", "appetiteHAM4_5")
+mydata[,scale_vars] <- apply(mydata[,scale_vars], 2, scale)
+X <- mydata[,scale_vars]
+
+data_jags_depression <- with(mydata, {
+        list(Nstudies = length(unique(studyid)),
+        Ncovariate = 11,
+        X = X,
+        Np = dim(X)[1],
+        studyid = studyid,
+        treat = treat + 1,
+        y = y)})
+```
+
+
+## glmm_full
+
+```{r glmm_full}
+m2 <- lmer(y ~ studyid + (baseseverity.hamd_total_start. + age + sex_m1_f2 + onset + episode_frequency_1_2_3over + episode_duration_wk + gilty_agitationHAM10_11_12_15_17 + body_symptoms_HAM9_13_14 + sleep_problems + anhedonia_redardationHAM1_2_3_16 + appetiteHAM4_5)*treat + (-1 + treat|studyid), data = mydata)
+summary(m2)
+```
+
+## naive step
+
+```{r naive_step, results = "hide"}
+m3 <- lm(y ~ studyid + (baseseverity.hamd_total_start. + age + sex_m1_f2 + onset + episode_frequency_1_2_3over + episode_duration_wk + gilty_agitationHAM10_11_12_15_17 + body_symptoms_HAM9_13_14 + sleep_problems + anhedonia_redardationHAM1_2_3_16 + appetiteHAM4_5)*treat, data = mydata)
+s3 <- step(m3, scope = list(lower = ~ baseseverity.hamd_total_start. + age + sex_m1_f2 + onset + episode_frequency_1_2_3over + episode_duration_wk + gilty_agitationHAM10_11_12_15_17 + body_symptoms_HAM9_13_14 + sleep_problems + anhedonia_redardationHAM1_2_3_16 + appetiteHAM4_5 + treat), direction = "both")
+```
+
+```{r}
+summary(s3)
+```
+
+## glmnet
+
+```{r glmnet}
+set.seed(1)
+data_glmnet <- model.matrix(y~ -1 + (baseseverity.hamd_total_start. + age + sex_m1_f2 + onset + episode_frequency_1_2_3over + episode_duration_wk + gilty_agitationHAM10_11_12_15_17 + body_symptoms_HAM9_13_14 + sleep_problems + anhedonia_redardationHAM1_2_3_16 + appetiteHAM4_5) * treat, data = mydata)
+data_glmnet <- cbind(y = mydata$y, data_glmnet = data_glmnet)
+
+p.fac.depression = c(rep(0, 11), 0, rep(1, 11)) #No shrinkage for treatment effect and prognostic effect
+cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.depression, family= "gaussian", type.measure = "deviance", standardize = FALSE)
+coef(cvfit, s = "lambda.min")
+```
+
+```{r}
+bootstrap_function  <- function(model_data, ndraws, p.fac, family, alpha = 1, col_labels) {
+  
+  coeff_mtx <- matrix(0, nrow = ndraws, ncol = length(col_labels))
+  
+  for (ii in 1:ndraws) {
+
+    bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
+    bootstrap_data <- model_data[bootstrap_ids,]
+    
+    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = family, type.measure = "deviance", standardize = FALSE, alpha = alpha)  
+    aa <- coef(bootstrap_model, s = "lambda.min")
+    coeff_mtx[ii,] <- sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))  
+  }
+  se <- apply(coeff_mtx, 2, sd, na.rm = TRUE)
+  return(se)
+}
+```
+
+```{r lasso_se, cache = TRUE}
+col_labels <- c("baseseverity.hamd_total_start.:treat", "age:treat", "sex_m1_f2:treat", "onset:treat", "episode_frequency_1_2_3over:treat", "episode_duration_wk:treat", "gilty_agitationHAM10_11_12_15_17:treat", "body_symptoms_HAM9_13_14:treat", "sleep_problems:treat", "anhedonia_redardationHAM1_2_3_16:treat", "appetiteHAM4_5:treat", "treat")
+sd_values <- bootstrap_function(model_data = data_glmnet, ndraws = 50, p.fac = p.fac.depression, family = "gaussian", alpha = 1, col_labels)
+sd_values
+```
+
+## ridge
+
+```{r ridge}
+set.seed(1)
+cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.depression, family= "gaussian", type.measure = "deviance", standardize = FALSE, alpha = 0)
+coef(cvfit, s = "lambda.min")
+```
+
+```{r ridge_sd, cache = TRUE}
+sd_values2 <- bootstrap_function(model_data = data_glmnet, ndraws = 50, p.fac = p.fac.depression, family = "gaussian", alpha = 0, col_labels)
+sd_values2
+```
+
+
+## Bayes Lasso
+
+```{r}
+modelBayesLasso <- function(){
+
+########## IPD-MA model
+for (i in 1:Np){
+	y[i] ~ dnorm(mu[i], sigma)  
+	mu[i]<-a[studyid[i]] + inprod(beta[], X[i,]) +
+	 (1 - equals(treat[i],1)) * inprod(gamma[], X[i,]) + d[studyid[i],treat[i]] 
+}
+sigma ~ dgamma(0.001, 0.001)
+
+#####treatment effect
+for(j in 1:Nstudies){
+	d[j,1] <- 0
+	d[j,2] ~ dnorm(delta[2], tau)
+}
+
+## prior distribution for heterogeneity of the treatment effect
+tau <- pow(sd, -2)
+sd ~ dnorm(0,1);T(0,)
+
+## prior distribution for average treatment effect
+delta[1] <- 0
+delta[2] ~ dnorm(0, 0.001)
+
+
+## prior distribution for baseline effect
+for (j in 1:Nstudies){
+	a[j] ~ dnorm(0, 0.001)	
+}
+
+tt <- lambda * sigma  # uses conditional prior
+lambda ~ dgamma(2, 0.1) # this diffuse prior has mean 20, variance 200 
+
+for(k in 1:Ncovariate){
+	beta[k] ~ dnorm(0, 0.001)
+}
+
+for(k in 1:Ncovariate){
+	gamma[k] ~ ddexp(0, tt) # penalization is only on gamma
+}
+}
+```
+
+
+```{r bayesLasso, cache = TRUE}
+model_bayesLASSO<- jags(data = data_jags_depression, inits = NULL,
+                 parameters.to.save =  c("gamma", "delta", "beta", "sd"),
+                 n.chains = 3, n.iter = 10000,
+                 n.burnin = 1000,DIC=F,
+                 model.file = modelBayesLasso)
+```
+
+```{r}
+print(model_bayesLASSO)
+model_bayesLASSO$BUGSoutput
+```
+
+## SSVS
+
+```{r}
+modelSSVS <- function(){
+
+########## IPD-MA model
+for (i in 1:Np){
+	y[i] ~ dnorm(mu[i], sigma)  
+	mu[i]<- a[studyid[i]] + inprod(beta[], X[i,]) +
+	 (1 - equals(treat[i],1)) * inprod(gamma[], X[i,]) + d[studyid[i],treat[i]] 
+}
+sigma ~ dgamma(0.001, 0.001)
+
+
+#####treatment effect
+for(j in 1:Nstudies){
+	d[j,1] <- 0
+	d[j,2] ~ dnorm(delta[2], tau)
+}
+
+## prior distribution for heterogeneity of the treatment effect
+tau <- pow(sd, -2)
+sd ~ dnorm(0,1);T(0,)
+
+## prior distribution for average treatment effect
+delta[1] <- 0
+delta[2] ~ dnorm(0, 0.001)
+
+
+## prior distribution for baseline effect
+for (j in 1:Nstudies){
+	a[j] ~ dnorm(0, 0.001)	
+}
+
+for(k in 1:Ncovariate){
+	beta[k] ~ dnorm(0, 0.001)
+}
+
+for(k in 1:Ncovariate){
+	IndA[k] ~ dcat(Pind[])
+	Ind[k] <- IndA[k] - 1
+	gamma[k] ~ dnorm(0, tauCov[IndA[k]])
+}
+
+zeta <- pow(eta, -2)
+eta ~ dunif(0, 5)
+tauCov[1] <- zeta
+tauCov[2] <- zeta * 0.01  # g = 100
+
+Pind[1] <- 0.5 #P(I_j=1)= 0.5
+Pind[2] <- 0.5 
+
+}
+```
+
+
+```{r SSVS_depression, cache = TRUE}
+model_SSVS<- jags(data = data_jags_depression, inits = NULL,
+                 parameters.to.save = c("gamma", "delta", "beta", "sd"),
+                 n.chains = 3, n.iter = 10000,
+                 n.burnin = 1000,DIC=F,
+                 model.file = modelSSVS)
+```
+
+```{r}
+print(model_SSVS)
+model_SSVS$BUGSoutput
+```
+
+
+

@@ -72,10 +72,6 @@ X <- mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtrea
 
 # Total data: 11433 -> complete cases X: 11106 
 
-col_labels_stent <- c("age", "gender", "diabetes", "stable_cad", "multivessel", "ladtreated", "overlap", "m_dia_above_3", "num_stent")
-col_labels_stent_all <- c("(Intercept)", col_labels_stent, paste0(col_labels_stent, ":treat"), "treat", paste0("as.factor(studyid)", 1:length(unique(mydata$studyid))))
-col_labels_stent_glmm <- c("(Intercept)", col_labels_stent, paste0(col_labels_stent, "_treat"), "treat", paste0("as.factor(studyid)", 1:length(unique(mydata$studyid))))
-
 expit <- function(x){
   exp(x)/(1+exp(x))
 }
@@ -179,11 +175,6 @@ sd_values
 
 ```{r ridge_stent, cache = TRUE}
 set.seed(1)
-data_glmnet <- model.matrix(y~ studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat, data = mydata)
-data_glmnet <- data_glmnet[,-1]
-data_glmnet <- cbind(y = mydata$y, data_glmnet = data_glmnet)
-
-p.fac.stent <- c(rep(0, 7), rep(0, 9), 0, rep(1,9)) #No shrinkage for treatment effect and baseline effect
 cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.stent, family = "binomial", type.measure = "deviance", standardize = FALSE, alpha = 0)
 coef(cvfit, s = "lambda.min")
 ```
@@ -258,7 +249,7 @@ for(k in 1:Ncovariate){
 ```{r bayesianLASSO_stent, cache = TRUE}
 model_bayesLASSO<- jags(data = data_jags_stent, inits = NULL,
                  parameters.to.save =  c("gamma", "delta", "beta", "sd"),
-                 n.chains = 2, n.iter = 10000,
+                 n.chains = 3, n.iter = 10000,
                  n.burnin = 1000,DIC=F,
                  model.file = modelBayesLasso)
 ```
@@ -344,7 +335,7 @@ Pind[2] <- 0.5
 ```{r SSVS_stent, cache = TRUE}
 model_SSVS <- jags(data = data_jags_stent, inits = NULL,
                  parameters.to.save =  c("gamma", "delta", "beta", "sd", "Ind"),
-                 n.chains = 2, n.iter = 10000,
+                 n.chains = 3, n.iter = 10000,
                  n.burnin = 1000, DIC=F,
                  model.file = modelSSVS)
 ```
