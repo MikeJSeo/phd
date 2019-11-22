@@ -56,6 +56,7 @@ pf <- c(1,2,3,4,5)
 em <- NULL
 beta <- c(0.2, 0.2, 0.2, 0.2, 0.2)
 gamma <- NULL
+tau = 0.2
 
 glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + treat + (-1 + treat|studyid)")
 glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")

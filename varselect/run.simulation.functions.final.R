@@ -7,7 +7,7 @@ run.simulation <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type, tau = tau)
     if(model.type == "gaussian"){
       m1 <- lmer(glmm_oracle_formula, data = data)
     } else if(model.type == "binary"){
@@ -25,7 +25,7 @@ run.simulation <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type, tau = tau)
     if(model.type == "gaussian"){
       m1 <- lmer(glmm_full_formula, data = data)
     } else if(model.type == "binary"){
@@ -42,7 +42,7 @@ run.simulation <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type, tau = tau)
     
     if(model.type == "gaussian"){
       m1 <- lm(step_full_formula, data = data)  
@@ -61,7 +61,7 @@ run.simulation <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type, tau = tau)
     
     data_glmnet <- model.matrix(step_full_formula, data = data)
     data_glmnet <- data_glmnet[,-1] 
@@ -83,7 +83,7 @@ run.simulation <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type, tau = tau)
     
     data_glmnet <- model.matrix(step_full_formula, data = data)
     data_glmnet <- data_glmnet[,-1] 
@@ -142,7 +142,7 @@ run.simulation2 <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type, tau = tau)
     
     data_jags <- with(data,{
       list(Nstudies = length(unique(studyid)),
@@ -178,7 +178,7 @@ run.simulation2 <- function(){
   for(i in seq(niter)){
     
     set.seed(i)
-    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type)
+    data <-generate.simulation(Nstudies = Nstudies, Ncovariate = Ncovariate, continuous.cov = continuous.cov, pf = pf, em = em, beta = beta, gamma = gamma, model.type = model.type, tau = tau)
     data_jags <- with(data,{
       list(Nstudies = length(unique(studyid)),
            X = data[,paste0("X",1:Ncovariate)],
