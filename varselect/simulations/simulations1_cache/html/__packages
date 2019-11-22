@@ -1,15 +1,8 @@
 base
-methods
-datasets
-utils
-grDevices
-graphics
-stats
 MASS
 Matrix
 lme4
 glmnet
 coda
-parallel
 dclone
 writexl
