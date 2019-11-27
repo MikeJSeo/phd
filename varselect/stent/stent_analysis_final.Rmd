@@ -166,7 +166,7 @@ bootstrap_function  <- function(model_data, ndraws, p.fac, family, alpha = 1, co
 ```
 
 ```{r lasso_se, cache = TRUE}
-col_labels <- c("age:treat", "gender:treat", "diabetes:treat", "stable_cad:trea", "multivessel:treat", "ladtreated:treat", "overlap:treat", "m_dia_above_3:treat", "num_stent:treat", "treat")
+col_labels <- c("age", "gender", "diabetes", "stable_cad", "multivessel", "ladtreated", "overlap", "m_dia_above_3", "num_stent", "age:treat", "gender:treat", "diabetes:treat", "stable_cad:trea", "multivessel:treat", "ladtreated:treat", "overlap:treat", "m_dia_above_3:treat", "num_stent:treat", "treat")
 sd_values <- bootstrap_function(model_data = data_glmnet, ndraws = 50, p.fac = p.fac.stent, family = "binomial", alpha = 1, col_labels)
 sd_values
 ```
