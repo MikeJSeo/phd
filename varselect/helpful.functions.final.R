@@ -56,11 +56,11 @@ generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.c
   data <- model.matrix(~ -1 + X*treat)
   
   meany <- alpha[studyid] + d[studyid] * treat + apply(X[,pf, drop = FALSE] * b[studyid,], 1, sum)
-    
+  
   if(!is.null(em)){
     meany <- meany + apply(X[,em, drop = FALSE] * c[studyid,] * treat, 1, sum)
   }
-      
+  
   sigmay <- 0.5
   py <- expit(meany)
 
