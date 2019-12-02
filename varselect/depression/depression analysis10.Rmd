@@ -269,14 +269,12 @@ mat1 <- model_bayesLASSO$BUGSoutput$sims.matrix[,c("delta[2]", "gamma[1]", "gamm
 
 #group1
 sum1 <- mat1 %*% c(1, group1_std)
-
 mean1 <- mean(sum1)
 se1 <- sd(sum1)
 mean1 + qnorm(c(.025,0.5,.975))* se1
 
 # group2
 sum2 <- mat1 %*% c(1, group2_std)
-
 mean2 <- mean(sum2)
 se2 <- sd(sum2)
 mean2 + qnorm(c(.025,0.5,.975))* se2
@@ -357,14 +355,12 @@ mat1 <- model_SSVS$BUGSoutput$sims.matrix[,c("delta[2]", "gamma[1]", "gamma[2]",
 
 #group1
 sum1 <- mat1 %*% c(1, group1_std)
-
 mean1 <- mean(sum1)
 se1 <- sd(sum1)
 mean1 + qnorm(c(.025,0.5,.975))* se1
 
 # group2
 sum2 <- mat1 %*% c(1, group2_std)
-
 mean2 <- mean(sum2)
 se2 <- sd(sum2)
 mean2 + qnorm(c(.025,0.5,.975))* se2
