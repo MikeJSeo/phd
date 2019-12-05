@@ -103,10 +103,7 @@ group1_std <- (group1 - mean_val)/sd_val
 contr <- c(rep(0, 4), rep(0, 10), 1, group1_std)
 v1 <- vcov(m2)
 se1 <- c(sqrt(contr %*% v1 %*% contr))
-se1
 mean1 <- c(contr %*% t(coef(m2)$studyid[1,]))
-coef(m2)$studyid
-mean1
 
 mean1 + qnorm(c(.025,0.5,.975))* as.vector(se1[[1]])
 
@@ -127,7 +124,7 @@ mean2 + qnorm(c(.025,0.5,.975))* as.vector(se2[[1]])
 
 ```{r naive_step, results = "hide"}
 m3 <- lm(y ~ studyid + (baseseverity.hamd_total_start. + age + sex_m1_f2 + onset + episode_frequency_1_2_3over + episode_duration_wk + gilty_agitationHAM10_11_12_15_17 + body_symptoms_HAM9_13_14 + sleep_problems + anhedonia_redardationHAM1_2_3_16)*treat, data = mydata)
-s3 <- step(m3, scope = list(lower = ~ baseseverity.hamd_total_start. + age + sex_m1_f2 + onset + episode_frequency_1_2_3over + episode_duration_wk + gilty_agitationHAM10_11_12_15_17 + body_symptoms_HAM9_13_14 + sleep_problems + anhedonia_redardationHAM1_2_3_16 + treat), direction = "both")
+s3 <- step(m3, scope = list(lower = ~ studyid + baseseverity.hamd_total_start. + age + sex_m1_f2 + onset + episode_frequency_1_2_3over + episode_duration_wk + gilty_agitationHAM10_11_12_15_17 + body_symptoms_HAM9_13_14 + sleep_problems + anhedonia_redardationHAM1_2_3_16 + treat), direction = "both")
 ```
 
 ```{r}
@@ -157,12 +154,30 @@ mean2 + qnorm(c(.025,0.5,.975))* as.vector(se2[[1]])
 
 ```{r glmnet}
 set.seed(1)
-data_glmnet <- model.matrix(y~ -1 + (baseseverity.hamd_total_start. + age + sex_m1_f2 + onset + episode_frequency_1_2_3over + episode_duration_wk + gilty_agitationHAM10_11_12_15_17 + body_symptoms_HAM9_13_14 + sleep_problems + anhedonia_redardationHAM1_2_3_16) * treat, data = mydata)
+data_glmnet <- model.matrix(y~ studyid + (baseseverity.hamd_total_start. + age + sex_m1_f2 + onset + episode_frequency_1_2_3over + episode_duration_wk + gilty_agitationHAM10_11_12_15_17 + body_symptoms_HAM9_13_14 + sleep_problems + anhedonia_redardationHAM1_2_3_16) * treat, data = mydata)
+data_glmnet <- data_glmnet[,-1]
 data_glmnet <- cbind(y = mydata$y, data_glmnet = data_glmnet)
 
-p.fac.depression = c(rep(0, 10), 0, rep(1, 10)) #No shrinkage for treatment effect and prognostic effect
+p.fac.depression = c(rep(0, 3), rep(0, 10), 0, rep(1, 10)) #No shrinkage for treatment effect and prognostic effect
 cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.depression, family= "gaussian", type.measure = "deviance", standardize = FALSE)
 coef(cvfit, s = "lambda.min")
+```
+
+```{r}
+# first group
+group1 <- c(15, 25, 1, 20, 1, 42.0356886, 5.4821570, 5, 5, 7.4845361)
+
+group1_std <- (group1 - mean_val)/sd_val
+
+contr <- c(rep(0, 4), rep(0, 10), 1, group1_std)
+contr %*% coef(cvfit, s = "lambda.min")
+
+# second group
+group2 <- c(25, 45, 0, 45, 0, 42.0356886, 5.4821570, 2, 1.5, 7.4845361)
+group2_std <- (group2 - mean_val)/sd_val
+
+contr <- c(rep(0, 4), rep(0, 10), 1, group2_std)
+contr %*% coef(cvfit, s = "lambda.min")
 ```
 
 ```{r}
@@ -197,6 +212,24 @@ set.seed(1)
 cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.depression, family= "gaussian", type.measure = "deviance", standardize = FALSE, alpha = 0)
 coef(cvfit, s = "lambda.min")
 ```
+
+```{r}
+# first group
+group1 <- c(15, 25, 1, 20, 1, 42.0356886, 5.4821570, 5, 5, 7.4845361)
+
+group1_std <- (group1 - mean_val)/sd_val
+
+contr <- c(rep(0, 4), rep(0, 10), 1, group1_std)
+contr %*% coef(cvfit, s = "lambda.min")
+
+# second group
+group2 <- c(25, 45, 0, 45, 0, 42.0356886, 5.4821570, 2, 1.5, 7.4845361)
+group2_std <- (group2 - mean_val)/sd_val
+
+contr <- c(rep(0, 4), rep(0, 10), 1, group2_std)
+contr %*% coef(cvfit, s = "lambda.min")
+```
+
 
 ```{r ridge_sd}
 #sd_values2 <- bootstrap_function(model_data = data_glmnet, ndraws = 50, p.fac = p.fac.depression, family = "gaussian", alpha = 0, col_labels)
