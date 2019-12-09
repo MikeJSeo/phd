@@ -59,11 +59,7 @@ ui <- shinyUI(fluidPage(
       h2("Input patient characteristics"),
       radioButtons("examples", "Examples", c("Average values" = "average", "Case of a patient belonging to group 1" = "group1", "Case of a patient belonging to group 2" = "group2", "Case of a patient belonging to group 3" = "group3")),
       
-      # conditionalPanel(condition = "input.examples == 'average'",
-      #                  sliderInput("age", "Age in years", min = 25, max = 75, value = 35)
-      # ),
-      uiOutput("age11"),
-
+      sliderInput("age", "Age in years", min = 25, max = 75, value = 45),
       radioButtons("sex", "Sex", c("Male" = 1, "Female" = 2)),      
       sliderInput("educatenumber", "Years of education", min = 8, max = 28, value = 12),
       selectInput("work", "Employment", choices = work_choices),
@@ -72,15 +68,15 @@ ui <- shinyUI(fluidPage(
       sliderInput("depression_episode_number", "Number of depression episodes", min = 1, max = 50, value = 3),
       sliderInput("episode_months", "Length of current depressive episode in months", min = 1, max = 276, value = 2),
       radioButtons("physical_illness", "Physical Illness", c("No" = 0, "Yes" = 1)),
-      sliderInput("primemd_q1", "PHQ-9 item 1 at baseline", min = 9, max = 3, value = 10),
-      sliderInput("primemd_q2", "PHQ-9 item 2 at baseline", min = 9, max = 3, value = 10),
-      sliderInput("primemd_q3", "PHQ-9 item 3 at baseline", min = 9, max = 3, value = 10),
-      sliderInput("primemd_q4", "PHQ-9 item 4 at baseline", min = 9, max = 3, value = 10),
-      sliderInput("primemd_q5", "PHQ-9 item 5 at baseline", min = 9, max = 3, value = 10),
-      sliderInput("primemd_q6", "PHQ-9 item 6 at baseline", min = 9, max = 3, value = 10),
-      sliderInput("primemd_q7", "PHQ-9 item 7 at baseline", min = 9, max = 3, value = 10),
-      sliderInput("primemd_q8", "PHQ-9 item 8 at baseline", min = 9, max = 3, value = 10),
-      sliderInput("primemd_q9", "PHQ-9 item 9 at baseline", min = 9, max = 3, value = 10),
+      uiOutput("primemd_q1"),
+      uiOutput("primemd_q2"),
+      uiOutput("primemd_q3"),
+      uiOutput("primemd_q4"),
+      uiOutput("primemd_q5"),
+      uiOutput("primemd_q6"),
+      uiOutput("primemd_q7"),
+      uiOutput("primemd_q8"),
+      uiOutput("primemd_q9"),
       sliderInput("phq9_q1_1", "PHQ-9 item 1 at week 1", min = 0, max = 3, value = 0),
       sliderInput("phq9_q2_1", "PHQ-9 item 2 at week 1", min = 0, max = 3, value = 0),
       sliderInput("phq9_q3_1", "PHQ-9 item 3 at week 1", min = 0, max = 3, value = 0),
@@ -173,17 +169,135 @@ ui <- shinyUI(fluidPage(
 server <- shinyServer(function(input, output) {
 
 
-  output$age11 <- renderUI({
-
+  # output$age <- renderUI({
+  # 
+  #   if(input$examples == "average"){
+  #     value = 30
+  #   } else if(input$examples == "group1"){
+  #     value = 15
+  #   } else{
+  #     value = 12
+  #   }
+  #   if(!is.null(value)){
+  #     sliderInput("age", "Age in years", min = 25, max = 75, value = 45)  
+  #   }
+  # })
+  
+  output$primemd_q1 <- renderUI({
+      if(input$examples == "average"){
+        value = 1
+      } else if(input$examples == "group1"){
+        value = 1
+      } else if(input$examples == "group2"){
+        value = 2
+      } else if(input$examples == "group3"){
+        value = 2
+      }
+      sliderInput("primemd_q1", "PHQ-9 item 1 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$primemd_q2 <- renderUI({
     if(input$examples == "average"){
-       value = 30
-    } else{
-      value = 15
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
     }
-    if(!is.null(value)){
-      sliderInput("age", "Age in years", min = 25, max = 75, value = value)  
+    sliderInput("primemd_q2", "PHQ-9 item 2 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$primemd_q3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
     }
-    
+    sliderInput("primemd_q3", "PHQ-9 item 3 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$primemd_q4 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("primemd_q4", "PHQ-9 item 4 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$primemd_q5 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("primemd_q5", "PHQ-9 item 5 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$primemd_q6 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("primemd_q6", "PHQ-9 item 6 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$primemd_q7 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("primemd_q7", "PHQ-9 item 7 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$primemd_q8 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("primemd_q8", "PHQ-9 item 8 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$primemd_q9 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("primemd_q9", "PHQ-9 item 9 at baseline", min = 0, max = 3, value = value)
   })
   
   
@@ -204,9 +318,6 @@ server <- shinyServer(function(input, output) {
     physical_illness = as.numeric(input$physical_illness)
     
     age = input$age
-    print(input$age)
-    print(input$age11)
-   # print(input$age11)
     educatenumber = input$educatenumber
     depression_age = input$depression_age
     depression_episode_number = input$depression_episode_number
@@ -295,88 +406,83 @@ server <- shinyServer(function(input, output) {
     
     ### create data frame
     dat1=list(
-      age, sex, educatenumber, w2, w3, 
-      w4, w5, w6, w7, ed2, ed3, ed4, depression_age, 
-      depression_episode_number, episode_months, physical_illness, 
-      primemd_q1, primemd_q2, primemd_q3, primemd_q4, primemd_q5, 
-      primemd_q6, primemd_q7, primemd_q8, primemd_q9, phq9_q1_1, 
-      phq9_q2_1, phq9_q3_1, phq9_q4_1, phq9_q5_1, phq9_q6_1, 
-      phq9_q7_1, phq9_q8_1, phq9_q9_1, w1_fibser_q1, w1_fibser_q2, 
-      w1_fibser_q3, w1_fibser_q4, bdi_q1_1, bdi_q2_1, bdi_q3_1, 
-      bdi_q4_1, bdi_q5_1, bdi_q6_1, bdi_q7_1, bdi_q8_1, bdi_q9_1, 
-      bdi_q10_1, bdi_q11_1, bdi_q12_1, bdi_q13_1, bdi_q14_1, 
-      bdi_q15_1, bdi_q17_1, bdi_q19_1, bdi_q20_1, bdi_q21_1, 
-      phq9_q1_3, phq9_q2_3, phq9_q3_3, phq9_q4_3, phq9_q5_3, 
-      phq9_q6_3, phq9_q7_3, phq9_q8_3, phq9_q9_3, w3_fibser_q1, 
-      w3_fibser_q2, w3_fibser_q3, w3_fibser_q4, bdi_q1_3, bdi_q2_3, 
-      bdi_q3_3, bdi_q4_3, bdi_q5_3, bdi_q6_3, bdi_q7_3, bdi_q8_3, 
-      bdi_q9_3, bdi_q10_3, bdi_q11_3, bdi_q12_3, bdi_q13_3, 
-      bdi_q14_3, bdi_q15_3, bdi_q17_3, bdi_q19_3, bdi_q20_3, 
-      bdi_q21_3, bdi_q16_1longer, bdi_q16_1shorter, bdi_q18_1longer, 
-      bdi_q18_1shorter, bdi_q16_3longer, bdi_q16_3shorter, bdi_q18_3longer, 
-      bdi_q18_3shorter)
+      age = age, sex = sex, educatenumber = educatenumber, w2 = w2, w3 = w3, 
+      w4 = w4, w5 = w5, w6 = w6, w7 = w7, ed2 = ed2, ed3 = ed3, ed4 = ed4, depression_age = depression_age, 
+      depression_episode_number = depression_episode_number, episode_months = episode_months, physical_illness = physical_illness, 
+      primemd_q1 = primemd_q1, primemd_q2 = primemd_q2, primemd_q3 = primemd_q3, primemd_q4 = primemd_q4, primemd_q5 = primemd_q5, 
+      primemd_q6 = primemd_q6, primemd_q7 = primemd_q7, primemd_q8 = primemd_q8, primemd_q9 = primemd_q9, phq9_q1_1 = phq9_q1_1, 
+      phq9_q2_1 = phq9_q2_1, phq9_q3_1 = phq9_q3_1, phq9_q4_1 = phq9_q4_1, phq9_q5_1 = phq9_q5_1, phq9_q6_1 = phq9_q6_1, 
+      phq9_q7_1 = phq9_q7_1, phq9_q8_1 = phq9_q8_1, phq9_q9_1 = phq9_q9_1, w1_fibser_q1 = w1_fibser_q1, w1_fibser_q2 = w1_fibser_q2, 
+      w1_fibser_q3 = w1_fibser_q3, w1_fibser_q4 = w1_fibser_q4, bdi_q1_1 = bdi_q1_1, bdi_q2_1 = bdi_q2_1, bdi_q3_1 = bdi_q3_1, 
+      bdi_q4_1 = bdi_q4_1, bdi_q5_1 = bdi_q5_1, bdi_q6_1 = bdi_q6_1, bdi_q7_1 = bdi_q7_1, bdi_q8_1 = bdi_q8_1, bdi_q9_1 = bdi_q9_1, 
+      bdi_q10_1 = bdi_q10_1, bdi_q11_1 = bdi_q11_1, bdi_q12_1 = bdi_q12_1, bdi_q13_1 = bdi_q13_1, bdi_q14_1 = bdi_q14_1, 
+      bdi_q15_1 = bdi_q15_1, bdi_q17_1 = bdi_q17_1, bdi_q19_1 = bdi_q19_1, bdi_q20_1 = bdi_q20_1, bdi_q21_1 = bdi_q21_1, 
+      phq9_q1_3 = phq9_q1_3, phq9_q2_3 = phq9_q2_3, phq9_q3_3 = phq9_q3_3, phq9_q4_3 = phq9_q4_3, phq9_q5_3 = phq9_q5_3, 
+      phq9_q6_3 = phq9_q6_3, phq9_q7_3 = phq9_q7_3, phq9_q8_3 = phq9_q8_3, phq9_q9_3 = phq9_q9_3, w3_fibser_q1 = w3_fibser_q1, 
+      w3_fibser_q2 = w3_fibser_q2, w3_fibser_q3 = w3_fibser_q3, w3_fibser_q4 = w3_fibser_q4, bdi_q1_3 = bdi_q1_3, bdi_q2_3 = bdi_q2_3, 
+      bdi_q3_3 = bdi_q3_3, bdi_q4_3 = bdi_q4_3, bdi_q5_3 = bdi_q5_3, bdi_q6_3 = bdi_q6_3, bdi_q7_3 = bdi_q7_3, bdi_q8_3 = bdi_q8_3, 
+      bdi_q9_3 = bdi_q9_3, bdi_q10_3 = bdi_q10_3, bdi_q11_3 = bdi_q11_3, bdi_q12_3 = bdi_q12_3, bdi_q13_3 = bdi_q13_3, 
+      bdi_q14_3 = bdi_q14_3, bdi_q15_3 = bdi_q15_3, bdi_q17_3 = bdi_q17_3, bdi_q19_3 = bdi_q19_3, bdi_q20_3 = bdi_q20_3, 
+      bdi_q21_3 = bdi_q21_3, bdi_q16_1longer = bdi_q16_1longer, bdi_q16_1shorter = bdi_q16_1shorter, bdi_q18_1longer = bdi_q18_1longer, 
+      bdi_q18_1shorter = bdi_q18_1shorter, bdi_q16_3longer = bdi_q16_3longer, bdi_q16_3shorter = bdi_q16_3shorter, bdi_q18_3longer = bdi_q18_3longer, 
+      bdi_q18_3shorter = bdi_q18_3shorter)
+    return(dat1)
   })
    
   
-  # getOutput <- reactive({
-  #   
-  #   dat1 <- getData()
-  #   
-  #   if(dat1)
-  #   dat2 = scale(dat1, center = xmeans, scale = xsd)
-  #   
-  #   ### predict the outcome for the three different treamtents
-  #   y1<- exp(predict(svm_Radial.t1, newdata = dat2))-1   #### continue sertraline
-  #   y2<- exp(predict(svm_Radial.t2, newdata = dat2))-1   #### combine with mirtazapine
-  #   y3<- exp(predict(svm_Radial.t3, newdata = dat2))-1   #### switch to mirtazapine
-  #   ind=1*(y1<y2&y1<y3)+2*(y2<y1&y2<y3)+3*(y3<y2&y3<y1)
-  #   best.strategy="combine sertraline and mirtazapine (second best: continue sertraline)"
-  #   if(ind==2){best.strategy="combine sertraline and mirtazapine (or switch to mirtazapine)"}
-  #   if(ind==3){best.strategy="switch to mirtazapine (or combine sertraline and mirtazapine)"}
-  #   
-  #   text1 = paste("The predicted PHQ9 score after 6 weeks, if continuing on sertraline, is ", round(y1,digits=1),".",sep="")
-  #   text2 = paste("The predicted PHQ9 score after 6 weeks, if combining sertraline and mirtazapine, is ", round(y2,digits=1),".",sep="")
-  #   text3 = paste("The predicted PHQ9 score after 6 weeks, if switching to mirtazapine, is ", round(y3,digits=1),".",sep="")
-  #   text4 = paste("The best predicted treatment strategy is to ", best.strategy,".",sep="")
-  #   
-  #   data = list(dat1 = dat1, best.strategy = best.strategy, text1 = text1, text2 = text2, text3 = text3, text4 = text4)
-  #   data
-  # })
-  
+  getOutput <- reactive({
+
+    dat1 <- getData()
+
+    if(all(!sapply(dat1, is.null))){
+      dat1 <- as.data.frame(dat1)
+      
+      dat2 = scale(dat1, center = xmeans, scale = xsd)
+      
+      ### predict the outcome for the three different treamtents
+      y1<- exp(predict(svm_Radial.t1, newdata = dat2))-1   #### continue sertraline
+      y2<- exp(predict(svm_Radial.t2, newdata = dat2))-1   #### combine with mirtazapine
+      y3<- exp(predict(svm_Radial.t3, newdata = dat2))-1   #### switch to mirtazapine
+      ind=1*(y1<y2&y1<y3)+2*(y2<y1&y2<y3)+3*(y3<y2&y3<y1)
+      best.strategy="combine sertraline and mirtazapine (second best: continue sertraline)"
+      if(ind==2){best.strategy="combine sertraline and mirtazapine (or switch to mirtazapine)"}
+      if(ind==3){best.strategy="switch to mirtazapine (or combine sertraline and mirtazapine)"}
+      
+      text1 = paste("The predicted PHQ9 score after 6 weeks, if continuing on sertraline, is ", round(y1,digits=1),".",sep="")
+      text2 = paste("The predicted PHQ9 score after 6 weeks, if combining sertraline and mirtazapine, is ", round(y2,digits=1),".",sep="")
+      text3 = paste("The predicted PHQ9 score after 6 weeks, if switching to mirtazapine, is ", round(y3,digits=1),".",sep="")
+      text4 = paste("The best predicted treatment strategy is to ", best.strategy,".",sep="")
+      
+      data = list(dat1 = dat1, best.strategy = best.strategy, text1 = text1, text2 = text2, text3 = text3, text4 = text4)
+      data  
+    }
+  })
     
-    output$dataframe = renderTable({
-      data = getOutput()
-      if(!is.null(data)){
-        apply(data$dat1, 2, as.numeric)
-      }
-    }, rownames = TRUE)
+  output$dataframe = renderTable({
     
-    output$text1 = renderText({
-      data = getOutput()
-      if(!is.null(data)){
-        data$text1
-      }
-    })
+    data = getOutput()
+    apply(data$dat1, 2, as.numeric)
+  }, rownames = TRUE)
     
-    output$text2 = renderText({
-      data = getOutput()
-      if(!is.null(data)){
-        data$text2
-      }
-    })
-    
-    output$text3 = renderText({
-      data = getData()
-      #print(data)
-      if(!is.null(data)){
-        data$text3
-      }
-    })
-    
-    output$text4 = renderText({
-      data = getData()
-      paste(data$text4)
-    })
+  output$text1 = renderText({
+    data = getOutput()
+    data$text1
+  })
+
+  output$text2 = renderText({
+    data = getOutput()
+    data$text2
+  })
+
+  output$text3 = renderText({
+    data = getOutput()
+    data$text3
+  })
+
+  output$text4 = renderText({
+    data = getOutput()
+    data$text4
+  })
     
   
 })
