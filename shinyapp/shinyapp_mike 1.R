@@ -56,8 +56,9 @@ ui <- shinyUI(fluidPage(
   sidebarLayout(
     
     sidebarPanel(
-      h2("Input patient characteristics"),
+      
       radioButtons("examples", "Examples", c("Average values" = "average", "Case of a patient belonging to group 1" = "group1", "Case of a patient belonging to group 2" = "group2", "Case of a patient belonging to group 3" = "group3")),
+      h2("Input patient characteristics"),
       
       sliderInput("age", "Age in years", min = 25, max = 75, value = 45),
       radioButtons("sex", "Sex", c("Male" = 1, "Female" = 2)),      
@@ -77,15 +78,15 @@ ui <- shinyUI(fluidPage(
       uiOutput("primemd_q7"),
       uiOutput("primemd_q8"),
       uiOutput("primemd_q9"),
-      sliderInput("phq9_q1_1", "PHQ-9 item 1 at week 1", min = 0, max = 3, value = 0),
-      sliderInput("phq9_q2_1", "PHQ-9 item 2 at week 1", min = 0, max = 3, value = 0),
-      sliderInput("phq9_q3_1", "PHQ-9 item 3 at week 1", min = 0, max = 3, value = 0),
-      sliderInput("phq9_q4_1", "PHQ-9 item 4 at week 1", min = 0, max = 3, value = 0),
-      sliderInput("phq9_q5_1", "PHQ-9 item 5 at week 1", min = 0, max = 3, value = 0),
-      sliderInput("phq9_q6_1", "PHQ-9 item 6 at week 1", min = 0, max = 3, value = 0),
-      sliderInput("phq9_q7_1", "PHQ-9 item 7 at week 1", min = 0, max = 3, value = 0),
-      sliderInput("phq9_q8_1", "PHQ-9 item 8 at week 1", min = 0, max = 3, value = 0),
-      sliderInput("phq9_q9_1", "PHQ-9 item 9 at week 1", min = 0, max = 3, value = 0),
+      uiOutput("phq9_q1_1"),
+      uiOutput("phq9_q2_1"),
+      uiOutput("phq9_q3_1"),
+      uiOutput("phq9_q4_1"),
+      uiOutput("phq9_q5_1"),
+      uiOutput("phq9_q6_1"),
+      uiOutput("phq9_q7_1"),
+      uiOutput("phq9_q8_1"),
+      uiOutput("phq9_q9_1"),
       sliderInput("w1_fibser_q1", "Adherence at week 1", min = 1, max = 7, value = 1),
       sliderInput("w1_fibser_q2", "FIBSER item 1 at week 1", min = 1, max = 7, value = 1),
       sliderInput("w1_fibser_q3", "FIBSER item 2 at week 1", min = 1, max = 7, value = 1),
@@ -169,137 +170,255 @@ ui <- shinyUI(fluidPage(
 server <- shinyServer(function(input, output) {
 
 
-  # output$age <- renderUI({
-  # 
-  #   if(input$examples == "average"){
-  #     value = 30
-  #   } else if(input$examples == "group1"){
-  #     value = 15
-  #   } else{
-  #     value = 12
-  #   }
-  #   if(!is.null(value)){
-  #     sliderInput("age", "Age in years", min = 25, max = 75, value = 45)  
-  #   }
-  # })
-  
+
   output$primemd_q1 <- renderUI({
       if(input$examples == "average"){
-        value = 1
+        value = 2.5
       } else if(input$examples == "group1"){
-        value = 1
+        value = 2.6
       } else if(input$examples == "group2"){
-        value = 2
+        value = 2.5
       } else if(input$examples == "group3"){
-        value = 2
+        value = 2.4
       }
-      sliderInput("primemd_q1", "PHQ-9 item 1 at baseline", min = 0, max = 3, value = value)
+      sliderInput("primemd_q1", "PHQ-9 item 1 at baseline", min = 0, max = 3, value = value, step = 0.1)
   })
   
   output$primemd_q2 <- renderUI({
     if(input$examples == "average"){
-      value = 1
+      value = 2.5
     } else if(input$examples == "group1"){
-      value = 1
+      value = 2.6
     } else if(input$examples == "group2"){
-      value = 2
+      value = 2.5
     } else if(input$examples == "group3"){
-      value = 2
+      value = 2.5
     }
-    sliderInput("primemd_q2", "PHQ-9 item 2 at baseline", min = 0, max = 3, value = value)
+    sliderInput("primemd_q2", "PHQ-9 item 2 at baseline", min = 0, max = 3, value = value, step = 0.1)
   })
   
   output$primemd_q3 <- renderUI({
     if(input$examples == "average"){
-      value = 1
+      value = 2.4
     } else if(input$examples == "group1"){
-      value = 1
+      value = 2.4
     } else if(input$examples == "group2"){
-      value = 2
+      value = 2.4
     } else if(input$examples == "group3"){
-      value = 2
+      value = 2.3
     }
-    sliderInput("primemd_q3", "PHQ-9 item 3 at baseline", min = 0, max = 3, value = value)
+    sliderInput("primemd_q3", "PHQ-9 item 3 at baseline", min = 0, max = 3, value = value, step = 0.1)
   })
   
   output$primemd_q4 <- renderUI({
     if(input$examples == "average"){
-      value = 1
+      value = 2.6
     } else if(input$examples == "group1"){
-      value = 1
+      value = 2.7
     } else if(input$examples == "group2"){
-      value = 2
+      value = 2.6
     } else if(input$examples == "group3"){
-      value = 2
+      value = 2.6
     }
-    sliderInput("primemd_q4", "PHQ-9 item 4 at baseline", min = 0, max = 3, value = value)
+    sliderInput("primemd_q4", "PHQ-9 item 4 at baseline", min = 0, max = 3, value = value, step = 0.1)
   })
   
   output$primemd_q5 <- renderUI({
     if(input$examples == "average"){
-      value = 1
+      value = 2.0
     } else if(input$examples == "group1"){
-      value = 1
+      value = 2.1
     } else if(input$examples == "group2"){
-      value = 2
+      value = 2.0
     } else if(input$examples == "group3"){
-      value = 2
+      value = 2.0
     }
-    sliderInput("primemd_q5", "PHQ-9 item 5 at baseline", min = 0, max = 3, value = value)
+    sliderInput("primemd_q5", "PHQ-9 item 5 at baseline", min = 0, max = 3, value = value, step = 0.1)
   })
   
   output$primemd_q6 <- renderUI({
     if(input$examples == "average"){
-      value = 1
+      value = 2.2
     } else if(input$examples == "group1"){
-      value = 1
+      value = 2.4
     } else if(input$examples == "group2"){
-      value = 2
+      value = 2.2
     } else if(input$examples == "group3"){
-      value = 2
+      value = 2.1
     }
-    sliderInput("primemd_q6", "PHQ-9 item 6 at baseline", min = 0, max = 3, value = value)
+    sliderInput("primemd_q6", "PHQ-9 item 6 at baseline", min = 0, max = 3, value = value, step = 0.1)
   })
   
   output$primemd_q7 <- renderUI({
     if(input$examples == "average"){
-      value = 1
+      value = 2.0
     } else if(input$examples == "group1"){
-      value = 1
+      value = 2.1
     } else if(input$examples == "group2"){
-      value = 2
+      value = 2.1
     } else if(input$examples == "group3"){
-      value = 2
+      value = 1.9
     }
-    sliderInput("primemd_q7", "PHQ-9 item 7 at baseline", min = 0, max = 3, value = value)
+    sliderInput("primemd_q7", "PHQ-9 item 7 at baseline", min = 0, max = 3, value = value, step = 0.1)
   })
   
   output$primemd_q8 <- renderUI({
     if(input$examples == "average"){
-      value = 1
+      value = 1.6
     } else if(input$examples == "group1"){
-      value = 1
+      value = 1.8
     } else if(input$examples == "group2"){
-      value = 2
+      value = 1.7
     } else if(input$examples == "group3"){
-      value = 2
+      value = 1.5
     }
-    sliderInput("primemd_q8", "PHQ-9 item 8 at baseline", min = 0, max = 3, value = value)
+    sliderInput("primemd_q8", "PHQ-9 item 8 at baseline", min = 0, max = 3, value = value, step = 0.1)
   })
   
   output$primemd_q9 <- renderUI({
     if(input$examples == "average"){
-      value = 1
+      value = 0.9
     } else if(input$examples == "group1"){
-      value = 1
+      value = 1.1
     } else if(input$examples == "group2"){
-      value = 2
+      value = 0.9
     } else if(input$examples == "group3"){
-      value = 2
+      value = 0.8
     }
-    sliderInput("primemd_q9", "PHQ-9 item 9 at baseline", min = 0, max = 3, value = value)
+    sliderInput("primemd_q9", "PHQ-9 item 9 at baseline", min = 0, max = 3, value = value, step = 0.1)
   })
   
+  output$phq9_q1_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 0.9
+    } else if(input$examples == "group1"){
+      value = 1.1
+    } else if(input$examples == "group2"){
+      value = 0.9
+    } else if(input$examples == "group3"){
+      value = 0.8
+    }
+    sliderInput("phq9_q1_1", "PHQ-9 item 1 at week 1", min = 0, max = 3, value = value, step = 0.1)
+  })
+  
+  output$phq9_q1_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 0.9
+    } else if(input$examples == "group1"){
+      value = 1.1
+    } else if(input$examples == "group2"){
+      value = 0.9
+    } else if(input$examples == "group3"){
+      value = 0.8
+    }
+    sliderInput("phq9_q1_1", "PHQ-9 item 1 at week 1", min = 0, max = 3, value = value, step = 0.1)
+  })
+  
+  output$phq9_q2_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 0.9
+    } else if(input$examples == "group1"){
+      value = 1.1
+    } else if(input$examples == "group2"){
+      value = 0.9
+    } else if(input$examples == "group3"){
+      value = 0.8
+    }
+    sliderInput("phq9_q2_1", "PHQ-9 item 2 at week 1", min = 0, max = 3, value = value, step = 0.1)
+  })
+  
+  output$phq9_q3_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 0.9
+    } else if(input$examples == "group1"){
+      value = 1.1
+    } else if(input$examples == "group2"){
+      value = 0.9
+    } else if(input$examples == "group3"){
+      value = 0.8
+    }
+    sliderInput("phq9_q3_1", "PHQ-9 item 3 at week 1", min = 0, max = 3, value = value, step = 0.1)
+  })
+  
+  output$phq9_q4_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 0.9
+    } else if(input$examples == "group1"){
+      value = 1.1
+    } else if(input$examples == "group2"){
+      value = 0.9
+    } else if(input$examples == "group3"){
+      value = 0.8
+    }
+    sliderInput("phq9_q4_1", "PHQ-9 item 4 at week 1", min = 0, max = 3, value = value, step = 0.1)
+  })
+  
+  output$phq9_q5_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 0.9
+    } else if(input$examples == "group1"){
+      value = 1.1
+    } else if(input$examples == "group2"){
+      value = 0.9
+    } else if(input$examples == "group3"){
+      value = 0.8
+    }
+    sliderInput("phq9_q5_1", "PHQ-9 item 5 at week 1", min = 0, max = 3, value = value, step = 0.1)
+  })
+  
+  output$phq9_q6_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 0.9
+    } else if(input$examples == "group1"){
+      value = 1.1
+    } else if(input$examples == "group2"){
+      value = 0.9
+    } else if(input$examples == "group3"){
+      value = 0.8
+    }
+    sliderInput("phq9_q6_1", "PHQ-9 item 6 at week 1", min = 0, max = 3, value = value, step = 0.1)
+  })
+  
+  output$phq9_q7_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 0.9
+    } else if(input$examples == "group1"){
+      value = 1.1
+    } else if(input$examples == "group2"){
+      value = 0.9
+    } else if(input$examples == "group3"){
+      value = 0.8
+    }
+    sliderInput("phq9_q7_1", "PHQ-9 item 7 at week 1", min = 0, max = 3, value = value, step = 0.1)
+  })
+  
+  output$phq9_q8_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 0.9
+    } else if(input$examples == "group1"){
+      value = 1.1
+    } else if(input$examples == "group2"){
+      value = 0.9
+    } else if(input$examples == "group3"){
+      value = 0.8
+    }
+    sliderInput("phq9_q8_1", "PHQ-9 item 8 at week 1", min = 0, max = 3, value = value, step = 0.1)
+  })
+  
+  output$phq9_q9_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 0.9
+    } else if(input$examples == "group1"){
+      value = 1.1
+    } else if(input$examples == "group2"){
+      value = 0.9
+    } else if(input$examples == "group3"){
+      value = 0.8
+    }
+    sliderInput("phq9_q9_1", "PHQ-9 item 9 at week 1", min = 0, max = 3, value = value, step = 0.1)
+  })
+  
+
   
   
   getData = reactive({
