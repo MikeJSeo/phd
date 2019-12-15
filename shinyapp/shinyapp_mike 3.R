@@ -160,7 +160,7 @@ ui <- shinyUI(fluidPage(
     mainPanel(
       
       tabsetPanel(id = 'gene set',
-                  tabPanel("Result", textOutput("text1"), textOutput("text2"), textOutput("text3"), textOutput("text5"), textOutput("text4"),
+                  tabPanel("Result", textOutput("text1"), textOutput("text2"), textOutput("text3"), plotOutput("plot1"), textOutput("text5"), textOutput("text4"),
                            tags$head(tags$style("#text4{color: blue;font-size: 25px;font-style:bold;} "))
                            
                            ),
@@ -195,7 +195,7 @@ server <- shinyServer(function(input, output) {
     } else if(input$examples == "group2"){
       value = 2
     } else if(input$examples == "group3"){
-      value = 2
+      value = 1
     }
     radioButtons("sex", "Sex", c("Male" = 1, "Female" = 2), selected = value)
   })
@@ -1514,7 +1514,7 @@ server <- shinyServer(function(input, output) {
       text4 = paste("The best predicted treatment strategy is to ", best.strategy,".",sep="")
       text5 = "For an appreciation of the uncertainty in relative treatment effects please see the paper, Table 2."
       
-      data = list(dat1 = dat1, best.strategy = best.strategy, text1 = text1, text2 = text2, text3 = text3, text4 = text4, text5 = text5)
+      data = list(dat1 = dat1, best.strategy = best.strategy, text1 = text1, text2 = text2, text3 = text3, text4 = text4, text5 = text5, y1 = round(y1,digits=1), y2 = round(y2,digits=1), y3 = round(y3,digits=1))
       data  
     }
   })
@@ -1550,7 +1550,26 @@ server <- shinyServer(function(input, output) {
     data$text5
   })
   
-  
+  output$plot1 = renderPlot({
+    
+    data = getOutput()
+    
+    if(!is.null(data$y1)){
+
+      df = data.frame(y = c(data$y1, data$y2, data$y3), groups = c("group 1", "group 2", "group 3"))
+      print(df)
+      ggplot(data=df, aes(x=groups, y=y, fill = groups)) +
+      geom_bar(stat="identity")+
+        theme_minimal()+
+        ylab("Predicted PHQ9 score after 6 weeks") +
+        xlab("") +
+        geom_text(aes(label=y), vjust=-0.3, size=3.5)
+
+    
+    }
+    
+    
+  })
 })
 
 shinyApp(ui = ui, server = server)
