@@ -160,7 +160,7 @@ ui <- shinyUI(fluidPage(
     mainPanel(
       
       tabsetPanel(id = 'gene set',
-                  tabPanel("Result", textOutput("text1"), textOutput("text2"), textOutput("text3"), plotOutput("plot1"), textOutput("text5"), textOutput("text4"),
+                  tabPanel("Result", textOutput("text1"), textOutput("text2"), textOutput("text3"), uiOutput("blank"), plotOutput("plot1"), textOutput("text5"), uiOutput("blank2"), textOutput("text4"),
                            tags$head(tags$style("#text4{color: blue;font-size: 25px;font-style:bold;} "))
                            
                            ),
@@ -178,7 +178,7 @@ server <- shinyServer(function(input, output) {
     if(input$examples == "average"){
       value = 42
     } else if(input$examples == "group1"){
-      value = 50
+      value = 51
     } else if(input$examples == "group2"){
       value = 50
     } else if(input$examples == "group3"){
@@ -243,7 +243,7 @@ server <- shinyServer(function(input, output) {
     if(input$examples == "average"){
       value = 37
     } else if(input$examples == "group1"){
-      value = 50
+      value = 51
     } else if(input$examples == "group2"){
       value = 20
     } else if(input$examples == "group3"){
@@ -293,7 +293,7 @@ server <- shinyServer(function(input, output) {
   
   output$primemd_q1 <- renderUI({
     if(input$examples == "average"){
-      value = 3
+      value = 2
     } else if(input$examples == "group1"){
       value = 2
     } else if(input$examples == "group2"){
@@ -425,7 +425,7 @@ server <- shinyServer(function(input, output) {
     if(input$examples == "average"){
       value = 2
     } else if(input$examples == "group1"){
-      value = 2
+      value = 3
     } else if(input$examples == "group2"){
       value = 2
     } else if(input$examples == "group3"){
@@ -540,7 +540,7 @@ server <- shinyServer(function(input, output) {
   
   output$w1_fibser_q1 <- renderUI({
     if(input$examples == "average"){
-      value = 5
+      value = 6
     } else if(input$examples == "group1"){
       value = 5
     } else if(input$examples == "group2"){
@@ -697,7 +697,7 @@ server <- shinyServer(function(input, output) {
 
   output$phq9_q9_3 <- renderUI({
     if(input$examples == "average"){
-      value = 1
+      value = 0
     } else if(input$examples == "group1"){
       value = 2
     } else if(input$examples == "group2"){
@@ -711,7 +711,7 @@ server <- shinyServer(function(input, output) {
   
   output$w3_fibser_q1 <- renderUI({
     if(input$examples == "average"){
-      value = 6
+      value = 7
     } else if(input$examples == "group1"){
       value = 5
     } else if(input$examples == "group2"){
@@ -792,7 +792,7 @@ server <- shinyServer(function(input, output) {
     if(input$examples == "average"){
       value = 1
     } else if(input$examples == "group1"){
-      value = 2
+      value = 1
     } else if(input$examples == "group2"){
       value = 2
     } else if(input$examples == "group3"){
@@ -818,7 +818,7 @@ server <- shinyServer(function(input, output) {
     if(input$examples == "average"){
       value = 1
     } else if(input$examples == "group1"){
-      value = 3
+      value = 2
     } else if(input$examples == "group2"){
       value = 1
     } else if(input$examples == "group3"){
@@ -844,7 +844,7 @@ server <- shinyServer(function(input, output) {
     if(input$examples == "average"){
       value = 2
     } else if(input$examples == "group1"){
-      value = 2
+      value = 3
     } else if(input$examples == "group2"){
       value = 2
     } else if(input$examples == "group3"){
@@ -896,7 +896,7 @@ server <- shinyServer(function(input, output) {
     if(input$examples == "average"){
       value = 1
     } else if(input$examples == "group1"){
-      value = 3
+      value = 1
     } else if(input$examples == "group2"){
       value = 1
     } else if(input$examples == "group3"){
@@ -959,7 +959,7 @@ server <- shinyServer(function(input, output) {
 
   output$bdi_q16_1longer <- renderUI({
     if(input$examples == "average"){
-      value = 2
+      value = 1
     } else if(input$examples == "group1"){
       value = 0
     } else if(input$examples == "group2"){
@@ -972,7 +972,7 @@ server <- shinyServer(function(input, output) {
 
   output$bdi_q16_1shorter <- renderUI({
     if(input$examples == "average"){
-      value = 2
+      value = 1
     } else if(input$examples == "group1"){
       value = 2
     } else if(input$examples == "group2"){
@@ -1011,7 +1011,7 @@ server <- shinyServer(function(input, output) {
 
   output$bdi_q18_1shorter <- renderUI({
     if(input$examples == "average"){
-      value = 1
+      value = 0
     } else if(input$examples == "group1"){
       value = 0
     } else if(input$examples == "group2"){
@@ -1064,7 +1064,7 @@ server <- shinyServer(function(input, output) {
   
   output$bdi_q1_3 <- renderUI({
     if(input$examples == "average"){
-      value = 2
+      value = 1
     } else if(input$examples == "group1"){
       value = 2
     } else if(input$examples == "group2"){
@@ -1077,7 +1077,7 @@ server <- shinyServer(function(input, output) {
   
   output$bdi_q2_3 <- renderUI({
     if(input$examples == "average"){
-      value = 2
+      value = 1
     } else if(input$examples == "group1"){
       value = 2
     } else if(input$examples == "group2"){
@@ -1103,7 +1103,7 @@ server <- shinyServer(function(input, output) {
   
   output$bdi_q4_3 <- renderUI({
     if(input$examples == "average"){
-      value = 2
+      value = 1
     } else if(input$examples == "group1"){
       value = 2
     } else if(input$examples == "group2"){
@@ -1142,7 +1142,7 @@ server <- shinyServer(function(input, output) {
   
   output$bdi_q7_3 <- renderUI({
     if(input$examples == "average"){
-      value = 2
+      value = 1
     } else if(input$examples == "group1"){
       value = 2
     } else if(input$examples == "group2"){
@@ -1155,7 +1155,7 @@ server <- shinyServer(function(input, output) {
   
   output$bdi_q8_3 <- renderUI({
     if(input$examples == "average"){
-      value = 2
+      value = 1
     } else if(input$examples == "group1"){
       value = 3
     } else if(input$examples == "group2"){
@@ -1246,7 +1246,7 @@ server <- shinyServer(function(input, output) {
   
   output$bdi_q15_3 <- renderUI({
     if(input$examples == "average"){
-      value = 2
+      value = 1
     } else if(input$examples == "group1"){
       value = 2
     } else if(input$examples == "group2"){
@@ -1259,7 +1259,7 @@ server <- shinyServer(function(input, output) {
   
   output$bdi_q16_3longer <- renderUI({
     if(input$examples == "average"){
-      value = 2
+      value = 1
     } else if(input$examples == "group1"){
       value = 0
     } else if(input$examples == "group2"){
@@ -1272,7 +1272,7 @@ server <- shinyServer(function(input, output) {
   
   output$bdi_q16_3shorter <- renderUI({
     if(input$examples == "average"){
-      value = 2
+      value = 1
     } else if(input$examples == "group1"){
       value = 2
     } else if(input$examples == "group2"){
@@ -1311,7 +1311,7 @@ server <- shinyServer(function(input, output) {
   
   output$bdi_q18_3shorter <- renderUI({
     if(input$examples == "average"){
-      value = 1
+      value = 0
     } else if(input$examples == "group1"){
       value = 2
     } else if(input$examples == "group2"){
@@ -1324,7 +1324,7 @@ server <- shinyServer(function(input, output) {
   
   output$bdi_q19_3 <- renderUI({
     if(input$examples == "average"){
-      value = 2
+      value = 1
     } else if(input$examples == "group1"){
       value = 2
     } else if(input$examples == "group2"){
@@ -1337,7 +1337,7 @@ server <- shinyServer(function(input, output) {
   
   output$bdi_q20_3 <- renderUI({
     if(input$examples == "average"){
-      value = 2
+      value = 1
     } else if(input$examples == "group1"){
       value = 2
     } else if(input$examples == "group2"){
@@ -1350,7 +1350,7 @@ server <- shinyServer(function(input, output) {
   
   output$bdi_q21_3 <- renderUI({
     if(input$examples == "average"){
-      value = 2
+      value = 1
     } else if(input$examples == "group1"){
       value = 3
     } else if(input$examples == "group2"){
@@ -1556,20 +1556,28 @@ server <- shinyServer(function(input, output) {
     
     if(!is.null(data$y1)){
 
-      df = data.frame(y = c(data$y1, data$y2, data$y3), groups = c("group 1", "group 2", "group 3"))
-      print(df)
+      groups <- factor(c("Continue", "Combine", "Switch"),
+                             levels = c("Continue", "Combine", "Switch"),ordered = TRUE)
+      
+      df = data.frame(y = c(data$y1, data$y2, data$y3), groups = groups)
       ggplot(data=df, aes(x=groups, y=y, fill = groups)) +
       geom_bar(stat="identity")+
         theme_minimal()+
         ylab("Predicted PHQ9 score after 6 weeks") +
         xlab("") +
-        geom_text(aes(label=y), vjust=-0.3, size=3.5)
-
-    
+        geom_text(aes(label=y), vjust=-0.3, size=3.5)+ 
+        scale_fill_manual("legend", values = c("Continue" = "light pink", "Combine" = "light blue", "Switch" = "light green"))
     }
-    
-    
   })
+  
+  output$blank <- renderUI({
+    HTML('<br>')
+  })
+  
+  output$blank2 <- renderUI({
+    HTML('<br>')
+  })
+  
 })
 
 shinyApp(ui = ui, server = server)

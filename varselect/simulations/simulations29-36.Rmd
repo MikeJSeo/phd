@@ -1,0 +1,365 @@
+---
+title: "simulations29-36"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(tidy = TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), warning = FALSE, message=FALSE, echo = FALSE)
+```
+
+
+```{r}
+# load packages needed
+library(MASS) # Used for data simulation
+
+library(lme4) #for fitting glmm
+library(glmnet) #for lasso
+library(dclone) # for parallel processing of JAGS code
+
+library(writexl)
+
+setwd("C:/Users/mike/Desktop/Github/phd/varselect/")
+#setwd("~/GitHub/phd/varselect/")
+
+source("run.simulation.functions.final.R")
+source("helpful.functions.final.R")
+
+# setup for parallel computing
+n.cores <- 2
+cl <- makePSOCKcluster(n.cores)
+tmp <- clusterEvalQ(cl, library(dclone))
+
+# number of simulation to run
+niter <- 1000
+
+start_time <- Sys.time()
+```
+
+## Simulation
+
+```{r}
+### parameters to change ###
+col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
+
+correct_em <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+correct_em_values <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+  
+Nstudies <- 5
+Ncovariate <- 10
+continuous.cov <- c(1, 2, 3, 6, 7, 8)
+pf <- c(1,2,3,4,5)
+em <- NULL
+beta <- c(0.2, 0.2, 0.2, 0.2, 0.2)
+gamma <- NULL
+tau <- 0.2
+
+glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + treat + (-1 + treat|studyid)")
+glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
+step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
+step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + treat")
+
+model.type = "gaussian"
+```
+
+```{r simulation29a, cache = TRUE, result = "hide", include = FALSE}
+simulation.a <- run.simulation()
+```
+
+```{r simulation29b, cache = TRUE, result = "hide", include = FALSE}
+simulation.b <- run.simulation2()
+```
+
+```{r}
+simulation.result <- rbind(simulation.a, simulation.b)
+simulation.result
+writne_xlsx(as.data.frame(round(simulation.result,3)), "simulation29.result.xlsx")
+```
+
+
+## Simulation
+
+```{r}
+### parameters to change ###
+col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
+
+correct_em <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+correct_em_values <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+  
+Nstudies <- 5
+Ncovariate <- 10
+continuous.cov <- c(1, 2, 3, 6, 7, 8)
+pf <- c(1,2,3,4,5)
+em <- NULL
+beta <- c(0.2, 0.2, 0.2, 0.2, 0.2)
+gamma <- NULL
+tau <- 0.5
+
+glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + treat + (-1 + treat|studyid)")
+glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
+step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
+step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + treat")
+
+model.type = "gaussian"
+```
+
+```{r simulation30a, cache = TRUE, result = "hide", include = FALSE}
+simulation.a <- run.simulation()
+```
+
+```{r simulation30b, cache = TRUE, result = "hide", include = FALSE}
+simulation.b <- run.simulation2()
+```
+
+```{r}
+simulation.result <- rbind(simulation.a, simulation.b)
+simulation.result
+write_xlsx(as.data.frame(round(simulation.result,3)), "simulation30.result.xlsx")
+```
+
+
+## Simulation
+
+```{r}
+### parameters to change ###
+col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
+
+correct_em <- c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
+correct_em_values <- c(0, 0, 0, 0, 0.1, 0, 0, 0, 0, 0)
+  
+Nstudies <- 5
+Ncovariate <- 10
+continuous.cov <- c(1, 2, 5, 6, 7, 8)
+pf <- c(1,2,3,4,5)
+em <- 5
+beta <- c(0.2, 0.2, 0.2, 0.2, 0.2)
+gamma <- 0.1
+tau <- 0.2
+
+glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X5*treat + treat + (-1 + treat|studyid)")
+glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
+step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
+step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + treat")
+
+model.type = "gaussian"
+```
+
+```{r simulation31a, cache = TRUE, result = "hide", include = FALSE}
+simulation.a <- run.simulation()
+```
+
+```{r simulation31b, cache = TRUE, result = "hide", include = FALSE}
+simulation.b <- run.simulation2()
+```
+
+```{r}
+simulation.result <- rbind(simulation.a, simulation.b)
+simulation.result
+write_xlsx(as.data.frame(round(simulation.result,3)), "simulation31.result.xlsx")
+```
+
+
+## Simulation
+
+```{r}
+### parameters to change ###
+col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
+
+correct_em <- c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
+correct_em_values <- c(0, 0, 0, 0, 0.1, 0, 0, 0, 0, 0)
+  
+Nstudies <- 5
+Ncovariate <- 10
+continuous.cov <- c(1, 2, 5, 6, 7, 8)
+pf <- c(1,2,3,4,5)
+em <- 5
+beta <- c(0.2, 0.2, 0.2, 0.2, 0.2)
+gamma <- 0.1
+tau <- 0.5
+
+glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X5*treat + treat + (-1 + treat|studyid)")
+glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
+step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
+step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + treat")
+
+model.type = "gaussian"
+```
+
+```{r simulation32a, cache = TRUE, result = "hide", include = FALSE}
+simulation.a <- run.simulation()
+```
+
+```{r simulation32b, cache = TRUE, result = "hide", include = FALSE}
+simulation.b <- run.simulation2()
+```
+
+```{r}
+simulation.result <- rbind(simulation.a, simulation.b)
+simulation.result
+write_xlsx(as.data.frame(round(simulation.result,3)), "simulation32.result.xlsx")
+```
+
+
+
+## Simulation
+
+```{r}
+### parameters to change ###
+col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
+
+correct_em <- c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
+correct_em_values <- c(0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0)
+  
+Nstudies <- 5
+Ncovariate <- 10
+continuous.cov <- c(1, 2, 5, 6, 7, 8)
+pf <- c(1,2,3,4,5)
+em <- 5
+beta <- c(0.2, 0.2, 0.2, 0.2, 0.2)
+gamma <- 0.5
+tau <- 0.2
+
+glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X5:treat + treat + (-1 + treat|studyid)")
+glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
+step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
+step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + treat")
+
+model.type = "gaussian"
+```
+
+```{r simulation33a, cache = TRUE, result = "hide", include = FALSE}
+simulation.a <- run.simulation()
+```
+
+```{r simulation33b, cache = TRUE, result = "hide", include = FALSE}
+simulation.b <- run.simulation2()
+```
+
+```{r}
+simulation.result <- rbind(simulation.a, simulation.b)
+simulation.result
+write_xlsx(as.data.frame(round(simulation.result,3)), "simulation33.result.xlsx")
+```
+
+
+
+## Simulation
+
+```{r}
+### parameters to change ###
+col_labels <- c(paste0("X", 1:10, ":treat"), "treat")
+
+correct_em <- c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
+correct_em_values <- c(0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0)
+  
+Nstudies <- 5
+Ncovariate <- 10
+continuous.cov <- c(1, 2, 5, 6, 7, 8)
+pf <- c(1,2,3,4,5)
+em <- 5
+beta <- c(0.2, 0.2, 0.2, 0.2, 0.2)
+gamma <- 0.5
+tau <- 0.5
+
+glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X5:treat + treat + (-1 + treat|studyid)")
+glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat + (-1 + treat|studyid)")
+step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
+step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + treat")
+
+model.type = "gaussian"
+```
+
+```{r simulation34a, cache = TRUE, result = "hide", include = FALSE}
+simulation.a <- run.simulation()
+```
+
+```{r simulation34b, cache = TRUE, result = "hide", include = FALSE}
+simulation.b <- run.simulation2()
+```
+
+```{r}
+simulation.result <- rbind(simulation.a, simulation.b)
+simulation.result
+write_xlsx(as.data.frame(round(simulation.result,3)), "simulation34.result.xlsx")
+```
+
+
+## Simulation
+
+```{r}
+### parameters to change ###
+col_labels <- c(paste0("X", 1:15, ":treat"), "treat")
+
+correct_em <- c(0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+correct_em_values <- c(0, 0, 0, 0, 0, 0.1, 0.1, 0, 0, 0, 0, 0, 0, 0, 0)
+  
+Nstudies <- 5
+Ncovariate <- 15
+continuous.cov <- c(1, 2, 3, 6, 8, 9, 10, 11, 12)
+pf <- c(1,2,3,4,5,6,7)
+em <- c(6,7)
+beta <- c(0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2)
+gamma <- c(0.1, 0.1)
+tau <- 0.2
+
+glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X6:treat + X7:treat + treat + (-1 + treat|studyid)")
+glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15)*treat + (-1 + treat|studyid)")
+step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15)*treat")
+step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + treat")
+
+model.type = "gaussian"
+```
+
+```{r simulation35a, cache = TRUE, result = "hide", include = FALSE}
+simulation.a <- run.simulation()
+```
+
+```{r simulation35b, cache = TRUE, result = "hide", include = FALSE}
+simulation.b <- run.simulation2()
+```
+
+```{r}
+simulation.result <- rbind(simulation.a, simulation.b)
+simulation.result
+write_xlsx(as.data.frame(round(simulation.result,3)), "simulation35.result.xlsx")
+```
+
+## Simulation
+
+```{r}
+### parameters to change ###
+col_labels <- c(paste0("X", 1:15, ":treat"), "treat")
+
+correct_em <- c(0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+correct_em_values <- c(0, 0, 0, 0, 0, 0.1, 0.1, 0, 0, 0, 0, 0, 0, 0, 0)
+  
+Nstudies <- 5
+Ncovariate <- 15
+continuous.cov <- c(1, 2, 3, 6, 8, 9, 10, 11, 12)
+pf <- c(1,2,3,4,5,6,7)
+em <- c(6,7)
+beta <- c(0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2)
+gamma <- c(0.1, 0.1)
+tau <- 0.5
+
+glmm_oracle_formula <- as.formula("y ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X6:treat + X7:treat + treat + (-1 + treat|studyid)")
+glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15)*treat + (-1 + treat|studyid)")
+step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15)*treat")
+step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + treat")
+
+model.type = "gaussian"
+```
+
+```{r simulation36a, cache = TRUE, result = "hide", include = FALSE}
+simulation.a <- run.simulation()
+```
+
+```{r simulation36b, cache = TRUE, result = "hide", include = FALSE}
+simulation.b <- run.simulation2()
+```
+
+```{r}
+simulation.result <- rbind(simulation.a, simulation.b)
+simulation.result
+write_xlsx(as.data.frame(round(simulation.result,3)), "simulation36.result.xlsx")
+```
