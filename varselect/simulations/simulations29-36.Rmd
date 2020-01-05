@@ -59,7 +59,7 @@ glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7
 step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
 step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + treat")
 
-model.type = "gaussian"
+model.type = "binary"
 ```
 
 ```{r simulation29a, cache = TRUE, result = "hide", include = FALSE}
@@ -100,7 +100,7 @@ glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7
 step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
 step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + treat")
 
-model.type = "gaussian"
+model.type = "binary"
 ```
 
 ```{r simulation30a, cache = TRUE, result = "hide", include = FALSE}
@@ -141,7 +141,7 @@ glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7
 step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
 step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + treat")
 
-model.type = "gaussian"
+model.type = "binary"
 ```
 
 ```{r simulation31a, cache = TRUE, result = "hide", include = FALSE}
@@ -182,7 +182,7 @@ glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7
 step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
 step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + treat")
 
-model.type = "gaussian"
+model.type = "binary"
 ```
 
 ```{r simulation32a, cache = TRUE, result = "hide", include = FALSE}
@@ -224,7 +224,7 @@ glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7
 step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
 step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + treat")
 
-model.type = "gaussian"
+model.type = "binary"
 ```
 
 ```{r simulation33a, cache = TRUE, result = "hide", include = FALSE}
@@ -266,7 +266,7 @@ glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7
 step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10)*treat")
 step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + treat")
 
-model.type = "gaussian"
+model.type = "binary"
 ```
 
 ```{r simulation34a, cache = TRUE, result = "hide", include = FALSE}
@@ -307,7 +307,7 @@ glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7
 step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15)*treat")
 step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + treat")
 
-model.type = "gaussian"
+model.type = "binary"
 ```
 
 ```{r simulation35a, cache = TRUE, result = "hide", include = FALSE}
@@ -347,7 +347,7 @@ glmm_full_formula <- as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7
 step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15)*treat")
 step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + treat")
 
-model.type = "gaussian"
+model.type = "binary"
 ```
 
 ```{r simulation36a, cache = TRUE, result = "hide", include = FALSE}
