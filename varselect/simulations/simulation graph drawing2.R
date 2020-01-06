@@ -134,6 +134,55 @@ data14 <- make_data(simulation14, simulation29, a_name = "Scenario 14 \n Continu
 data15 <- make_data(simulation15, simulation30, a_name = "Scenario 15 \n Continuous, N = 5", b_name = "Scenario 30 \n Continuous, N = 10", 
                     xlab = "15 covariates, three effect modifiers \n \u03c4 = 0.5, large effect modification")
 
+## binary
+
+data16 <- make_data(simulation31, simulation46, a_name = "Scenario 31 \n Binary, N = 5", b_name = "Scenario 46 \n Binary, N = 10",
+                   xlab = "10 covariates, no effect modifiers \n \u03c4 = 0.2, no effect modification")
+
+data17 <- make_data(simulation32, simulation47, a_name = "Scenario 32 \n Binary, N = 5", b_name = "Scenario 47 \n Binary, N = 10",
+                   xlab = "10 covariates, no effect modifiers \n \u03c4 = 0.5, no effect modification")
+
+data18 <- make_data(simulation33, simulation48, a_name = "Scenario 33 \n Binary, N = 5", b_name = "Scenario 48 \n Binary, N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, small effect modification")
+
+data19 <- make_data(simulation34, simulation49, a_name = "Scenario 34 \n Binary, N = 5", b_name = "Scenario 49 \n Binary, N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, small effect modification")
+
+data20 <- make_data(simulation35, simulation50, a_name = "Scenario 35 \n Binary, N = 5", b_name = "Scenario 50 \n Binary, N = 10", 
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, large effect modification")
+
+data21 <- make_data(simulation36, simulation51, a_name = "Scenario 36 \n Binary, N = 5", b_name = "Scenario 51 \n Binary, N = 10", 
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, large effect modification")
+
+# data22 <- make_data(simulation37, simulation52, a_name = "Scenario 37 \n Binary, N = 5", b_name = "Scenario 52 \n Binary, N = 10", 
+#                    xlab = "10 covariates, ten effect modifiers \n \u03c4 = 0.2, small effect modification")
+
+data23 <- make_data(simulation38, simulation53, a_name = "Scenario 38 \n Binary, N = 5", b_name = "Scenario 53 \n Binary, N = 10", 
+                   xlab = "15 covariates, two effect modifiers \n \u03c4 = 0.2, small effect modification")
+
+data24 <- make_data(simulation39, simulation54, a_name = "Scenario 39 \n Binary, N = 5", b_name = "Scenario 54 \n Binary, N = 10", 
+                   xlab = "15 covariates, two effect modifiers \n \u03c4 = 0.5, small effect modification")
+
+data25 <- make_data(simulation40, simulation55, a_name = "Scenario 40 \n Binary, N = 5", b_name = "Scenario 55 \n Binary, N = 10", 
+                    xlab = "15 covariates, two effect modifiers \n \u03c4 = 0.2, large effect modification")
+
+data26 <- make_data(simulation41, simulation56, a_name = "Scenario 41 \n Binary, N = 5", b_name = "Scenario 56 \n Binary, N = 10", 
+                    xlab = "15 covariates, two effect modifiers \n \u03c4 = 0.5, large effect modification")
+
+data27 <- make_data(simulation42, simulation57, a_name = "Scenario 42 \n Binary, N = 5", b_name = "Scenario 57 \n Binary, N = 10", 
+                    xlab = "15 covariates, three effect modifiers \n \u03c4 = 0.2, small effect modification")
+
+data28 <- make_data(simulation43, simulation58, a_name = "Scenario 43 \n Binary, N = 5", b_name = "Scenario 58 \n Binary, N = 10", 
+                    xlab = "15 covariates, three effect modifiers \n \u03c4 = 0.5, small effect modification")
+
+data29 <- make_data(simulation44, simulation59, a_name = "Scenario 44 \n Binary, N = 5", b_name = "Scenario 59 \n Binary, N = 10", 
+                    xlab = "15 covariates, three effect modifiers \n \u03c4 = 0.2, large effect modification")
+
+data30 <- make_data(simulation45, simulation60, a_name = "Scenario 45 \n Binary, N = 5", b_name = "Scenario 60 \n Binary, N = 10", 
+                    xlab = "15 covariates, three effect modifiers \n \u03c4 = 0.5, large effect modification")
+
+
+
 
 plot1 <- ggplot(data=data1$data, aes(x=models, y=error)) +
   geom_bar(stat="identity") + facet_grid(~simulations) + 
@@ -232,8 +281,7 @@ plot15 <- ggplot(data=data15$data, aes(x=models, y=error)) +
   xlab(data15$xlab)
 
 
-#grid.arrange(plot1,plot2, plot3,plot4,plot5,plot6,plot7,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot15, plot16,plot17,plot18,plot19,plot20,plot21,plot22,plot23,plot24,plot25,plot26,plot27,plot28,plot29,plot30, ncol=6)
-grid.arrange(plot1,plot2, plot3,plot4,plot5,plot6,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot15,
-             plot1,plot2, plot3,plot4,plot5,plot6, plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot15, plot1, plot2,
+grid.arrange(plot1,plot2, plot3,plot4,plot5,plot6,plot7,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot15,
+             plot16,plot17,plot18,plot19,plot20,plot21,plot22,plot23,plot24,plot25,plot26,plot27,plot28,plot29,plot30,
              left = textGrob("Patient specific treatment mse", rot = 90, vjust = 0.5),
              ncol=6, as.table = FALSE)
