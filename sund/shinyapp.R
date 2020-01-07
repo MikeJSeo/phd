@@ -57,7 +57,7 @@ ui <- shinyUI(fluidPage(
     
     sidebarPanel(
       
-      radioButtons("examples", "Examples", c("Patient with covariate values set to the average of the population" = "average", "Case of a patient belonging to group 1" = "group1", "Case of a patient belonging to group 2" = "group2", "Case of a patient belonging to group 3" = "group3")),
+      radioButtons("examples", "Examples", c("Patient with covariate values set to the average of the population" = "average", "Case of a patient belonging to Group 1" = "group1", "Case of a patient belonging to Group 2" = "group2", "Case of a patient belonging to Group 3" = "group3")),
       h2("Input patient characteristics"),
       
       uiOutput("age"),
@@ -1504,14 +1504,15 @@ server <- shinyServer(function(input, output) {
       y2<- exp(predict(svm_Radial.t2, newdata = dat2))-1   #### combine with mirtazapine
       y3<- exp(predict(svm_Radial.t3, newdata = dat2))-1   #### switch to mirtazapine
       ind=1*(y1<y2&y1<y3)+2*(y2<y1&y2<y3)+3*(y3<y2&y3<y1)
-      best.strategy="combine sertraline and mirtazapine (second best: continue sertraline)"
-      if(ind==2){best.strategy="combine sertraline and mirtazapine (or switch to mirtazapine)"}
-      if(ind==3){best.strategy="switch to mirtazapine (or combine sertraline and mirtazapine)"}
+      best.strategy="The patient belongs to Group 1"
+      if(ind==2){best.strategy="The patient belongs to Group 2"}
+      if(ind==3){best.strategy="The patient belongs to Group 3"}
       
       text1 = paste("The predicted PHQ9 score after 6 weeks, if continuing on sertraline, is ", round(y1,digits=1),".",sep="")
       text2 = paste("The predicted PHQ9 score after 6 weeks, if combining sertraline and mirtazapine, is ", round(y2,digits=1),".",sep="")
       text3 = paste("The predicted PHQ9 score after 6 weeks, if switching to mirtazapine, is ", round(y3,digits=1),".",sep="")
-      text4 = paste("The best predicted treatment strategy is to ", best.strategy,".",sep="")
+      #text4 = paste("The best predicted treatment strategy is to ", best.strategy,".",sep="")
+      text4 = best.strategy
       text5 = "For an appreciation of the uncertainty in relative treatment effects please see the paper, Table 2."
       
       data = list(dat1 = dat1, best.strategy = best.strategy, text1 = text1, text2 = text2, text3 = text3, text4 = text4, text5 = text5, y1 = round(y1,digits=1), y2 = round(y2,digits=1), y3 = round(y3,digits=1))
