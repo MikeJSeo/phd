@@ -199,10 +199,47 @@ bootstrap_function  <- function(model_data, ndraws, p.fac, family, alpha = 1, co
 }
 ```
 
+```{r}
+bootstrap_function2  <- function(model_data, ndraws, p.fac, family, alpha = 1, contr_vec) {
+  
+  predictions <- rep(NA, ndraws)
+  
+  for (ii in 1:ndraws) {
+
+    bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
+    bootstrap_data <- model_data[bootstrap_ids,]
+    
+    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = family, type.measure = "deviance", standardize = FALSE, alpha = alpha)  
+    predictions[ii] <- exp(contr_vec %*% coef(bootstrap_model, s = "lambda.min"))
+
+  }
+  return(predictions)
+}
+```
+
 ```{r lasso_se}
-#col_labels <- c("baseseverity.hamd_total_start.", "age", "sex_m1_f2", "onset", "episode_frequency_1_2_3over", "episode_duration_wk","gilty_agitationHAM10_11_12_15_17", "body_symptoms_HAM9_13_14", "sleep_problems", "anhedonia_redardationHAM1_2_3_16", "baseseverity.hamd_total_start.:treat", "age:treat", "sex_m1_f2:treat", "onset:treat", "episode_frequency_1_2_3over:treat", "episode_duration_wk:treat", "gilty_agitationHAM10_11_12_15_17:treat", "body_symptoms_HAM9_13_14:treat", "sleep_problems:treat", "anhedonia_redardationHAM1_2_3_16:treat", "treat")
-#sd_values <- bootstrap_function(model_data = data_glmnet, ndraws = 50, p.fac = p.fac.depression, family = "gaussian", alpha = 1, col_labels)
-#sd_values
+col_labels <- c("baseseverity.hamd_total_start.", "age", "sex_m1_f2", "onset", "episode_frequency_1_2_3over", "episode_duration_wk","gilty_agitationHAM10_11_12_15_17", "body_symptoms_HAM9_13_14", "sleep_problems", "anhedonia_redardationHAM1_2_3_16", "baseseverity.hamd_total_start.:treat", "age:treat", "sex_m1_f2:treat", "onset:treat", "episode_frequency_1_2_3over:treat", "episode_duration_wk:treat", "gilty_agitationHAM10_11_12_15_17:treat", "body_symptoms_HAM9_13_14:treat", "sleep_problems:treat", "anhedonia_redardationHAM1_2_3_16:treat", "treat")
+sd_values <- bootstrap_function(model_data = data_glmnet, ndraws = 50, p.fac = p.fac.depression, family = "gaussian", alpha = 1, col_labels)
+sd_values
+```
+
+
+```{r lasso_predictions}
+set.seed(1)
+group1 <- c(15, 25, 1, 20, 1, 42.0356886, 5.4821570, 5, 5, 7.4845361)
+group1_std <- (group1 - mean_val)/sd_val
+contr <- c(rep(0, 4), rep(0, 10), 1, group1_std)
+
+predictions_group1 <- bootstrap_function2(model_data = data_glmnet, ndraws = 200, p.fac = p.fac.depression, family = "gaussian", alpha = 1, contr_vec = contr)
+quantile(predictions_group1, probs = c(0.025, 0.5, 0.975))
+
+set.seed(1)
+group2 <- c(25, 45, 0, 45, 0, 42.0356886, 5.4821570, 2, 1.5, 7.4845361)
+group2_std <- (group2 - mean_val)/sd_val
+contr <- c(rep(0, 4), rep(0, 10), 1, group2_std)
+
+predictions_group2 <- bootstrap_function2(model_data = data_glmnet, ndraws = 200, p.fac = p.fac.depression, family = "gaussian", alpha = 1, contr_vec = contr)
+quantile(predictions_group2, probs = c(0.025, 0.5, 0.975))
 ```
 
 ## ridge
@@ -232,9 +269,28 @@ contr %*% coef(cvfit, s = "lambda.min")
 
 
 ```{r ridge_sd}
-#sd_values2 <- bootstrap_function(model_data = data_glmnet, ndraws = 50, p.fac = p.fac.depression, family = "gaussian", alpha = 0, col_labels)
-#sd_values2
+sd_values2 <- bootstrap_function(model_data = data_glmnet, ndraws = 50, p.fac = p.fac.depression, family = "gaussian", alpha = 0, col_labels)
+sd_values2
 ```
+
+```{r ridge_predictions, cache = TRUE}
+set.seed(1)
+group1 <- c(15, 25, 1, 20, 1, 42.0356886, 5.4821570, 5, 5, 7.4845361)
+group1_std <- (group1 - mean_val)/sd_val
+contr <- c(rep(0, 4), rep(0, 10), 1, group1_std)
+
+predictions_group1 <- bootstrap_function2(model_data = data_glmnet, ndraws = 200, p.fac = p.fac.depression, family = "gaussian", alpha = 0, contr_vec = contr)
+quantile(predictions_group1, probs = c(0.025, 0.5, 0.975))
+
+set.seed(1)
+group2 <- c(25, 45, 0, 45, 0, 42.0356886, 5.4821570, 2, 1.5, 7.4845361)
+group2_std <- (group2 - mean_val)/sd_val
+contr <- c(rep(0, 4), rep(0, 10), 1, group2_std)
+
+predictions_group2 <- bootstrap_function2(model_data = data_glmnet, ndraws = 200, p.fac = p.fac.depression, family = "gaussian", alpha = 0, contr_vec = contr)
+quantile(predictions_group2, probs = c(0.025, 0.5, 0.975))
+```
+
 
 
 ## Bayes Lasso
