@@ -6,13 +6,12 @@ mydata <- read_excel("ra_dataset.xlsx")
 mydata <- as.data.frame(mydata)
 
 ## data with non-missing outcome
-mydata2 <- mydata[!is.na(mydata$change_das_bsr),]
+mydata <- mydata[!is.na(mydata$change_das_bsr),]
+#apply(mydata, 2, function(x) sum(is.na(x)))
 
-
-## data with complete data
-#data <- mydata[complete.cases(mydata),]
-#data2 <- mydata[, -which(colnames(mydata) %in% c("base_bmi"))]
-
+## data with complete data: three covariates removed
+data <- mydata[, -which(colnames(mydata) %in% c("base_bmi", "base_haq", "comorbidities"))]
+data <- data[complete.cases(data),]
 
 ## variables to include
 # gender
@@ -34,29 +33,22 @@ mydata2 <- mydata[!is.na(mydata$change_das_bsr),]
 
 # BSRBR
 
-BSRBR <- mydata[mydata$study == "BSRBR",]
+BSRBR <- data[data$study == "BSRBR",]
 table(BSRBR$treatment)
-
-apply(BSRBR, 2, function(x) sum(is.na(x)))
 
 # REFLEX
 
-REFLEX <- mydata2[mydata2$study == "REFLEX",]
+REFLEX <- data[data$study == "REFLEX",]
 table(REFLEX$treatment)
-
-apply(REFLEX, 2, function(x) sum(is.na(x)))
 
 # SCQM
 
-SCQM <- mydata2[mydata2$study == "SCQM",]
+SCQM <- data[data$study == "SCQM",]
 table(SCQM$treatment)
-
-apply(SCQM, 2, function(x) sum(is.na(x)))
-
 
 # TOWARD
 
-TOWARD <- mydata[mydata$study == "TOWARD",]
+TOWARD <- data[data$study == "TOWARD",]
 table(TOWARD$treatment)
 
-apply(TOWARD, 2, function(x) sum(is.na(x)))
+

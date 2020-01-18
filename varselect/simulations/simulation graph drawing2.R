@@ -39,12 +39,12 @@ simulation29 <- read_excel("simulation29.result.xlsx")
 simulation30 <- read_excel("simulation30.result.xlsx")
 simulation31 <- read_excel("simulation31.result.xlsx")
 simulation32 <- read_excel("simulation32.result.xlsx")
-# simulation33 <- read_excel("simulation33.result.xlsx")
-# simulation34 <- read_excel("simulation34.result.xlsx")
-# simulation35 <- read_excel("simulation35.result.xlsx")
-# simulation36 <- read_excel("simulation36.result.xlsx")
+simulation33 <- read_excel("simulation33.result.xlsx")
+simulation34 <- read_excel("simulation34.result.xlsx")
+simulation35 <- read_excel("simulation35.result.xlsx")
+simulation36 <- read_excel("simulation36.result.xlsx")
 simulation37 <- read_excel("simulation37.result.xlsx")
-# simulation38 <- read_excel("simulation38.result.xlsx")
+simulation38 <- read_excel("simulation38.result.xlsx")
 # simulation39 <- read_excel("simulation39.result.xlsx")
 simulation40 <- read_excel("simulation40.result.xlsx")
 simulation41 <- read_excel("simulation41.result.xlsx")
@@ -142,24 +142,24 @@ data16 <- make_data(simulation31, simulation46, a_name = "Scenario 31 \n N = 5",
 data17 <- make_data(simulation32, simulation47, a_name = "Scenario 32 \n N = 5", b_name = "Scenario 47 \n N = 10",
                    xlab = "10 covariates, no effect modifiers \n \u03c4 = 0.5, no effect modification")
 
-# data18 <- make_data(simulation33, simulation48, a_name = "Scenario 33 \n N = 5", b_name = "Scenario 48 \n N = 10",
-#                    xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, small effect modification")
-# 
-# data19 <- make_data(simulation34, simulation49, a_name = "Scenario 34 \n N = 5", b_name = "Scenario 49 \n N = 10",
-#                    xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, small effect modification")
-# 
-# data20 <- make_data(simulation35, simulation50, a_name = "Scenario 35 \n N = 5", b_name = "Scenario 50 \n N = 10",
-#                    xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, large effect modification")
-# 
-# data21 <- make_data(simulation36, simulation51, a_name = "Scenario 36 \n N = 5", b_name = "Scenario 51 \n N = 10",
-#                    xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, large effect modification")
+data18 <- make_data(simulation33, simulation48, a_name = "Scenario 33 \n N = 5", b_name = "Scenario 48 \n N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, small effect modification")
+
+data19 <- make_data(simulation34, simulation49, a_name = "Scenario 34 \n N = 5", b_name = "Scenario 49 \n N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, small effect modification")
+
+data20 <- make_data(simulation35, simulation50, a_name = "Scenario 35 \n N = 5", b_name = "Scenario 50 \n N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, large effect modification")
+
+data21 <- make_data(simulation36, simulation51, a_name = "Scenario 36 \n N = 5", b_name = "Scenario 51 \n N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, large effect modification")
 
 data22 <- make_data(simulation37, simulation52, a_name = "Scenario 37 \n N = 5", b_name = "Scenario 52 \n N = 10",
                    xlab = "10 covariates, ten effect modifiers \n \u03c4 = 0.5, large effect modification")
 
-# data23 <- make_data(simulation38, simulation53, a_name = "Scenario 38 \n N = 5", b_name = "Scenario 53 \n N = 10",
-#                    xlab = "15 covariates, two effect modifiers \n \u03c4 = 0.2, small effect modification")
-# 
+data23 <- make_data(simulation38, simulation53, a_name = "Scenario 38 \n N = 5", b_name = "Scenario 53 \n N = 10",
+                   xlab = "15 covariates, two effect modifiers \n \u03c4 = 0.2, small effect modification")
+
 # data24 <- make_data(simulation39, simulation54, a_name = "Scenario 39 \n N = 5", b_name = "Scenario 54 \n N = 10",
 #                    xlab = "15 covariates, two effect modifiers \n \u03c4 = 0.5, small effect modification")
 
@@ -292,29 +292,29 @@ plot17 <- ggplot(data=data17$data, aes(x=models, y=error)) +
   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
   xlab(data17$xlab)
 
-# plot18 <- ggplot(data=data18$data, aes(x=models, y=error)) +
-#   geom_bar(stat="identity") + facet_grid(~simulations) + 
-#   theme(axis.title.y=element_blank()) +
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
-#   xlab(data18$xlab)
+plot18 <- ggplot(data=data18$data, aes(x=models, y=error)) +
+  geom_bar(stat="identity") + facet_grid(~simulations) +
+  theme(axis.title.y=element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  xlab(data18$xlab)
 
-# plot19 <- ggplot(data=data19$data, aes(x=models, y=error)) +
-#   geom_bar(stat="identity") + facet_grid(~simulations) + 
-#   theme(axis.title.y=element_blank()) +
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
-#   xlab(data19$xlab)
+plot19 <- ggplot(data=data19$data, aes(x=models, y=error)) +
+  geom_bar(stat="identity") + facet_grid(~simulations) +
+  theme(axis.title.y=element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  xlab(data19$xlab)
 
-# plot20 <- ggplot(data=data20$data, aes(x=models, y=error)) +
-#   geom_bar(stat="identity") + facet_grid(~simulations) + 
-#   theme(axis.title.y=element_blank()) +
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
-#   xlab(data20$xlab)
+plot20 <- ggplot(data=data20$data, aes(x=models, y=error)) +
+  geom_bar(stat="identity") + facet_grid(~simulations) +
+  theme(axis.title.y=element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  xlab(data20$xlab)
 
-# plot21 <- ggplot(data=data21$data, aes(x=models, y=error)) +
-#   geom_bar(stat="identity") + facet_grid(~simulations) + 
-#   theme(axis.title.y=element_blank()) +
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
-#   xlab(data21$xlab)
+plot21 <- ggplot(data=data21$data, aes(x=models, y=error)) +
+  geom_bar(stat="identity") + facet_grid(~simulations) +
+  theme(axis.title.y=element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  xlab(data21$xlab)
 
 plot22 <- ggplot(data=data22$data, aes(x=models, y=error)) +
   geom_bar(stat="identity") + facet_grid(~simulations) + 
@@ -373,7 +373,7 @@ plot30 <- ggplot(data=data30$data, aes(x=models, y=error)) +
 
 
 grid.arrange(plot1,plot2, plot3,plot4,plot5,plot6,plot7,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot15,
-             plot16,plot17,plot1,plot1,plot1,plot1,plot22,plot1,plot1,plot25,plot26,plot27,plot28,plot29,plot30,
+             plot16,plot17,plot18,plot19,plot20,plot21,plot22,plot1,plot1,plot25,plot26,plot27,plot28,plot29,plot30,
              left = textGrob("Patient specific treatment MSE", rot = 90, vjust = 0.5),
              ncol=6, as.table = FALSE)
 
@@ -438,17 +438,17 @@ data16 <- make_data(simulation31, simulation46, a_name = "Scenario 31 \n N = 5",
 data17 <- make_data(simulation32, simulation47, a_name = "Scenario 32 \n N = 5", b_name = "Scenario 47 \n N = 10",
                     xlab = "10 covariates, no effect modifiers \n \u03c4 = 0.5, no effect modification", mse = 3)
 
-# data18 <- make_data(simulation33, simulation48, a_name = "Scenario 33 \n N = 5", b_name = "Scenario 48 \n N = 10",
-#                    xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, small effect modification", mse = 3)
-# 
-# data19 <- make_data(simulation34, simulation49, a_name = "Scenario 34 \n N = 5", b_name = "Scenario 49 \n N = 10",
-#                    xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, small effect modification", mse = 3)
-# 
-# data20 <- make_data(simulation35, simulation50, a_name = "Scenario 35 \n N = 5", b_name = "Scenario 50 \n N = 10",
-#                    xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, large effect modification", mse = 3)
-# 
-# data21 <- make_data(simulation36, simulation51, a_name = "Scenario 36 \n N = 5", b_name = "Scenario 51 \n N = 10",
-#                    xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, large effect modification", mse = 3)
+data18 <- make_data(simulation33, simulation48, a_name = "Scenario 33 \n N = 5", b_name = "Scenario 48 \n N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, small effect modification", mse = 3)
+
+data19 <- make_data(simulation34, simulation49, a_name = "Scenario 34 \n N = 5", b_name = "Scenario 49 \n N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, small effect modification", mse = 3)
+
+data20 <- make_data(simulation35, simulation50, a_name = "Scenario 35 \n N = 5", b_name = "Scenario 50 \n N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, large effect modification", mse = 3)
+
+data21 <- make_data(simulation36, simulation51, a_name = "Scenario 36 \n N = 5", b_name = "Scenario 51 \n N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, large effect modification", mse = 3)
 
 data22 <- make_data(simulation37, simulation52, a_name = "Scenario 37 \n N = 5", b_name = "Scenario 52 \n N = 10",
                     xlab = "10 covariates, ten effect modifiers \n \u03c4 = 0.5, large effect modification", mse = 3)
@@ -588,29 +588,29 @@ plot17 <- ggplot(data=data17$data, aes(x=models, y=error)) +
   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
   xlab(data17$xlab)
 
-# plot18 <- ggplot(data=data18$data, aes(x=models, y=error)) +
-#   geom_bar(stat="identity") + facet_grid(~simulations) + 
-#   theme(axis.title.y=element_blank()) +
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
-#   xlab(data18$xlab)
+plot18 <- ggplot(data=data18$data, aes(x=models, y=error)) +
+  geom_bar(stat="identity") + facet_grid(~simulations) +
+  theme(axis.title.y=element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  xlab(data18$xlab)
 
-# plot19 <- ggplot(data=data19$data, aes(x=models, y=error)) +
-#   geom_bar(stat="identity") + facet_grid(~simulations) + 
-#   theme(axis.title.y=element_blank()) +
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
-#   xlab(data19$xlab)
+plot19 <- ggplot(data=data19$data, aes(x=models, y=error)) +
+  geom_bar(stat="identity") + facet_grid(~simulations) +
+  theme(axis.title.y=element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  xlab(data19$xlab)
 
-# plot20 <- ggplot(data=data20$data, aes(x=models, y=error)) +
-#   geom_bar(stat="identity") + facet_grid(~simulations) + 
-#   theme(axis.title.y=element_blank()) +
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
-#   xlab(data20$xlab)
+plot20 <- ggplot(data=data20$data, aes(x=models, y=error)) +
+  geom_bar(stat="identity") + facet_grid(~simulations) +
+  theme(axis.title.y=element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  xlab(data20$xlab)
 
-# plot21 <- ggplot(data=data21$data, aes(x=models, y=error)) +
-#   geom_bar(stat="identity") + facet_grid(~simulations) + 
-#   theme(axis.title.y=element_blank()) +
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
-#   xlab(data21$xlab)
+plot21 <- ggplot(data=data21$data, aes(x=models, y=error)) +
+  geom_bar(stat="identity") + facet_grid(~simulations) +
+  theme(axis.title.y=element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  xlab(data21$xlab)
 
 plot22 <- ggplot(data=data22$data, aes(x=models, y=error)) +
   geom_bar(stat="identity") + facet_grid(~simulations) + 
@@ -731,17 +731,17 @@ data16 <- make_data(simulation31, simulation46, a_name = "Scenario 31 \n N = 5",
 data17 <- make_data(simulation32, simulation47, a_name = "Scenario 32 \n N = 5", b_name = "Scenario 47 \n N = 10",
                     xlab = "10 covariates, no effect modifiers \n \u03c4 = 0.5, no effect modification", mse = 2)
 
-# data18 <- make_data(simulation33, simulation48, a_name = "Scenario 33 \n N = 5", b_name = "Scenario 48 \n N = 10",
-#                    xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, small effect modification", mse = 2)
-# 
-# data19 <- make_data(simulation34, simulation49, a_name = "Scenario 34 \n N = 5", b_name = "Scenario 49 \n N = 10",
-#                    xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, small effect modification", mse = 2)
-# 
-# data20 <- make_data(simulation35, simulation50, a_name = "Scenario 35 \n N = 5", b_name = "Scenario 50 \n N = 10",
-#                    xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, large effect modification", mse = 2)
-# 
-# data21 <- make_data(simulation36, simulation51, a_name = "Scenario 36 \n N = 5", b_name = "Scenario 51 \n N = 10",
-#                    xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, large effect modification", mse = 2)
+data18 <- make_data(simulation33, simulation48, a_name = "Scenario 33 \n N = 5", b_name = "Scenario 48 \n N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, small effect modification", mse = 2)
+
+data19 <- make_data(simulation34, simulation49, a_name = "Scenario 34 \n N = 5", b_name = "Scenario 49 \n N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, small effect modification", mse = 2)
+
+data20 <- make_data(simulation35, simulation50, a_name = "Scenario 35 \n N = 5", b_name = "Scenario 50 \n N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, large effect modification", mse = 2)
+
+data21 <- make_data(simulation36, simulation51, a_name = "Scenario 36 \n N = 5", b_name = "Scenario 51 \n N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, large effect modification", mse = 2)
 
 data22 <- make_data(simulation37, simulation52, a_name = "Scenario 37 \n N = 5", b_name = "Scenario 52 \n N = 10",
                     xlab = "10 covariates, ten effect modifiers \n \u03c4 = 0.5, large effect modification", mse = 2)
@@ -881,29 +881,29 @@ plot17 <- ggplot(data=data17$data, aes(x=models, y=error)) +
   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
   xlab(data17$xlab)
 
-# plot18 <- ggplot(data=data18$data, aes(x=models, y=error)) +
-#   geom_bar(stat="identity") + facet_grid(~simulations) + 
-#   theme(axis.title.y=element_blank()) +
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
-#   xlab(data18$xlab)
+plot18 <- ggplot(data=data18$data, aes(x=models, y=error)) +
+  geom_bar(stat="identity") + facet_grid(~simulations) +
+  theme(axis.title.y=element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  xlab(data18$xlab)
 
-# plot19 <- ggplot(data=data19$data, aes(x=models, y=error)) +
-#   geom_bar(stat="identity") + facet_grid(~simulations) + 
-#   theme(axis.title.y=element_blank()) +
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
-#   xlab(data19$xlab)
+plot19 <- ggplot(data=data19$data, aes(x=models, y=error)) +
+  geom_bar(stat="identity") + facet_grid(~simulations) +
+  theme(axis.title.y=element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  xlab(data19$xlab)
 
-# plot20 <- ggplot(data=data20$data, aes(x=models, y=error)) +
-#   geom_bar(stat="identity") + facet_grid(~simulations) + 
-#   theme(axis.title.y=element_blank()) +
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
-#   xlab(data20$xlab)
+plot20 <- ggplot(data=data20$data, aes(x=models, y=error)) +
+  geom_bar(stat="identity") + facet_grid(~simulations) +
+  theme(axis.title.y=element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  xlab(data20$xlab)
 
-# plot21 <- ggplot(data=data21$data, aes(x=models, y=error)) +
-#   geom_bar(stat="identity") + facet_grid(~simulations) + 
-#   theme(axis.title.y=element_blank()) +
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
-#   xlab(data21$xlab)
+plot21 <- ggplot(data=data21$data, aes(x=models, y=error)) +
+  geom_bar(stat="identity") + facet_grid(~simulations) +
+  theme(axis.title.y=element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  xlab(data21$xlab)
 
 plot22 <- ggplot(data=data22$data, aes(x=models, y=error)) +
   geom_bar(stat="identity") + facet_grid(~simulations) + 
@@ -1023,17 +1023,17 @@ data16 <- make_data(simulation31, simulation46, a_name = "Scenario 31 \n N = 5",
 data17 <- make_data(simulation32, simulation47, a_name = "Scenario 32 \n N = 5", b_name = "Scenario 47 \n N = 10",
                     xlab = "10 covariates, no effect modifiers \n \u03c4 = 0.5, no effect modification", mse = 1)
 
-# data18 <- make_data(simulation33, simulation48, a_name = "Scenario 33 \n N = 5", b_name = "Scenario 48 \n N = 10",
-#                    xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, small effect modification", mse = 1)
-# 
-# data19 <- make_data(simulation34, simulation49, a_name = "Scenario 34 \n N = 5", b_name = "Scenario 49 \n N = 10",
-#                    xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, small effect modification", mse = 1)
-# 
-# data20 <- make_data(simulation35, simulation50, a_name = "Scenario 35 \n N = 5", b_name = "Scenario 50 \n N = 10",
-#                    xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, large effect modification", mse = 1)
-# 
-# data21 <- make_data(simulation36, simulation51, a_name = "Scenario 36 \n N = 5", b_name = "Scenario 51 \n N = 10",
-#                    xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, large effect modification", mse = 1)
+data18 <- make_data(simulation33, simulation48, a_name = "Scenario 33 \n N = 5", b_name = "Scenario 48 \n N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, small effect modification", mse = 1)
+
+data19 <- make_data(simulation34, simulation49, a_name = "Scenario 34 \n N = 5", b_name = "Scenario 49 \n N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, small effect modification", mse = 1)
+
+data20 <- make_data(simulation35, simulation50, a_name = "Scenario 35 \n N = 5", b_name = "Scenario 50 \n N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.2, large effect modification", mse = 1)
+
+data21 <- make_data(simulation36, simulation51, a_name = "Scenario 36 \n N = 5", b_name = "Scenario 51 \n N = 10",
+                   xlab = "10 covariates, one effect modifiers \n \u03c4 = 0.5, large effect modification", mse = 1)
 
 data22 <- make_data(simulation37, simulation52, a_name = "Scenario 37 \n N = 5", b_name = "Scenario 52 \n N = 10",
                     xlab = "10 covariates, ten effect modifiers \n \u03c4 = 0.5, large effect modification", mse = 1)
@@ -1173,29 +1173,29 @@ plot17 <- ggplot(data=data17$data, aes(x=models, y=error)) +
   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
   xlab(data17$xlab)
 
-# plot18 <- ggplot(data=data18$data, aes(x=models, y=error)) +
-#   geom_bar(stat="identity") + facet_grid(~simulations) + 
-#   theme(axis.title.y=element_blank()) +
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
-#   xlab(data18$xlab)
+plot18 <- ggplot(data=data18$data, aes(x=models, y=error)) +
+  geom_bar(stat="identity") + facet_grid(~simulations) +
+  theme(axis.title.y=element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  xlab(data18$xlab)
 
-# plot19 <- ggplot(data=data19$data, aes(x=models, y=error)) +
-#   geom_bar(stat="identity") + facet_grid(~simulations) + 
-#   theme(axis.title.y=element_blank()) +
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
-#   xlab(data19$xlab)
+plot19 <- ggplot(data=data19$data, aes(x=models, y=error)) +
+  geom_bar(stat="identity") + facet_grid(~simulations) +
+  theme(axis.title.y=element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  xlab(data19$xlab)
 
-# plot20 <- ggplot(data=data20$data, aes(x=models, y=error)) +
-#   geom_bar(stat="identity") + facet_grid(~simulations) + 
-#   theme(axis.title.y=element_blank()) +
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
-#   xlab(data20$xlab)
+plot20 <- ggplot(data=data20$data, aes(x=models, y=error)) +
+  geom_bar(stat="identity") + facet_grid(~simulations) +
+  theme(axis.title.y=element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  xlab(data20$xlab)
 
-# plot21 <- ggplot(data=data21$data, aes(x=models, y=error)) +
-#   geom_bar(stat="identity") + facet_grid(~simulations) + 
-#   theme(axis.title.y=element_blank()) +
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
-#   xlab(data21$xlab)
+plot21 <- ggplot(data=data21$data, aes(x=models, y=error)) +
+  geom_bar(stat="identity") + facet_grid(~simulations) +
+  theme(axis.title.y=element_blank()) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) +
+  xlab(data21$xlab)
 
 plot22 <- ggplot(data=data22$data, aes(x=models, y=error)) +
   geom_bar(stat="identity") + facet_grid(~simulations) + 

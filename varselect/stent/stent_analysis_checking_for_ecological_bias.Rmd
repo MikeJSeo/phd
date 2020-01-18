@@ -1,0 +1,93 @@
+---
+title: "Variable selection in individual patient data meta-analysis - stent dataset"
+author: "Michael Seo"
+date: "16 January 2020"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(tidy = TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), warning = FALSE, message=FALSE, echo = FALSE)
+```
+
+
+```{r}
+# load packages needed
+library(readstata13)
+
+library(lme4) #for fitting glmm
+library(glmnet) #for lasso
+library(R2jags)# for Bayesian models
+
+library(MASS) # Used for data simulation
+```
+
+
+```{r}
+# Setting directory
+setwd("C:/Users/ms19g661/Desktop")
+#setwd("C:/Users/mike/Desktop")
+#stent <- read.dta13("stent.dta")
+stent <- read.dta13("1_year_stent_data_21092018.dta")
+
+#load/save everything else from/to github
+setwd("~/GitHub/phd/varselect")
+#setwd("C:/Users/mike/Desktop/Github/phd/varselect")
+```
+
+
+```{r}
+# "age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "gpi", "new_p2y12", "num_stent"
+# gender=1 is men, gender=0 is female
+# dropped gpi, new_p2y12
+# dropped study 19: too big
+study_inclusion <- c(3, 4, 5, 12, 13, 14, 15, 17)
+data0 <- stent[stent$trial_name %in% study_inclusion,]
+
+#rename study
+for(i in 1:dim(data0)[1]){
+  data0$trial_name[i] <- which(data0$trial_name[i] == study_inclusion)
+}
+data0$trial_name <- as.factor(data0$trial_name)
+
+X <-  data0[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")]
+
+#recode categorical variables
+ii <- sapply(X, is.factor)
+X[ii] <- lapply(X[ii], as.character)
+X[X == "Yes"] <- 1
+X[X == "Male"] <- 1
+X[X == "No"] <- 0
+X[X == "Female"] <- 0
+X[ii] <- lapply(X[ii], as.numeric)
+
+data_stent <- cbind(X, y = data0$a_death_5yr_yn, treat = ifelse(data0$rand == "BMS", 0, 1), studyid = data0$trial_name)
+mydata <- na.omit(data_stent)
+
+
+# scale with trial specific mean and sd
+for(i in 1:length(unique(mydata$study))){
+  this.study <- unique(mydata$study)[i]
+
+  mydata[mydata$study == this.study,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")] <-  apply(mydata[mydata$study == this.study,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")], 2, scale, scale = FALSE)
+
+}
+
+# scale all variables, not centering
+mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")] <- apply(mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")], 2, scale, center = FALSE)
+
+X <- mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")]
+
+
+expit <- function(x){
+  exp(x)/(1+exp(x))
+}
+```
+
+## glmm_full
+
+```{r glmm_full_stent, cache = TRUE}
+m2 <- glmer(y ~ studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat + (-1 + treat|studyid), data = mydata, family = binomial)
+summary(m2)
+```
