@@ -156,7 +156,7 @@ exp(contr %*% coef(cvfit, s = "lambda.min"))
 
 
 ```{r}
-bootstrap_function  <- function(model_data, ndraws, p.fac, family, alpha = 1, col_labels) {
+bootstrap_function  <- function(model_data, ndraws, p.fac, family, alpha = 1, col_labels, lambdas = NULL) {
   
   coeff_mtx <- matrix(0, nrow = ndraws, ncol = length(col_labels))
   
@@ -165,7 +165,12 @@ bootstrap_function  <- function(model_data, ndraws, p.fac, family, alpha = 1, co
     bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
     bootstrap_data <- model_data[bootstrap_ids,]
     
-    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = family, type.measure = "deviance", standardize = FALSE, alpha = alpha)  
+    if(alpha == 0 & family == "binomial"){
+      bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = family, type.measure = "deviance", standardize = FALSE, alpha = alpha, lambda = lambdas)  
+    }else {
+      bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = family, type.measure = "deviance", standardize = FALSE, alpha = alpha)  
+    }
+  
     aa <- coef(bootstrap_model, s = "lambda.min")
     coeff_mtx[ii,] <- sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))  
   }
@@ -176,7 +181,7 @@ bootstrap_function  <- function(model_data, ndraws, p.fac, family, alpha = 1, co
 
 
 ```{r}
-bootstrap_function2  <- function(model_data, ndraws, p.fac, family, alpha = 1, contr_vec) {
+bootstrap_function2  <- function(model_data, ndraws, p.fac, family, alpha = 1, contr_vec, lambdas = NULL) {
   
   predictions <- rep(NA, ndraws)
   
@@ -185,7 +190,12 @@ bootstrap_function2  <- function(model_data, ndraws, p.fac, family, alpha = 1, c
     bootstrap_ids <- sample(seq(nrow(model_data)), nrow(model_data), replace = TRUE)
     bootstrap_data <- model_data[bootstrap_ids,]
     
-    bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = family, type.measure = "deviance", standardize = FALSE, alpha = alpha)  
+     if(alpha == 0 & family == "binomial"){
+      bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = family, type.measure = "deviance", standardize = FALSE, alpha = alpha, lambda = lambdas)  
+    }else {
+      bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = family, type.measure = "deviance", standardize = FALSE, alpha = alpha)  
+    }
+    
     predictions[ii] <- exp(contr_vec %*% coef(bootstrap_model, s = "lambda.min"))
 
   }
@@ -196,7 +206,7 @@ bootstrap_function2  <- function(model_data, ndraws, p.fac, family, alpha = 1, c
 
 
 ```{r lasso_se, cache = TRUE}
-col_labels <- c("age", "gender", "diabetes", "stable_cad", "multivessel", "ladtreated", "overlap", "m_dia_above_3", "num_stent", "age:treat", "gender:treat", "diabetes:treat", "stable_cad:trea", "multivessel:treat", "ladtreated:treat", "overlap:treat", "m_dia_above_3:treat", "num_stent:treat", "treat")
+col_labels <- c("age", "gender", "diabetes", "stable_cad", "multivessel", "ladtreated", "overlap", "m_dia_above_3", "num_stent", "age:treat", "gender:treat", "diabetes:treat", "stable_cad:treat", "multivessel:treat", "ladtreated:treat", "overlap:treat", "m_dia_above_3:treat", "num_stent:treat", "treat")
 set.seed(1)
 sd_values <- bootstrap_function(model_data = data_glmnet, ndraws = 50, p.fac = p.fac.stent, family = "binomial", alpha = 1, col_labels)
 sd_values
@@ -219,25 +229,26 @@ quantile(predictions_group2, probs = c(0.025, 0.5, 0.975))
 
 ```{r ridge_stent, cache = TRUE}
 set.seed(1)
-cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.stent, family = "binomial", type.measure = "deviance", standardize = FALSE, alpha = 0)
+lambdas <- 10^seq(3, -3, by = -.1) #manually specify lambda value to cross validate
+cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.stent, family = "binomial", type.measure = "deviance", standardize = FALSE, alpha = 0, lambda = lambdas)
 coef(cvfit, s = "lambda.min")
 ```
 
 ```{r ridge_sd, cache = TRUE}
 set.seed(1)
-sd_values2 <- bootstrap_function(model_data = data_glmnet, ndraws = 50, p.fac = p.fac.stent, family = "binomial", alpha = 0, col_labels)
+sd_values2 <- bootstrap_function(model_data = data_glmnet, ndraws = 50, p.fac = p.fac.stent, family = "binomial", alpha = 0, col_labels, lambda = lambdas)
 sd_values2
 ```
 
 ```{r ridge_predictions, cache = TRUE}
 set.seed(1)
 contr <- c(rep(0, 8), rep(0, 9), 1, 0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418)
-predictions_group1 <- bootstrap_function2(model_data = data_glmnet, ndraws = 200, p.fac = p.fac.stent, family = "binomial", alpha = 0, contr_vec = contr)
+predictions_group1 <- bootstrap_function2(model_data = data_glmnet, ndraws = 200, p.fac = p.fac.stent, family = "binomial", alpha = 0, contr_vec = contr, lambda = lambdas)
 quantile(predictions_group1, probs = c(0.025, 0.5, 0.975))
 
 set.seed(1)
 contr <- c(rep(0, 8), rep(0, 9), 1, -1.522422, 0.606939, -0.5525687, 1.3948883, -0.9276506, -0.9352369, -0.425849, 0.1858944, -0.6300019)
-predictions_group2 <- bootstrap_function2(model_data = data_glmnet, ndraws = 200, p.fac = p.fac.stent, family = "binomial", alpha = 0, contr_vec = contr)
+predictions_group2 <- bootstrap_function2(model_data = data_glmnet, ndraws = 200, p.fac = p.fac.stent, family = "binomial", alpha = 0, contr_vec = contr, lambda = lambdas)
 quantile(predictions_group2, probs = c(0.025, 0.5, 0.975))
 ```
 
@@ -304,7 +315,7 @@ for(k in 1:Ncovariate){
 }
 ```
 
-```{r bayesianLASSO_stent, cache = TRUE}
+```{r bayesianLASSO_stent, cache = TRUE, eval = FALSE}
 model_bayesLASSO<- jags(data = data_jags_stent, inits = NULL,
                  parameters.to.save =  c("gamma", "delta", "beta", "sd"),
                  n.chains = 3, n.iter = 10000,
@@ -312,13 +323,13 @@ model_bayesLASSO<- jags(data = data_jags_stent, inits = NULL,
                  model.file = modelBayesLasso)
 ```
 
-```{r}
+```{r, eval = FALSE}
 print(model_bayesLASSO)
 model_bayesLASSO$BUGSoutput
 ```
 
 
-```{r}
+```{r, eval =FALSE}
 # 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5: 3.1705418
 mat1 <- model_bayesLASSO$BUGSoutput$sims.matrix[,c("delta[2]", "gamma[1]", "gamma[2]", "gamma[3]", "gamma[4]", "gamma[5]", "gamma[6]", "gamma[7]", "gamma[8]", "gamma[9]")]
 sum1 <- mat1 %*% c(1, 0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418)
@@ -390,7 +401,7 @@ Pind[2] <- 0.5
 ```
 
 
-```{r SSVS_stent, cache = TRUE}
+```{r SSVS_stent, cache = TRUE, eval = FALSE}
 model_SSVS <- jags(data = data_jags_stent, inits = NULL,
                  parameters.to.save =  c("gamma", "delta", "beta", "sd", "Ind"),
                  n.chains = 3, n.iter = 10000,
@@ -398,13 +409,13 @@ model_SSVS <- jags(data = data_jags_stent, inits = NULL,
                  model.file = modelSSVS)
 ```
 
-```{r}
+```{r, eval = FALSE}
 print(model_SSVS)
 model_SSVS$BUGSoutput
 ```
 
 
-```{r}
+```{r, eval = FALSE}
 # 80 years: 0.9325098, female(gender = 0): -1.6474649, diabetes=1: 1.8095668, stable_cad=0: -0.7168387, multivessel=1: 1.0778950, ladtreated = 1: 1.0691515, overlap=1: 2.348039, m_dia_above_3=0: -5.3789130, num_stents = 5: 3.1705418
 mat1 <- model_SSVS$BUGSoutput$sims.matrix[,c("delta[2]", "gamma[1]", "gamma[2]", "gamma[3]", "gamma[4]", "gamma[5]", "gamma[6]", "gamma[7]", "gamma[8]", "gamma[9]")]
 sum1 <- mat1 %*% c(1, 0.9325098, -1.6474649, 1.8095668, -0.7168387, 1.0778950, 1.0691515, 2.348039, -5.3789130, 3.1705418)

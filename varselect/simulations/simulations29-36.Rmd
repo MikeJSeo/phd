@@ -20,8 +20,7 @@ library(dclone) # for parallel processing of JAGS code
 library(writexl)
 
 #setwd("C:/Users/mike/Desktop/Github/phd/varselect/")
-#setwd("~/GitHub/phd/varselect/")
-setwd("O:/varselect")
+setwd("~/GitHub/phd/varselect/")
 
 source("run.simulation.functions.final.R")
 source("helpful.functions.final.R")
