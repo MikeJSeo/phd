@@ -5,7 +5,7 @@ library("grid")
 require("gridExtra")
 
 #setwd("C:/Users/mike/Desktop/Github/phd/varselect/simulation_results_renumbered")
-setwd("~/GitHub/phd/varselect/simulation_results_renumbered")
+setwd("~/GitHub/phd/varselect/simulation_results")
 
 simulation1 <- read_excel("simulation1.result.xlsx")
 simulation2 <- read_excel("simulation2.result.xlsx")
@@ -1273,11 +1273,3 @@ grid.arrange(arrangeGrob(plot1,plot2,plot3,plot4,plot5,plot6,plot8,plot9, plot10
              arrangeGrob(plot16, plot17, plot18,plot19,plot20,plot21,plot23,plot24, plot25,plot26,plot27,plot28,plot29,plot30,
                          top=textGrob("Dichotomous outcome"), ncol=3, as.table = FALSE),
              left = textGrob("True effect modifier MSE", rot = 90, vjust = 0.5), ncol=2)
-
-
-
-grid.arrange(plot1, plot2, plot3,plot4,plot5,plot6,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot15,
-             plot16, plot17, plot18,plot19,plot20,plot21,plot23,plot24, plot25,plot26,plot27,plot28,plot29,plot30,
-             left = textGrob("False effect modifier MSE", rot = 90, vjust = 0.5),
-             ncol=6, as.table = FALSE)
-
