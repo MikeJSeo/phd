@@ -379,6 +379,30 @@ plot30 <- ggplot(data=data30$data, aes(x=models, y=error)) +
 #              top = grid::textGrob("Title",x=0,hjust=0))
 
 
+fg <- frameGrob()
+tg <- textGrob("Continuous outcome", gp = gpar(fontsize = 28, fontfamily= "Times"))
+rg <- rectGrob(x = tg$x+unit(4, "mm"), y = tg$y, width = stringWidth(tg$label)*5 + unit(9, "mm") ,                 
+               height = stringHeight(tg$label) + unit(10,"mm"), gp = gpar(fill = "light grey", lty = 0))
+fg <- packGrob(fg, rg)
+fg <- packGrob(fg, tg)
+
+
+fg2 <- frameGrob()
+tg2 <- textGrob("Binary outcome", gp = gpar(fontsize = 28, fontfamily= "Times"))
+rg2 <- rectGrob(x = tg2$x+unit(4, "mm"), y = tg2$y, width = stringWidth(tg$label)*5 + unit(9, "mm"),                 
+               height = stringHeight(tg2$label) + unit(10,"mm"), gp = gpar(fill = "light grey", lty = 0))
+fg2 <- packGrob(fg2, rg2)
+fg2 <- packGrob(fg2, tg2)
+
+grid.arrange(arrangeGrob(plot1,plot2, plot3,plot4,plot5,plot6,plot7,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot15,
+                         top=fg, ncol=3, as.table = FALSE),
+             arrangeGrob(plot16,plot17,plot18,plot19,plot20,plot21,plot22,plot23,plot24,plot25,plot26,plot27,plot28,plot29,plot30,
+                         top=fg2, ncol=3, as.table = FALSE),
+             left = textGrob("Patient specific treatment MSE", rot = 90, vjust = 0.5), ncol=2)
+
+
+
+
 grid.arrange(arrangeGrob(plot1,plot2, plot3,plot4,plot5,plot6,plot7,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot15,
                          top=textGrob("Continuous outcome"), ncol=3, as.table = FALSE),
              arrangeGrob(plot16,plot17,plot18,plot19,plot20,plot21,plot22,plot23,plot24,plot25,plot26,plot27,plot28,plot29,plot30,
@@ -1266,7 +1290,6 @@ plot30 <- ggplot(data=data30$data, aes(x=models, y=error)) +
   theme(axis.title.y=element_blank()) +
   scale_y_continuous(labels = scales::number_format(accuracy = 0.01)) + 
   xlab(data30$xlab)
-
 
 grid.arrange(arrangeGrob(plot1,plot2,plot3,plot4,plot5,plot6,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot15,
                          top=textGrob("Continuous outcome"), ncol=3, as.table = FALSE),
