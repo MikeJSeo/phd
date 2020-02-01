@@ -372,13 +372,7 @@ plot30 <- ggplot(data=data30$data, aes(x=models, y=error)) +
 
 
 
-# grid.arrange(plot1,plot2, plot3,plot4,plot5,plot6,plot7,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot15,
-#              plot16,plot17,plot18,plot19,plot20,plot21,plot22,plot23,plot24,plot25,plot26,plot27,plot28,plot29,plot30,
-#              left = textGrob("Patient specific treatment MSE", rot = 90, vjust = 0.5),
-#              ncol=6, as.table = FALSE,
-#              top = grid::textGrob("Title",x=0,hjust=0))
-
-
+windowsFonts(Times = windowsFont("Times New Roman"))
 fg <- frameGrob()
 tg <- textGrob("Continuous outcome", gp = gpar(fontsize = 28, fontfamily= "Times"))
 rg <- rectGrob(x = tg$x+unit(4, "mm"), y = tg$y, width = stringWidth(tg$label)*5 + unit(9, "mm") ,                 
@@ -399,19 +393,6 @@ grid.arrange(arrangeGrob(plot1,plot2, plot3,plot4,plot5,plot6,plot7,plot8,plot9,
              arrangeGrob(plot16,plot17,plot18,plot19,plot20,plot21,plot22,plot23,plot24,plot25,plot26,plot27,plot28,plot29,plot30,
                          top=fg2, ncol=3, as.table = FALSE),
              left = textGrob("Patient specific treatment MSE", rot = 90, vjust = 0.5), ncol=2)
-
-
-
-
-grid.arrange(arrangeGrob(plot1,plot2, plot3,plot4,plot5,plot6,plot7,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot15,
-                         top=textGrob("Continuous outcome"), ncol=3, as.table = FALSE),
-             arrangeGrob(plot16,plot17,plot18,plot19,plot20,plot21,plot22,plot23,plot24,plot25,plot26,plot27,plot28,plot29,plot30,
-                         top=textGrob("Dichotomous outcome"), ncol=3, as.table = FALSE),
-             left = textGrob("Patient specific treatment MSE", rot = 90, vjust = 0.5), ncol=2)
-             
-             
-
-
 
 
 
@@ -703,9 +684,9 @@ plot30 <- ggplot(data=data30$data, aes(x=models, y=error)) +
 
 
 grid.arrange(arrangeGrob(plot1,plot2, plot3,plot4,plot5,plot6,plot7,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot15,
-                         top=textGrob("Continuous outcome"), ncol=3, as.table = FALSE),
+                         top=fg, ncol=3, as.table = FALSE),
              arrangeGrob(plot16,plot17,plot18,plot19,plot20,plot21,plot22,plot23,plot24,plot25,plot26,plot27,plot28,plot29,plot30,
-                         top=textGrob("Dichotomous outcome"), ncol=3, as.table = FALSE),
+                         top=fg2, ncol=3, as.table = FALSE),
              left = textGrob("Treatment MSE", rot = 90, vjust = 0.5), ncol=2)
 
 
@@ -998,9 +979,9 @@ plot30 <- ggplot(data=data30$data, aes(x=models, y=error)) +
 
 
 grid.arrange(arrangeGrob(plot3,plot4,plot5,plot6,plot7,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot15,
-                         top=textGrob("Continuous outcome"), ncol=3, as.table = FALSE),
+                         top=fg, ncol=3, as.table = FALSE),
              arrangeGrob(plot18,plot19,plot20,plot21,plot22,plot23,plot24,plot25,plot26,plot27,plot28,plot29,plot30,
-                         top=textGrob("Dichotomous outcome"), ncol=3, as.table = FALSE),
+                         top=fg2, ncol=3, as.table = FALSE),
              left = textGrob("True effect modifier MSE", rot = 90, vjust = 0.5), ncol=2)
 
 
@@ -1292,7 +1273,7 @@ plot30 <- ggplot(data=data30$data, aes(x=models, y=error)) +
   xlab(data30$xlab)
 
 grid.arrange(arrangeGrob(plot1,plot2,plot3,plot4,plot5,plot6,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot15,
-                         top=textGrob("Continuous outcome"), ncol=3, as.table = FALSE),
+                         top=fg, ncol=3, as.table = FALSE),
              arrangeGrob(plot16, plot17, plot18,plot19,plot20,plot21,plot23,plot24, plot25,plot26,plot27,plot28,plot29,plot30,
-                         top=textGrob("Dichotomous outcome"), ncol=3, as.table = FALSE),
+                         top=fg2, ncol=3, as.table = FALSE),
              left = textGrob("True effect modifier MSE", rot = 90, vjust = 0.5), ncol=2)

@@ -1,0 +1,220 @@
+---
+title: "ra analysis"
+author: "Michael Seo"
+date: "1 Februar 2020"
+output: html_document
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(tidy = TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), warning = FALSE, message=FALSE, echo = FALSE)
+```
+
+
+```{r}
+setwd("C:/Users/ms19g661/Desktop")
+
+library("readxl")
+# xls files
+mydata <- read_excel("ra_dataset.xlsx")
+mydata <- as.data.frame(mydata)
+
+## data with non-missing outcome
+mydata <- mydata[!is.na(mydata$change_das_bsr),]
+#apply(mydata, 2, function(x) sum(is.na(x)))
+
+## data with complete data: three covariates removed
+data <- mydata[, -which(colnames(mydata) %in% c("base_bmi", "base_haq", "comorbidities"))]
+data <- data[complete.cases(data),]
+
+## variables to include
+# gender
+# age
+## not included: base_bmi: BMI
+# disease_duration: time from RA diagnosis to baseline visit, in years
+# n_prev_dmards: No. of previous cDMARDs
+# n_prev_antiTNF: No. of previous anti-TNF agents
+# base_rf : rheumatoid factor
+# conc_stero: On steroids
+## not included: base_haq: HAQ questionnaire (another disease activity score)
+## not included: comorbidities
+# base_bsr: baseline ESR, not to be confused with the DAS28
+# base_das_bsr: baseline DAS28 score
+
+## four studies; BSRBR, REFLEX, SCQM, TOWARD
+
+# BSRBR
+
+BSRBR <- data[data$study == "BSRBR",]
+#table(BSRBR$treatment)
+
+# REFLEX
+
+REFLEX <- data[data$study == "REFLEX",]
+#table(REFLEX$treatment)
+
+# SCQM
+
+SCQM <- data[data$study == "SCQM",]
+#table(SCQM$treatment)
+
+# TOWARD
+
+TOWARD <- data[data$study == "TOWARD",]
+#table(TOWARD$treatment)
+```
+
+## First stage analysis: BSRBR
+
+Here's how treatment is assigned.
+
+"DMARDs" is assigned 1 (baseline); "RTX + DMARDs" is assigned 2 (second column); "TCZ + DMARDs" is assigned 3 (third column)
+
+```{r}
+data <- BSRBR
+y <- data$change_das_bsr
+X <- data[,c("gender", "age", "disease_duration", "n_prev_dmards", "n_prev_antiTNF", "base_rf", "conc_stero", "base_bsr", "base_das_bsr")]
+Np <- length(y)
+Ncovariate <- ncol(X)
+
+data$treatment[data$treatment == "DMARDs"] <- 1
+data$treatment[data$treatment == "RTX + DMARDs"] <- 2
+data$treatment[data$treatment == "TCZ + DMARDs"] <- 3
+data$treatment <- as.numeric(data$treatment)
+
+Ntreat <- length(unique(data$treatment))
+
+data_jags <- with(data,{
+  list(y = y,
+       X = X,
+       Np = Np,
+       Ncovariate = Ncovariate,
+       treat = treatment,
+       Ntreat = Ntreat)
+})
+
+
+library(rjags)
+setwd("~/GitHub/phd/ra")
+
+jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
+BSRBR_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 2000)
+summary(BSRBR_samples)
+```
+
+## First stage analysis: SCQM
+
+```{r}
+data <- SCQM
+y <- data$change_das_bsr
+X <- data[,c("gender", "age", "disease_duration", "n_prev_dmards", "n_prev_antiTNF", "base_rf", "conc_stero", "base_bsr", "base_das_bsr")]
+Np <- length(y)
+Ncovariate <- ncol(X)
+
+data$treatment[data$treatment == "DMARDs"] <- 1
+data$treatment[data$treatment == "RTX + DMARDs"] <- 2
+data$treatment[data$treatment == "TCZ + DMARDs"] <- 3
+data$treatment <- as.numeric(data$treatment)
+
+Ntreat <- length(unique(data$treatment))
+
+data_jags <- with(data,{
+  list(y = y,
+       X = X,
+       Np = Np,
+       Ncovariate = Ncovariate,
+       treat = treatment,
+       Ntreat = Ntreat)
+})
+
+
+library(rjags)
+setwd("~/GitHub/phd/ra")
+
+jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
+SCQM_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 2000)
+summary(SCQM_samples)
+```
+
+## First stage analysis: REFLEX
+
+This one doesn't have TCZ + DMARDs
+
+"DMARDs" is assigned 1 (baseline); "RTX + DMARDs" is assigned 2 (second column)
+
+```{r}
+data <- REFLEX
+y <- data$change_das_bsr
+X <- data[,c("gender", "age", "disease_duration", "n_prev_dmards", "n_prev_antiTNF", "base_rf", "conc_stero", "base_bsr", "base_das_bsr")]
+Np <- length(y)
+Ncovariate <- ncol(X)
+
+data$treatment[data$treatment == "DMARDs"] <- 1
+data$treatment[data$treatment == "RTX + DMARDs"] <- 2
+data$treatment <- as.numeric(data$treatment)
+
+Ntreat <- length(unique(data$treatment))
+
+data_jags <- with(data,{
+  list(y = y,
+       X = X,
+       Np = Np,
+       Ncovariate = Ncovariate,
+       treat = treatment,
+       Ntreat = Ntreat
+       )
+})
+
+
+library(rjags)
+setwd("~/GitHub/phd/ra")
+
+jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
+REFLEX_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 2000)
+summary(REFLEX_samples)
+```
+
+
+## First stage analysis: TOWARD
+
+This one doesn't have RTX + DMARDs
+
+"DMARDs" is assigned 1 (baseline); "TCZ + DMARDs" is assigned 2 (second column)
+
+
+```{r}
+data <- TOWARD
+y <- data$change_das_bsr
+X <- data[,c("gender", "age", "disease_duration", "n_prev_dmards", "n_prev_antiTNF", "base_rf", "conc_stero", "base_bsr", "base_das_bsr")]
+Np <- length(y)
+Ncovariate <- ncol(X)
+
+data$treatment[data$treatment == "DMARDs"] <- 1
+data$treatment[data$treatment == "TCZ + DMARDs"] <- 2
+data$treatment <- as.numeric(data$treatment)
+
+data_jags <- with(data,{
+  list(y = y,
+       X = X,
+       Np = Np,
+       Ncovariate = Ncovariate,
+       treat = treatment)
+})
+
+
+library(rjags)
+setwd("~/GitHub/phd/ra")
+
+jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
+TOWARD_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 2000)
+summary(TOWARD_samples)
+```
+
+
+## Use univariate meta analysis AD model
+
+```{r}
+BSRBR_samples_mean <- summary(REFLEX_samples)$statistics[,1]
+BSRBR_samples_sd <- summary(REFLEX_samples)$statistics[,2]
+```
