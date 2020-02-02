@@ -8,14 +8,17 @@ output: html_document
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(tidy = TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), warning = FALSE, message=FALSE, echo = FALSE)
+knitr::opts_chunk$set(tidy = TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), warning = FALSE, message=FALSE)
 ```
 
 
 ```{r}
-setwd("C:/Users/ms19g661/Desktop")
+#setwd("C:/Users/ms19g661/Desktop")
+setwd("C:/Users/mike/Desktop")
 
 library("readxl")
+library("mvmeta")
+
 # xls files
 mydata <- read_excel("ra_dataset.xlsx")
 mydata <- as.data.frame(mydata)
@@ -96,7 +99,8 @@ data_jags <- with(data,{
 
 
 library(rjags)
-setwd("~/GitHub/phd/ra")
+#setwd("~/GitHub/phd/ra")
+setwd("C:/Users/mike/Desktop/Github/phd/ra")
 
 jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
 BSRBR_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 2000)
@@ -128,10 +132,6 @@ data_jags <- with(data,{
        Ntreat = Ntreat)
 })
 
-
-library(rjags)
-setwd("~/GitHub/phd/ra")
-
 jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
 SCQM_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 2000)
 summary(SCQM_samples)
@@ -153,7 +153,6 @@ Ncovariate <- ncol(X)
 data$treatment[data$treatment == "DMARDs"] <- 1
 data$treatment[data$treatment == "RTX + DMARDs"] <- 2
 data$treatment <- as.numeric(data$treatment)
-
 Ntreat <- length(unique(data$treatment))
 
 data_jags <- with(data,{
@@ -165,10 +164,6 @@ data_jags <- with(data,{
        Ntreat = Ntreat
        )
 })
-
-
-library(rjags)
-setwd("~/GitHub/phd/ra")
 
 jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
 REFLEX_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 2000)
@@ -193,18 +188,16 @@ Ncovariate <- ncol(X)
 data$treatment[data$treatment == "DMARDs"] <- 1
 data$treatment[data$treatment == "TCZ + DMARDs"] <- 2
 data$treatment <- as.numeric(data$treatment)
+Ntreat <- length(unique(data$treatment))
 
 data_jags <- with(data,{
   list(y = y,
        X = X,
        Np = Np,
        Ncovariate = Ncovariate,
-       treat = treatment)
+       treat = treatment,
+       Ntreat = Ntreat)
 })
-
-
-library(rjags)
-setwd("~/GitHub/phd/ra")
 
 jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
 TOWARD_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 2000)
@@ -215,6 +208,83 @@ summary(TOWARD_samples)
 ## Use univariate meta analysis AD model
 
 ```{r}
-BSRBR_samples_mean <- summary(REFLEX_samples)$statistics[,1]
-BSRBR_samples_sd <- summary(REFLEX_samples)$statistics[,2]
+BSRBR_mean <- summary(BSRBR_samples)$statistics[,1]
+BSRBR_se <- summary(BSRBR_samples)$statistics[,2]/ dim(BSRBR)[1]
+
+REFLEX_mean <- summary(REFLEX_samples)$statistics[,1]
+REFLEX_se <- summary(REFLEX_samples)$statistics[,2] / dim(REFLEX)[1]
+
+SCQM_mean <- summary(SCQM_samples)$statistics[,1]
+SCQM_se <- summary(SCQM_samples)$statistics[,2] / dim(SCQM)[1]
+
+TOWARD_mean <- summary(TOWARD_samples)$statistics[,1]
+TOWARD_se <- summary(TOWARD_samples)$statistics[,2] / dim(TOWARD)[1]
+
+#beta
+y <- rbind(BSRBR_mean[1:Ncovariate], REFLEX_mean[1:Ncovariate], SCQM_mean[1:Ncovariate], TOWARD_mean[1:Ncovariate])
+se <- rbind(BSRBR_se[1:Ncovariate], REFLEX_se[1:Ncovariate], SCQM_se[1:Ncovariate], TOWARD_se[1:Ncovariate])
+
+beta_estimate <- rep(NA, Ncovariate)
+for(i in 1:Ncovariate){
+ dd <- data.frame(y = y[,i], se = se[,i])
+ beta_estimate[i] <- mvmeta(y ~ 1, S = se^2, dd, method = "reml")
+}
+beta_estimate <- as.vector(unlist(beta_estimate))
+names(beta_estimate) <- colnames(X)
+beta_estimate
+  
+# RTX + DMARDs treatment effect
+y <- rbind(BSRBR_mean[c("delta[2]")], SCQM_mean[c("delta[2]")], TOWARD_mean[c("delta[2]")])
+se <- rbind(BSRBR_se[c("delta[2]")], SCQM_se[c("delta[2]")], TOWARD_se[c("delta[2]")])
+
+delta_estimate <- NA
+dd <- data.frame(y = y, se = se)
+RTX_estimate <- mvmeta(y ~ 1, S = se^2, dd, method = "reml")
+RTX_estimate <- as.vector(unlist(RTX_estimate[1]))
+names(RTX_estimate) <- "RTX"
+RTX_estimate
+
+# TCZ + DMARDs
+y <- rbind(BSRBR_mean[c("delta[3]")], SCQM_mean[c("delta[3]")], REFLEX_mean[c("delta[2]")])
+se <- rbind(BSRBR_se[c("delta[3]")], SCQM_se[c("delta[3]")], REFLEX_se[c("delta[2]")])
+
+delta_estimate <- NA
+dd <- data.frame(y = y, se = se)
+TCZ_estimate <- mvmeta(y ~ 1, S = se^2, dd, method = "reml")
+TCZ_estimate <- as.vector(unlist(TCZ_estimate[1]))
+names(TCZ_estimate) <- "TCZ"
+TCZ_estimate
+
+# gamma RTX
+y <- rbind(BSRBR_mean[grepl("gamma", names(BSRBR_mean))][(Ncovariate+1):(2*Ncovariate)], SCQM_mean[grepl("gamma", names(SCQM_mean))][(Ncovariate+1):(2*Ncovariate)], TOWARD_mean[grepl("gamma", names(TOWARD_mean))][(Ncovariate+1):(2*Ncovariate)], REFLEX_mean[grepl("gamma", names(REFLEX_mean))][(Ncovariate+1):(2*Ncovariate)])
+se <- rbind(BSRBR_se[grepl("gamma", names(BSRBR_se))][(Ncovariate+1):(2*Ncovariate)], SCQM_se[grepl("gamma", names(SCQM_se))][(Ncovariate+1):(2*Ncovariate)], TOWARD_se[grepl("gamma", names(TOWARD_se))][(Ncovariate+1):(2*Ncovariate)], REFLEX_se[grepl("gamma", names(REFLEX_se))][(Ncovariate+1):(2*Ncovariate)])
+
+gammaRTX_estimate <- rep(NA, Ncovariate)
+for(i in 1:Ncovariate){
+ dd <- data.frame(y = y[,i], se = se[,i])
+ gammaRTX_estimate[i] <- mvmeta(y ~ 1, S = se^2, dd, method = "reml")
+}
+gammaRTX_estimate <- as.vector(unlist(gammaRTX_estimate))
+names(gammaRTX_estimate) <- colnames(X)
+gammaRTX_estimate
+
+
+# gamma TCZ
+y <- rbind(BSRBR_mean[grepl("gamma", names(BSRBR_mean))][(1 + 2*Ncovariate): (3*Ncovariate)], SCQM_mean[grepl("gamma", names(SCQM_mean))][(1+2*Ncovariate):(3*Ncovariate)], TOWARD_mean[grepl("gamma", names(TOWARD_mean))][(1+ 2*Ncovariate):(3*Ncovariate)], REFLEX_mean[grepl("gamma", names(REFLEX_mean))][(1+ 2*Ncovariate):(3*Ncovariate)])
+se <- rbind(BSRBR_se[grepl("gamma", names(BSRBR_se))][(1+ 2*Ncovariate):(3*Ncovariate)], SCQM_se[grepl("gamma", names(SCQM_se))][(1+ 2*Ncovariate):(3*Ncovariate)], TOWARD_se[grepl("gamma", names(TOWARD_se))][(1+ 2*Ncovariate):(3*Ncovariate)], REFLEX_se[grepl("gamma", names(REFLEX_se))][(1+ 2*Ncovariate):(3*Ncovariate)])
+
+gammaTCZ_estimate <- rep(NA, Ncovariate)
+for(i in 1:Ncovariate){
+ dd <- data.frame(y = y[,i], se = se[,i])
+ gammaTCZ_estimate[i] <- mvmeta(y ~ 1, S = se^2, dd, method = "reml")
+}
+gammaTCZ_estimate <- as.vector(unlist(gammaTCZ_estimate))
+names(gammaTCZ_estimate) <- colnames(X)
+gammaTCZ_estimate
+```
+
+## JAGS code
+
+```{r}
+jags_model #model code
 ```
