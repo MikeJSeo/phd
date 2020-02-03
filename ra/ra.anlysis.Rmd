@@ -11,17 +11,21 @@ output: html_document
 knitr::opts_chunk$set(tidy = TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), warning = FALSE, message=FALSE)
 ```
 
-
 ```{r}
-#setwd("C:/Users/ms19g661/Desktop")
-setwd("C:/Users/mike/Desktop")
-
 library("readxl")
-library("mvmeta")
+library("mixmeta") #previously mvmeta
+library("rjags")
+
+setwd("C:/Users/ms19g661/Desktop")
+#setwd("C:/Users/mike/Desktop")
 
 # xls files
 mydata <- read_excel("ra_dataset.xlsx")
 mydata <- as.data.frame(mydata)
+
+setwd("~/GitHub/phd/ra")
+#setwd("C:/Users/mike/Desktop/Github/phd/ra")
+
 
 ## data with non-missing outcome
 mydata <- mydata[!is.na(mydata$change_das_bsr),]
@@ -50,22 +54,22 @@ data <- data[complete.cases(data),]
 # BSRBR
 
 BSRBR <- data[data$study == "BSRBR",]
-#table(BSRBR$treatment)
+table(BSRBR$treatment)
 
 # REFLEX
 
 REFLEX <- data[data$study == "REFLEX",]
-#table(REFLEX$treatment)
+table(REFLEX$treatment)
 
 # SCQM
 
 SCQM <- data[data$study == "SCQM",]
-#table(SCQM$treatment)
+table(SCQM$treatment)
 
 # TOWARD
 
 TOWARD <- data[data$study == "TOWARD",]
-#table(TOWARD$treatment)
+table(TOWARD$treatment)
 ```
 
 ## First stage analysis: BSRBR
@@ -74,7 +78,7 @@ Here's how treatment is assigned.
 
 "DMARDs" is assigned 1 (baseline); "RTX + DMARDs" is assigned 2 (second column); "TCZ + DMARDs" is assigned 3 (third column)
 
-```{r}
+```{r BSRBR, cache = TRUE}
 data <- BSRBR
 y <- data$change_das_bsr
 X <- data[,c("gender", "age", "disease_duration", "n_prev_dmards", "n_prev_antiTNF", "base_rf", "conc_stero", "base_bsr", "base_das_bsr")]
@@ -97,19 +101,14 @@ data_jags <- with(data,{
        Ntreat = Ntreat)
 })
 
-
-library(rjags)
-#setwd("~/GitHub/phd/ra")
-setwd("C:/Users/mike/Desktop/Github/phd/ra")
-
 jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
-BSRBR_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 2000)
+BSRBR_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 10000)
 summary(BSRBR_samples)
 ```
 
 ## First stage analysis: SCQM
 
-```{r}
+```{r SCQM, cache = TRUE}
 data <- SCQM
 y <- data$change_das_bsr
 X <- data[,c("gender", "age", "disease_duration", "n_prev_dmards", "n_prev_antiTNF", "base_rf", "conc_stero", "base_bsr", "base_das_bsr")]
@@ -133,7 +132,7 @@ data_jags <- with(data,{
 })
 
 jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
-SCQM_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 2000)
+SCQM_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 10000)
 summary(SCQM_samples)
 ```
 
@@ -143,7 +142,7 @@ This one doesn't have TCZ + DMARDs
 
 "DMARDs" is assigned 1 (baseline); "RTX + DMARDs" is assigned 2 (second column)
 
-```{r}
+```{r REFLEX, cache = TRUE}
 data <- REFLEX
 y <- data$change_das_bsr
 X <- data[,c("gender", "age", "disease_duration", "n_prev_dmards", "n_prev_antiTNF", "base_rf", "conc_stero", "base_bsr", "base_das_bsr")]
@@ -166,7 +165,7 @@ data_jags <- with(data,{
 })
 
 jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
-REFLEX_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 2000)
+REFLEX_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 10000)
 summary(REFLEX_samples)
 ```
 
@@ -178,7 +177,7 @@ This one doesn't have RTX + DMARDs
 "DMARDs" is assigned 1 (baseline); "TCZ + DMARDs" is assigned 2 (second column)
 
 
-```{r}
+```{r TOWARD, cache = TRUE}
 data <- TOWARD
 y <- data$change_das_bsr
 X <- data[,c("gender", "age", "disease_duration", "n_prev_dmards", "n_prev_antiTNF", "base_rf", "conc_stero", "base_bsr", "base_das_bsr")]
@@ -200,12 +199,13 @@ data_jags <- with(data,{
 })
 
 jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
-TOWARD_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 2000)
+TOWARD_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 10000)
 summary(TOWARD_samples)
 ```
 
 
-## Use univariate meta analysis AD model
+## Second stage:
+Use univariate meta analysis AD model from mixmeta (previously mvmeta) R package
 
 ```{r}
 BSRBR_mean <- summary(BSRBR_samples)$statistics[,1]
@@ -221,64 +221,68 @@ TOWARD_mean <- summary(TOWARD_samples)$statistics[,1]
 TOWARD_se <- summary(TOWARD_samples)$statistics[,2] / dim(TOWARD)[1]
 
 #beta
-y <- rbind(BSRBR_mean[1:Ncovariate], REFLEX_mean[1:Ncovariate], SCQM_mean[1:Ncovariate], TOWARD_mean[1:Ncovariate])
-se <- rbind(BSRBR_se[1:Ncovariate], REFLEX_se[1:Ncovariate], SCQM_se[1:Ncovariate], TOWARD_se[1:Ncovariate])
+y <- rbind(BSRBR_mean[1:Ncovariate], SCQM_mean[1:Ncovariate], REFLEX_mean[1:Ncovariate], TOWARD_mean[1:Ncovariate])
+se <- rbind(BSRBR_se[1:Ncovariate], SCQM_se[1:Ncovariate], REFLEX_se[1:Ncovariate], TOWARD_se[1:Ncovariate])
+colnames(y) <- colnames(X)
+y
 
 beta_estimate <- rep(NA, Ncovariate)
 for(i in 1:Ncovariate){
  dd <- data.frame(y = y[,i], se = se[,i])
- beta_estimate[i] <- mvmeta(y ~ 1, S = se^2, dd, method = "reml")
+ beta_estimate[i] <- mixmeta(y ~ 1, S = se^2, dd, method = "reml")$coefficients
 }
-beta_estimate <- as.vector(unlist(beta_estimate))
 names(beta_estimate) <- colnames(X)
 beta_estimate
   
 # RTX + DMARDs treatment effect
-y <- rbind(BSRBR_mean[c("delta[2]")], SCQM_mean[c("delta[2]")], TOWARD_mean[c("delta[2]")])
-se <- rbind(BSRBR_se[c("delta[2]")], SCQM_se[c("delta[2]")], TOWARD_se[c("delta[2]")])
+y <- rbind(BSRBR_mean[c("delta[2]")], SCQM_mean[c("delta[2]")], REFLEX_mean[c("delta[2]")])
+se <- rbind(BSRBR_se[c("delta[2]")], SCQM_se[c("delta[2]")], REFLEX_se[c("delta[2]")])
+y
 
-delta_estimate <- NA
 dd <- data.frame(y = y, se = se)
-RTX_estimate <- mvmeta(y ~ 1, S = se^2, dd, method = "reml")
-RTX_estimate <- as.vector(unlist(RTX_estimate[1]))
+RTX_estimate <- mixmeta(y ~ 1, S = se^2, dd, method = "reml")$coefficients
 names(RTX_estimate) <- "RTX"
 RTX_estimate
 
 # TCZ + DMARDs
-y <- rbind(BSRBR_mean[c("delta[3]")], SCQM_mean[c("delta[3]")], REFLEX_mean[c("delta[2]")])
-se <- rbind(BSRBR_se[c("delta[3]")], SCQM_se[c("delta[3]")], REFLEX_se[c("delta[2]")])
+y <- rbind(BSRBR_mean[c("delta[3]")], SCQM_mean[c("delta[3]")], TOWARD_mean[c("delta[2]")])
+se <- rbind(BSRBR_se[c("delta[3]")], SCQM_se[c("delta[3]")], TOWARD_se[c("delta[2]")])
+y
 
-delta_estimate <- NA
 dd <- data.frame(y = y, se = se)
-TCZ_estimate <- mvmeta(y ~ 1, S = se^2, dd, method = "reml")
-TCZ_estimate <- as.vector(unlist(TCZ_estimate[1]))
+TCZ_estimate <- mixmeta(y ~ 1, S = se^2, dd, method = "reml")$coefficients
 names(TCZ_estimate) <- "TCZ"
 TCZ_estimate
 
-# gamma RTX
-y <- rbind(BSRBR_mean[grepl("gamma", names(BSRBR_mean))][(Ncovariate+1):(2*Ncovariate)], SCQM_mean[grepl("gamma", names(SCQM_mean))][(Ncovariate+1):(2*Ncovariate)], TOWARD_mean[grepl("gamma", names(TOWARD_mean))][(Ncovariate+1):(2*Ncovariate)], REFLEX_mean[grepl("gamma", names(REFLEX_mean))][(Ncovariate+1):(2*Ncovariate)])
-se <- rbind(BSRBR_se[grepl("gamma", names(BSRBR_se))][(Ncovariate+1):(2*Ncovariate)], SCQM_se[grepl("gamma", names(SCQM_se))][(Ncovariate+1):(2*Ncovariate)], TOWARD_se[grepl("gamma", names(TOWARD_se))][(Ncovariate+1):(2*Ncovariate)], REFLEX_se[grepl("gamma", names(REFLEX_se))][(Ncovariate+1):(2*Ncovariate)])
+# gamma RTX x treatment
+gamma.names <- names(BSRBR_mean)[grepl("gamma", names(BSRBR_mean))][-c(1:Ncovariate)]
+
+y <- rbind(BSRBR_mean[gamma.names[1:Ncovariate]], SCQM_mean[gamma.names[1:Ncovariate]], REFLEX_mean[gamma.names[1:Ncovariate]])
+colnames(y) <- colnames(X)
+y # (SCQM, BSRBR) vs REFLEX 
+
+se <- rbind(BSRBR_se[gamma.names[1:Ncovariate]], SCQM_se[gamma.names[1:Ncovariate]], REFLEX_se[gamma.names[1:Ncovariate]])
 
 gammaRTX_estimate <- rep(NA, Ncovariate)
 for(i in 1:Ncovariate){
  dd <- data.frame(y = y[,i], se = se[,i])
- gammaRTX_estimate[i] <- mvmeta(y ~ 1, S = se^2, dd, method = "reml")
+ gammaRTX_estimate[i] <- mixmeta(y ~ 1, S = se^2, dd, method = "reml")$coefficients
 }
-gammaRTX_estimate <- as.vector(unlist(gammaRTX_estimate))
 names(gammaRTX_estimate) <- colnames(X)
 gammaRTX_estimate
 
+# gamma TCZ x treatment
+y <- rbind(BSRBR_mean[gamma.names[(Ncovariate+1):(2*Ncovariate)]], SCQM_mean[gamma.names[(Ncovariate+1):(2*Ncovariate)]], TOWARD_mean[gamma.names[1:Ncovariate]])
+colnames(y) <- colnames(X)
+y # (SCQM, BSRBR) vs TOWARD
 
-# gamma TCZ
-y <- rbind(BSRBR_mean[grepl("gamma", names(BSRBR_mean))][(1 + 2*Ncovariate): (3*Ncovariate)], SCQM_mean[grepl("gamma", names(SCQM_mean))][(1+2*Ncovariate):(3*Ncovariate)], TOWARD_mean[grepl("gamma", names(TOWARD_mean))][(1+ 2*Ncovariate):(3*Ncovariate)], REFLEX_mean[grepl("gamma", names(REFLEX_mean))][(1+ 2*Ncovariate):(3*Ncovariate)])
-se <- rbind(BSRBR_se[grepl("gamma", names(BSRBR_se))][(1+ 2*Ncovariate):(3*Ncovariate)], SCQM_se[grepl("gamma", names(SCQM_se))][(1+ 2*Ncovariate):(3*Ncovariate)], TOWARD_se[grepl("gamma", names(TOWARD_se))][(1+ 2*Ncovariate):(3*Ncovariate)], REFLEX_se[grepl("gamma", names(REFLEX_se))][(1+ 2*Ncovariate):(3*Ncovariate)])
+se <- rbind(BSRBR_se[gamma.names[(Ncovariate+1):(2*Ncovariate)]], SCQM_se[gamma.names[(Ncovariate+1):(2*Ncovariate)]], TOWARD_se[gamma.names[1:Ncovariate]])
 
 gammaTCZ_estimate <- rep(NA, Ncovariate)
 for(i in 1:Ncovariate){
  dd <- data.frame(y = y[,i], se = se[,i])
- gammaTCZ_estimate[i] <- mvmeta(y ~ 1, S = se^2, dd, method = "reml")
+ gammaTCZ_estimate[i] <- mixmeta(y ~ 1, S = se^2, dd, method = "reml")$coefficients
 }
-gammaTCZ_estimate <- as.vector(unlist(gammaTCZ_estimate))
 names(gammaTCZ_estimate) <- colnames(X)
 gammaTCZ_estimate
 ```
