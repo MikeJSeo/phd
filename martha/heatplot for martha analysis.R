@@ -10,13 +10,16 @@ library("ggplot2")
 #setwd("C:/Users/efthimiou/Google Drive/PROJECT/APPLIED PROJECTS/Martha/data") #change working directory
 #original <- read_excel("For Orestis 20.11.19.xlsx",  col_names = FALSE)
 
-setwd("C:/Users/ms19g661/Desktop")
+
+#setwd("C:/Users/ms19g661/Desktop")
+setwd("C:/Users/mike/Desktop")
 original <- read_excel("Data Martha 06.10.19.xlsx",  col_names = FALSE)
 original <- as.data.frame(original)
 original[original[,4] == "Placebo" & !is.na(original[,4]),4] <- "placebo"
 original[!is.na(original[,1]) & original[,1] == "Jefferson2000 (29060/785)" & original[,5] == "paroxetine CR", 4] <- "paroxetine"
 
-setwd("~/GitHub/phd/martha")
+setwd("C:/Users/mike/Desktop/Github/phd/martha")
+#setwd("~/GitHub/phd/martha")
 source("useful functions for martha.R")
 
 treatment.selection <- c("placebo", "amitriptyline", "mirtazapine", "vortioxetine", "duloxetine", "agolematine", "venlafaxine") 
@@ -31,6 +34,7 @@ outcome.renamed[outcome.renamed == "Diarrhoea"] <- "DIARRHOEA"
 
 #########################  preliminary cleaning
 final <- data.frame()
+placebo.rate.store <- rep(NA, length(outcome.renamed))
 
 for(i in 1:length(outcome.selection)){
 print(paste("Analyzing", outcome.selection[i]))
@@ -67,7 +71,6 @@ odds.pla=rate.pla/(1-rate.pla)
 OR.pla$event.rate=round(OR.pla$OR*odds.pla/(1+OR.pla$OR*odds.pla),digits=3)
 OR.pla$CI.lower=round(OR.pla$lowerOR*odds.pla/(1+OR.pla$lowerOR*odds.pla),digits=3)
 OR.pla$CI.upper=round(OR.pla$upperOR*odds.pla/(1+OR.pla$upperOR*odds.pla),digits=3)
-OR.pla$rate.pla = rate.pla
 
 #write.xlsx(event.rates,file=paste0(outcome,".xlsx"), sheetName = "event.rates", append = T)  
 #write.xlsx(placebo.rates,file=paste0(outcome,".xlsx"), sheetName = "placebo.rates", append = T)  
@@ -95,17 +98,22 @@ risk.drugs.3=clinically.important.RD.3+rate.pla
 OR.import.3=risk.drugs.3/(1-risk.drugs.3)/((rate.pla)/(1-rate.pla))
 OR.pla$Zscore.3=(OR.pla$logOR-log(OR.import.3))/OR.pla$seTE
 
-OR.pla2=OR.pla[,which(colnames(OR.pla) %in% c("drug","Zscore.0","Zscore.1","Zscore.2","Zscore.3"))]
-#write.xlsx(OR.pla2,file=paste0(outcome,".xlsx"), sheetName = "Z.scores", append = T)  
+# no clinical difference
+aa <- data.frame(outcome = rep(outcome.renamed[i], length(OR.pla$drug)), drug = OR.pla$drug,
+                 Zscore.0 = OR.pla$Zscore.0,  Zscore.1 = OR.pla$Zscore.1, Zscore.2 = OR.pla$Zscore.2, Zscore.3 = OR.pla$Zscore.3, 
+                 event.rate = round(OR.pla$event.rate*100,1))
 
-aa <- data.frame(outcome = rep(outcome.renamed[i], length(OR.pla2$drug)), drug = OR.pla2$drug,
-                 Zscore = OR.pla$Zscore.0, event.rate = round(OR.pla$event.rate*100,1))
+placebo.rate.store[i] <- round(rate.pla*100,1)
+
 final <- rbind(final, aa)
 
 }
 
+final$Zscore <- final$Zscore.0
+final <- final[,c("outcome", "drug", "Zscore", "event.rate")]
+
 #add in placebo
-bb <- data.frame(outcome = outcome.renamed, drug = rep("placebo", length(outcome.renamed)), Zscore = rep(NA, length(outcome.renamed)), event.rate = rep(NA, length(outcome.renamed)) )
+bb <- data.frame(outcome = outcome.renamed, drug = rep("placebo", length(outcome.renamed)), Zscore = rep(NA, length(outcome.renamed)), event.rate = placebo.rate.store )
 final2 <- rbind(final, bb)
 
 final2$drug <- factor(final2$drug,
@@ -113,8 +121,8 @@ final2$drug <- factor(final2$drug,
 
 final2$Zscore <- as.numeric(final2$Zscore)
 final2$Zscore2 <- final2$Zscore #truncated zscore
-final2$Zscore2[final2$Zscore2 < -4.25] = -4.25
-final2$Zscore2[final2$Zscore2 > 4.25] = 4.25
+final2$Zscore2[final2$Zscore2 < -2.5] = -2.5
+final2$Zscore2[final2$Zscore2 > 2.5] = 2.5
 
 aa <- function(x){
   if(!is.na(x)){
