@@ -23,12 +23,12 @@ original[!is.na(original[,1]) & original[,1] == "Jefferson2000 (29060/785)" & or
 setwd("~/GitHub/phd/martha")
 source("useful functions for martha.R")
 
-treatment.selection <- c("amitriptyline", "duloxetine", "fluoxetine", "mirtazapine", "reboxetine", "venlafaxine", "vortioxetine", "placebo")
-outcome.selection <- c("NAUSEA", "HEADACHE", "DRY MOUTH", "INSOMNIA", "SEDATION/SOMNOLENCE", "Diarrhoea", "HYPERHIDROSIS", "ARRHYTMIA/HEART RATE DISORDER", "SUICIDAL IDEATION", "AGGRESSION", "ACCIDENTAL OVERDOSE")  
+
+treatment.selection <- c("vortioxetine", "venlafaxine", "reboxetine", "mirtazapine", "fluoxetine", "duloxetine", "amitriptyline", "placebo")
+outcome.selection <- c("NAUSEA", "HEADACHE", "DRY MOUTH", "INSOMNIA", "SEXUAL DYSFUNCTION","Diarrhoea", "SUICIDAL IDEATION", "AGGRESSION", "ACCIDENTAL OVERDOSE")  
+severe_ae <- c("SUICIDAL IDEATION", "AGGRESSION", "ACCIDENTAL OVERDOSE")
 
 outcome.renamed <- outcome.selection
-outcome.renamed[outcome.renamed == "SEDATION/SOMNOLENCE"] <- "SEDATION"
-outcome.renamed[outcome.renamed == "ARRHYTMIA/HEART RATE DISORDER"] <- "ARRHYTMIA"
 outcome.renamed[outcome.renamed == "Diarrhoea"] <- "DIARRHOEA"
 
 
@@ -82,10 +82,17 @@ risk.drugs.1=clinically.important.RD.1+rate.pla
 OR.import.1=risk.drugs.1/(1-risk.drugs.1)/((rate.pla)/(1-rate.pla))
 OR.pla$Zscore.1=(OR.pla$logOR-log(OR.import.1))/OR.pla$seTE
 
+Zscore.1 <- 
+if(outcome %in% severe_ae){
+  OR.pla$Zscore.0
+} else {
+  OR.pla$Zscore.1
+}
+
 # no clinical difference
 aa <- data.frame(outcome = rep(outcome.renamed[i], length(OR.pla$drug)), drug = OR.pla$drug,
-                 Zscore.0 = OR.pla$Zscore.0,  Zscore.1 = OR.pla$Zscore.1, 
-                 event.rate = round(OR.pla$event.rate*100,1))
+                 Zscore.0 = OR.pla$Zscore.0,  Zscore.1 = Zscore.1, 
+                 event.rate = round(OR.pla$event.rate*100,1), rate.pla = rate.pla, logOR = OR.pla$logOR, seTE = OR.pla$seTE)
 
 placebo.rate.store[i] <- round(rate.pla*100,1)
 final <- rbind(final, aa)
