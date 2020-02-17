@@ -23,6 +23,7 @@ for(k in 1:Ncovariate){
 for(k in 1:Ncovariate){
 	gamma[k,1] <- 0
 }
+
 for(k in 1:Ncovariate){
 	for(t in 2:Ntreat){
 		gamma[k,t] ~ dnorm(0,0.001)

@@ -8,33 +8,34 @@ load("final.rda")
 ui <- shinyUI(fluidPage(
   shinyjs::inlineCSS(list(body = "color:DarkBlue")),
   # Application title
-  titlePanel(h1("A heatplot for presenting network meta-analysis results for multiple outcomes")),
+  titlePanel(h1("The Kilim plot: a tool for visualizing network meta-analysis results for multiple outcomes")),
   
-  # Sidebar with a slider input for number of bins 
-  sidebarLayout(
-    
-    sidebarPanel(
-      h3("Clinically important threshold (in risk difference)"),
-      sliderInput("NAUSEA", "NAUSEA:", min = 0, max = 0.5, value = 0, step = 0.01),
-      sliderInput("HEADACHE", "HEADACHE:", min = 0, max = 0.5, value = 0, step = 0.01),
-      sliderInput("DRY_MOUTH", "DRY MOUTH:", min = 0, max = 0.5, value = 0, step = 0.01),
-      sliderInput("INSOMNIA", "INSOMNIA:", min = 0, max = 0.5, value = 0, step = 0.01),
-      sliderInput("SEXUAL_DYSFUNCTION", "SEXUAL DYSFUNCTION:", min = 0, max = 0.5, value = 0, step = 0.01),
-      sliderInput("DIARRHOEA", "DIARRHOEA:", min = 0, max = 0.5, value = 0, step = 0.01),
-      sliderInput("SUICIDAL_IDEATION", "SUICIDAL IDEATION:", min = 0, max = 0.5, value = 0, step = 0.01),
-      sliderInput("AGGRESSION", "AGGRESSION:", min = 0, max = 0.5, value = 0, step = 0.01),
-      sliderInput("ACCIDENTAL_OVERDOSE", "ACCIDENTAL OVERDOSE:", min = 0, max = 0.5, value = 0, step = 0.01)
+  tabPanel("Heatplot", plotOutput("plot1")),
   
-    ),
-    mainPanel(
-      
-      tabsetPanel(id = 'heatplot',
-                  tabPanel("Heatplot", plotOutput("plot1")),
-                  tabPanel("Dataset", tableOutput("data1"))
+  hr(),
+  h3("Clinically important threshold (in risk difference)"),
+  
+  fluidRow(
+    column(3,
+           sliderInput("NAUSEA", "NAUSEA:", min = 0, max = 0.1, value = 0, step = 0.01),
+           sliderInput("HEADACHE", "HEADACHE:", min = 0, max = 0.1, value = 0, step = 0.01),
+           sliderInput("DRY_MOUTH", "DRY MOUTH:", min = 0, max = 0.1, value = 0, step = 0.01)
+      ),
+      column(4, offset = 1,
+            sliderInput("INSOMNIA", "INSOMNIA:", min = 0, max = 0.1, value = 0, step = 0.01),
+            sliderInput("SEXUAL_DYSFUNCTION", "SEXUAL DYSFUNCTION:", min = 0, max = 0.1, value = 0, step = 0.01),
+            sliderInput("DIARRHOEA", "DIARRHOEA:", min = 0, max = 0.1, value = 0, step = 0.01)
+      ),
+      column(4,
+            sliderInput("SUICIDAL_IDEATION", "SUICIDAL IDEATION:", min = 0, max = 0.1, value = 0, step = 0.01),
+            sliderInput("AGGRESSION", "AGGRESSION:", min = 0, max = 0.1, value = 0, step = 0.01),
+            sliderInput("ACCIDENTAL_OVERDOSE", "ACCIDENTAL OVERDOSE:", min = 0, max = 0.1, value = 0, step = 0.01)
       )
-    ))    
     )
   )
+  
+  
+)
 
 
 server <- shinyServer(function(input, output) {
@@ -110,9 +111,6 @@ server <- shinyServer(function(input, output) {
           legend.position = "left",
           legend.text = element_text(size = 14))
   })
-  
-  
-  
 })
 
 shinyApp(ui = ui, server = server)

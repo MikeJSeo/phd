@@ -36,6 +36,8 @@ outcome.renamed[outcome.renamed == "Diarrhoea"] <- "DIARRHOEA"
 final <- data.frame()
 placebo.rate.store <- rep(NA, length(outcome.renamed))
 
+studyID_all <- vector(mode = "character")
+
 for(i in 1:length(outcome.selection)){
 print(paste("Analyzing", outcome.selection[i]))
 outcome <- outcome.selection[i]
@@ -48,14 +50,17 @@ data <- data[,c("StudyID", "Drug", "No_randomised", "martha_outcome")]
 data <- aggregate(x = data[,c("No_randomised", "martha_outcome")], by = list(data[,"Drug"], data[,c("StudyID")]), FUN = sum)
 colnames(data) <- c("Drug", "StudyID", "No_randomised", "martha_outcome")
 
+# studies used
+studyID_all <- c(studyID_all, data$StudyID)
+
 # Fit network meta analysis
 p1 = pairwise(treat = Drug, event = martha_outcome, n = No_randomised, studlab = StudyID, data = data, sm = "OR", allstudies=T)
-net1 <- netmeta(p1, prediction = T, comb.fixed = T, comb.random = F)
+net1 <- netmeta(p1)
 
 # treatment estimate (odds ratio) from netmeta
-OR.pla <- data.frame("drug" = colnames(net1$TE.fixed))
-OR.pla$logOR <- net1$TE.fixed[,"placebo"]
-OR.pla$seTE <- net1$seTE.fixed[,"placebo"]
+OR.pla <- data.frame("drug" = colnames(net1$TE.random))
+OR.pla$logOR <- net1$TE.random[,"placebo"]
+OR.pla$seTE <- net1$seTE.random[,"placebo"]
 OR.pla$OR=exp(OR.pla$logOR)
 OR.pla$upperOR=exp(OR.pla$logOR+1.96*OR.pla$seTE)
 OR.pla$lowerOR=exp(OR.pla$logOR-1.96*OR.pla$seTE)
@@ -63,7 +68,7 @@ OR.pla <- OR.pla[-which(OR.pla$drug == "placebo"),] #exclude comparison with pla
 
 # meta analysis of event rates in placebo
 meta.pla = metaprop(event = round(data$martha_outcome[data$Drug=="placebo"]), n = data$No_randomised[data$Drug=="placebo"], prediction = TRUE, method = "GLMM")
-rate.pla = exp(meta.pla$TE.random)/(1+exp(meta.pla$TE.random))
+rate.pla = exp(meta.pla$TE.fixed)/(1+exp(meta.pla$TE.fixed))
 odds.pla=rate.pla/(1-rate.pla)
 
 # calculate event rate for treatment using the formula
@@ -99,10 +104,12 @@ final <- rbind(final, aa)
 
 }
 
+# find unique studyID
+length(unique(studyID_all))
 
 final_data <- final
-#final_data$Zscore <- final$Zscore.0 #specify which z score we want: differ on clinical difference
-final_data$Zscore <- final$Zscore.1
+final_data$Zscore <- final$Zscore.0 #specify which z score we want: differ on clinical difference
+#final_data$Zscore <- final$Zscore.1
 final_data <- final_data[,c("outcome", "drug", "Zscore", "event.rate")]
 
 #add in placebo
@@ -156,7 +163,7 @@ for(i in 1:9){
   
   # Fit network meta analysis
   p1 = pairwise(treat = Drug, event = martha_outcome, n = No_randomised, studlab = StudyID, data = data, sm = "OR", allstudies=T)
-  net1 <- netmeta(p1, prediction = T, comb.fixed = T, comb.random = F)
+  net1 <- netmeta(p1, prediction = T)
   
   sort.order <- colnames(net1$TE.random)
   sort.order <- sort.order[sort.order != "placebo"]

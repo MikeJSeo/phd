@@ -102,7 +102,7 @@ data_jags <- with(data,{
 })
 
 jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
-BSRBR_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 10000)
+BSRBR_samples <- coda.samples(jags_model, variable.names = c("alpha","gamma", "beta", "delta"), n.iter = 10000)
 summary(BSRBR_samples)
 ```
 
@@ -132,7 +132,7 @@ data_jags <- with(data,{
 })
 
 jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
-SCQM_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 10000)
+SCQM_samples <- coda.samples(jags_model, variable.names = c("alpha", "gamma", "beta", "delta"), n.iter = 10000)
 summary(SCQM_samples)
 ```
 
@@ -165,7 +165,7 @@ data_jags <- with(data,{
 })
 
 jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
-REFLEX_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 10000)
+REFLEX_samples <- coda.samples(jags_model, variable.names = c("alpha", "gamma", "beta", "delta"), n.iter = 10000)
 summary(REFLEX_samples)
 ```
 
@@ -199,17 +199,71 @@ data_jags <- with(data,{
 })
 
 jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
-TOWARD_samples <- coda.samples(jags_model, variable.names = c("gamma", "beta", "delta"), n.iter = 10000)
+TOWARD_samples <- coda.samples(jags_model, variable.names = c("alpha","gamma", "beta", "delta"), n.iter = 10000)
 summary(TOWARD_samples)
 ```
 
 
 ## Second stage:
-Use univariate meta analysis AD model from mixmeta (previously mvmeta) R package
+
+Train 2 RCT + Swiss then externally validate using British registry.
+calculate mu which consists of 9 covariates, 2 treatment effect, 18 effect modifiers = vector of 29. 
 
 ```{r}
-BSRBR_mean <- summary(BSRBR_samples)$statistics[,1]
-BSRBR_se <- summary(BSRBR_samples)$statistics[,2]/ dim(BSRBR)[1]
+#names_of_vector <- colnames(BSRBR_samples)
+
+#SCQM
+SCQM_result <- as.matrix(SCQM_samples)
+SCQM_result <- SCQM_result[, colSums(SCQM_result != 0) > 0] #remove 0 columns
+
+y1 <- apply(SCQM_result, 2, mean)
+Omega1 <- solve(cov(SCQM_result))
+
+
+#REFLEX
+REFLEX_result <- as.matrix(REFLEX_samples)
+REFLEX_result <- REFLEX_result[, colSums(REFLEX_result != 0) > 0] #remove 0 columns
+
+y2 <- apply(REFLEX_result, 2, mean)
+Omega2 <- solve(cov(REFLEX_result))
+
+###TOWARD
+TOWARD_result <- as.matrix(TOWARD_samples)
+TOWARD_result <- TOWARD_result[, colSums(TOWARD_result != 0) > 0] #remove 0 columns
+
+y3 <- apply(TOWARD_result, 2, mean)
+Omega3 <- solve(cov(TOWARD_result))
+
+
+data_jags2 <- 
+  list(y1 = y1,
+       y2 = y2, 
+       y3 = y3,
+       Omega1 = Omega1,
+       Omega2 = Omega2,
+       Omega3 = Omega3,
+       Ncovariate = Ncovariate,
+       R = diag(10),
+       k = 10)
+
+jags_model2 <- jags.model("IPD-MA-stage2.txt", data_jags2, n.chains = 3, n.adapt = 1000)
+samples <- coda.samples(jags_model2, variable.names = c("alpha","beta", "gamma2", "gamma3", "delta2", "delta3"), n.iter = 10000)
+
+
+
+
+#BSRBR
+BSRBR_result <- as.matrix(BSRBR_samples)
+BSRBR_result <- BSRBR_result[, colSums(BSRBR_result != 0) > 0] #remove 0 columns
+
+y1 <- apply(BSRBR_result, 2, mean)
+Omega1 <- solve(cov(BSRBR_result))
+
+
+
+
+
+
 
 REFLEX_mean <- summary(REFLEX_samples)$statistics[,1]
 REFLEX_se <- summary(REFLEX_samples)$statistics[,2] / dim(REFLEX)[1]
@@ -217,8 +271,6 @@ REFLEX_se <- summary(REFLEX_samples)$statistics[,2] / dim(REFLEX)[1]
 SCQM_mean <- summary(SCQM_samples)$statistics[,1]
 SCQM_se <- summary(SCQM_samples)$statistics[,2] / dim(SCQM)[1]
 
-TOWARD_mean <- summary(TOWARD_samples)$statistics[,1]
-TOWARD_se <- summary(TOWARD_samples)$statistics[,2] / dim(TOWARD)[1]
 
 #beta
 y <- rbind(BSRBR_mean[1:Ncovariate], SCQM_mean[1:Ncovariate], REFLEX_mean[1:Ncovariate], TOWARD_mean[1:Ncovariate])
