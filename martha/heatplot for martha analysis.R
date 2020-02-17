@@ -73,8 +73,8 @@ odds.pla=rate.pla/(1-rate.pla)
 
 # calculate event rate for treatment using the formula
 OR.pla$event.rate=round(OR.pla$OR*odds.pla/(1+OR.pla$OR*odds.pla),digits=3)
-OR.pla$CI.lower=round(OR.pla$lowerOR*odds.pla/(1+OR.pla$lowerOR*odds.pla),digits=3)
-OR.pla$CI.upper=round(OR.pla$upperOR*odds.pla/(1+OR.pla$upperOR*odds.pla),digits=3)
+#OR.pla$CI.lower=round(OR.pla$lowerOR*odds.pla/(1+OR.pla$lowerOR*odds.pla),digits=3)
+#OR.pla$CI.upper=round(OR.pla$upperOR*odds.pla/(1+OR.pla$upperOR*odds.pla),digits=3)
 
 ### calculate adjusted Z-scores for heatplot
 clinically.important.RD.0=0.0  ##### clinically important risk difference for this outcome

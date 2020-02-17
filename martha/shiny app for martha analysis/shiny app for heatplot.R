@@ -1,7 +1,5 @@
 library("shiny")
 library("ggplot2")
-#install.packages("ggplot2")
-#install.packages("netmeta")
 
 load("final.rda")
 
@@ -33,8 +31,6 @@ ui <- shinyUI(fluidPage(
       )
     )
   )
-  
-  
 )
 
 
@@ -44,15 +40,6 @@ server <- shinyServer(function(input, output) {
   outcome.selection <- c("NAUSEA", "HEADACHE", "DRY MOUTH", "INSOMNIA", "SEXUAL DYSFUNCTION","DIARRHOEA", "SUICIDAL IDEATION", "AGGRESSION", "ACCIDENTAL OVERDOSE")  
   treatment.selection <- c("vortioxetine", "venlafaxine", "reboxetine", "mirtazapine", "fluoxetine", "duloxetine", "amitriptyline", "placebo")
 
-  # function to add % sign..
-  aa <- function(x){
-    if(!is.na(x)){
-      paste0(x, "%")
-    } else{
-      x
-    }
-  }
-  
   ## calculate adjust z-score
   getData <- reactive({
   
@@ -62,7 +49,7 @@ server <- shinyServer(function(input, output) {
   for(i in 1:length(rate.pla.list)){
     rate.pla <- rate.pla.list[i]
     clinically.important.RD <- clinically.important.RD.list[i]
-    risk.drugs <- clinically.important.RD+ rate.pla
+    risk.drugs <- clinically.important.RD + rate.pla
     OR.import <- risk.drugs/(1-risk.drugs)/((rate.pla)/(1-rate.pla))
     logOR <- final[final$outcome == outcome.selection[i], "logOR"]
     seTE <- final[final$outcome == outcome.selection[i], "seTE"]
@@ -84,17 +71,12 @@ server <- shinyServer(function(input, output) {
   final_data$Zscore2[final_data$Zscore2 < -2.5] = -2.5
   final_data$Zscore2[final_data$Zscore2 > 2.5] = 2.5
 
+  # add % sign
+  aa <- function(x){ if(!is.na(x)){paste0(x, "%")} else{x}}
   final_data$event.rate <- sapply(final_data$event.rate, aa)
   return(final_data)
   
   })
-
-  output$data1 = renderTable({
-    final_data = getData()
-    final_data
-    
-  })
-  
 
   output$plot1 = renderPlot({
     
