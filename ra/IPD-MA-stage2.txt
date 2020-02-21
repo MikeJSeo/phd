@@ -1,53 +1,27 @@
 model{
 
+#likelihood
 y1 ~ dmnorm(theta1[], Omega1[,])
-theta1 ~ dmnorm(Mu1, tau)
+theta1 ~ dmnorm(delta[1:2], prec)
 
-Mu1 <- c(alpha, beta[], delta2, gamma2[], delta3, gamma3[])
-tau[1:k,1:k] ~ dwish(R, k) # k is the total number of parameters
+y2 ~ dnorm(theta2, Omega2)
+theta2 ~ dnorm(delta[1], inverse(sigma1))
 
-y2 ~ dmnorm(theta2[], Omega2[,])
-tau1 <- tau[1:20, 1:20]
-theta2 ~ dmnorm(Mu2[], tau1)
-Mu2 <- c(alpha, beta[], delta2, gamma2[])
+y3 ~ dnorm(theta3, Omega3)
+theta3 ~ dnorm(delta[2], inverse(sigma2))
 
-#y3 ~ dmnorm(theta3[], Omega3[,])
-#theta3 ~ dmnorm(Mu3[], tau[1:20,1:20])
-#Mu3 <- c(alpha, beta[], delta3, gamma3[])
+#parameters
+sigma1 ~ dunif(0, 1)
+sigma2 ~ dunif(0, 1)
+rho ~ dunif(-1, 1)
+delta[1] ~ dnorm(0, 0.001)
+delta[2] ~ dnorm(0, 0.001)
 
-tau1[1:10,1:10] ~ dwish(R,k)
-tau2[1:10,1:10] ~ dwish(R,k)
-tau3[1:10,1:10] ~ dwish(R,k)
-tau4[1:10,1:10] ~ dwish(R,k)
-tau5[1:10,1:10] ~ dwish(R,k)
-tau6[1:10,1:10] ~ dwish(R,k)
-tau7[1:10,1:10] ~ dwish(R,k)
-tau8[1:10,1:10] ~ dwish(R,k)
-tau9[1:10,1:10] ~ dwish(R,k)
+Sigma[1,1] <- sigma1
+Sigma[2,2] <- sigma2
+Sigma[1,2] <- sqrt(sigma1) * sqrt(sigma2) * rho
+Sigma[2,1] <- Sigma[1,2]
+prec[1:2,1:2] <- inverse(Sigma[,])
 
-tau[1:10,1:10] <- tau1[,]
-tau[1:10,11:20] <- tau2[,]
-tau[1:10,21:30] <- tau3[,]
-tau[11:20,1:10] <- tau2[,]
-tau[21:30,21:30] <- tau3[,]
-
-
-
-#newTau[1:10,1:10] <- tau[1:10, 1:10]
-##newTau[11:20,1:10] <- tau[21:30, 1:10]
-#newTau[1:10,11:20] <- tau[21:30, 1:10]
-#newTau[11:20,11:20] <- tau[21:30, 21:30]
-
-
-### Priors
-alpha ~ dnorm(0, 0.001)
-delta2 ~ dnorm(0, 0.001)
-delta3 ~ dnorm(0, 0.001)
-
-for(i in 1:Ncovariate){
-	beta[i] ~ dnorm(0, 0.001)
-	gamma2[i] ~ dnorm(0, 0.001)
-	gamma3[i] ~ dnorm(0, 0.001)
-}
 
 }

@@ -95,7 +95,7 @@ for(i in 1:5){
   OR.import.0 <- risk.drugs.0/(1-risk.drugs.0)/((rate.pla)/(1-rate.pla))
   OR.pla$Zscore.0 <- (OR.pla$logOR-log(OR.import.0))/OR.pla$seTE
   
-  outcome.result <- data.frame(outcome = paste("outcome", i), drug = OR.pla$drug, Zscore = OR.pla$Zscore.0, event.rate = round(OR.pla$event.rate*100,1), rate.pla = rate.pla, logOR = OR.pla$logOR, seTE = OR.pla$seTE)
+  outcome.result <- data.frame(outcome = paste("outcome", i), drug = OR.pla$drug, OR = OR.pla$OR ,Zscore = OR.pla$Zscore.0, event.rate = round(OR.pla$event.rate*100), rate.pla = rate.pla, logOR = OR.pla$logOR, seTE = OR.pla$seTE)
   final <- rbind(final, outcome.result)
 }
 
@@ -122,13 +122,58 @@ ui <- shinyUI(fluidPage(
     column(4,
            sliderInput("outcome5", "outcome5:", min = 0, max = 0.1, value = 0, step = 0.01)
     )
-  )))
+  ),
+  
+  hr(),
+  h3("Absolute event rate for the reference intervention (external information; if none, do not specify)"),
+  
+  fluidRow(
+    column(3,
+           sliderInput("outcome1_e", "outcome1:", min = 0, max = 0.99, value = 0, step = 0.01),
+           sliderInput("outcome2_e", "outcome2:", min = 0, max = 0.99, value = 0, step = 0.01)
+    ),
+    column(4, offset = 1,
+           sliderInput("outcome3_e", "outcome3:", min = 0, max = 0.99, value = 0, step = 0.01),
+           sliderInput("outcome4_e", "outcome4:", min = 0, max = 0.99, value = 0, step = 0.01)
+    ),
+    column(4,
+           sliderInput("outcome5_e", "outcome5:", min = 0, max = 0.99, value = 0, step = 0.01)
+    )
+  )
+  
+))
 
 server <- shinyServer(function(input, output) {
   
   rate.pla.list <- unique(final$rate.pla)  
   
   getData <- reactive({
+    
+    if(input$outcome1_e != 0){
+      rate.pla.list[1] <- input$outcome1_e
+    }  
+    
+    if(input$outcome2_e != 0){
+      rate.pla.list[2] <- input$outcome2_e
+    }
+    
+    if(input$outcome3_e != 0){
+      rate.pla.list[3] <- input$outcome3_e
+    }
+    
+    if(input$outcome4_e != 0){
+      rate.pla.list[4] <- input$outcome4_e
+    }
+    
+    if(input$outcome5_e != 0){
+      rate.pla.list[5] <- input$outcome5_e
+    }
+    
+    rate.pla <- rep(rate.pla.list, table(final$outcome))  
+    odds.pla=rate.pla/(1-rate.pla)
+    
+    # calculate event rate for treatment using the formula  
+    final$event.rate <- round(final$OR* odds.pla/ (1+final$OR*odds.pla) * 100)
     
     # constantly update clinically important values
     clinically.important.RD.list <- c(input$outcome1, input$outcome2, input$outcome3, input$outcome4, input$outcome5)
@@ -150,7 +195,7 @@ server <- shinyServer(function(input, output) {
     final_data <- final_data[,c("outcome", "drug", "Zscore", "event.rate")]
     
     #add in placebo arms
-    placebo.arms <- data.frame(outcome = paste("outcome", 1:5), drug = rep(1, 5), Zscore = rep(NA, 5), event.rate = round(rate.pla.list*100,1) )
+    placebo.arms <- data.frame(outcome = paste("outcome", 1:5), drug = rep(1, 5), Zscore = rep(NA, 5), event.rate = round(rate.pla.list*100) )
     final_data <- rbind(final_data, placebo.arms)
     
     final_data$Zscore2 <- final_data$Zscore #truncated zscore
@@ -164,7 +209,14 @@ server <- shinyServer(function(input, output) {
     final_data$drug <- paste("treatment", final_data$drug)
     final_data$drug <- factor(final_data$drug, level = paste("treatment", 7:1), ordered = TRUE)
     
-    return(final_data)
+    # fill in missing combination
+    dat2 <- with(final_data, expand.grid(outcome = levels(outcome), drug = levels(drug)))
+    final_data2 <- merge(final_data, dat2, all.y = TRUE)
+    
+    final_data2[final_data2$drug != "treatment 1" & is.na(final_data2$Zscore), "Zscore2"] <- 0
+    final_data2[final_data2$drug != "treatment 1" & is.na(final_data2$Zscore), "event.rate"] <- "-"
+    
+    return(final_data2)
   })
   
   output$plot1 = renderPlot({
@@ -175,7 +227,8 @@ server <- shinyServer(function(input, output) {
       geom_text(aes(label= event.rate), size = 6) +
       scale_fill_gradient2(low = "green", mid = "white", high = "red", na.value = "lightskyblue1", breaks = c(-2.326348, -1.281552, 0, 1.281552, 2.326348), limits = c(-2.5, 2.5), labels = c("p < 0.01", "p = 0.1", "p = 1.00", "p = 0.1", "p < 0.01"))+
       labs(x = "",y = "") +
-      theme(legend.title = element_blank(),axis.text.x = element_text(angle=30,hjust=1,vjust=1.0, size = 14),axis.text.y = element_text(size = 14),legend.position = "left", legend.text = element_text(size = 14))
+      theme(legend.title = element_blank(),axis.text.x = element_text(size = 12),axis.text.y = element_text(size = 12),legend.position = "left", legend.text = element_text(size = 12)) +
+      scale_x_discrete(position = "top") 
   })
 })
 
