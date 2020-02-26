@@ -12,15 +12,15 @@ library("grid") # for layering forest plots..
 #setwd("C:/Users/efthimiou/Google Drive/PROJECT/APPLIED PROJECTS/Martha/data") #change working directory
 #original <- read_excel("For Orestis 20.11.19.xlsx",  col_names = FALSE)
 
-#setwd("C:/Users/ms19g661/Desktop")
-setwd("C:/Users/mike/Desktop")
+setwd("C:/Users/ms19g661/Desktop")
+#setwd("C:/Users/mike/Desktop")
 original <- read_excel("Data Martha 06.10.19.xlsx",  col_names = FALSE)
 original <- as.data.frame(original)
 original[original[,4] == "Placebo" & !is.na(original[,4]),4] <- "placebo"
 original[!is.na(original[,1]) & original[,1] == "Jefferson2000 (29060/785)" & original[,5] == "paroxetine CR", 4] <- "paroxetine"
 
-setwd("C:/Users/mike/Desktop/Github/phd/martha")
-#setwd("~/GitHub/phd/martha")
+#setwd("C:/Users/mike/Desktop/Github/phd/martha")
+setwd("~/GitHub/phd/martha")
 source("useful functions for martha.R")
 
 
@@ -180,7 +180,7 @@ for(i in 1:9){
   
   pospos <- ifelse(i %% 3 == 0, 3, i %%3)
   pushViewport(viewport(layout.pos.col = ceiling(i/3), layout.pos.row = pospos))
-  forest(net1, sortvar = sort.order, reference.group = "placebo", smlab = paste0(outcome, "\n", "other vs 'placebo'"),
+  forest(net1, sortvar = TE, reference.group = "placebo", smlab = outcome.renamed[i],
          label.right = "Favours placebo", label.left = "Favours drug", digits=2, xlim=c(0.1,15), new = FALSE)
   popViewport()
 } 

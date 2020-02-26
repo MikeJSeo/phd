@@ -11,7 +11,7 @@ ui <- shinyUI(fluidPage(
   tabPanel("Heatplot", plotOutput("plot1")),
   
   hr(),
-  h3("Clinically important threshold (in risk difference)"),
+  h3("Clinically important values (in risk difference)"),
   
   fluidRow(
     column(3,
@@ -32,7 +32,7 @@ ui <- shinyUI(fluidPage(
     ),
   
   hr(),
-  h3("Absolute event rate for the reference intervention (external information; if none, do not specify)"),
+  h3("Absolute event rate for the reference intervention (external information; if none, leave it as 0)"),
   
   fluidRow(
     column(3,
