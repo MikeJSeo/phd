@@ -33,7 +33,7 @@ cl <- makePSOCKcluster(n.cores)
 tmp <- clusterEvalQ(cl, library(dclone))
 
 # number of simulation to run
-niter <- 1000
+niter <- 10
 ```
 
 ## Simulation
@@ -62,7 +62,7 @@ step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 
 model.type = "gaussian"
 ```
 
-```{r simulationa, eval = FALSE}
+```{r simulationa, cache = TRUE, result = "hide", include = FALSE}
 simulation.a <- run.simulation()
 ```
 
@@ -70,14 +70,13 @@ simulation.a <- run.simulation()
 simulation.b <- run.simulation2()
 ```
 
-```{r simulationc, eval = FALSE}
+```{r simulationc, cache = TRUE, result = "hide", include = FALSE}
 simulation.c <- run.simulation3()
 ```
 
 
 ```{r}
-#simulation.result <- rbind(simulation.a, simulation.b, simulation.c)
-simulation.result <- simulation.b
+simulation.result <- rbind(simulation.a, simulation.b, simulation.c)
 simulation.result
 write_xlsx(as.data.frame(round(simulation.result,3)), "simulation1.xlsx")
 ```

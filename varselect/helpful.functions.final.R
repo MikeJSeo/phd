@@ -97,6 +97,17 @@ find_performance <- function(val, correct_values, correct_em, data_subset){
     )
 }
 
+find_performance1 <- function(val, correct_values, data_subset){
+  
+  bias <- mean((data_subset %*% val - data_subset %*% c(correct_values, 1)))
+  
+  diff <- data_subset %*% val - data_subset %*% c(correct_values, 1)
+  variance <- mean((diff - mean(diff))^2)
+#  variance <- var((data_subset %*% val - data_subset %*% c(correct_values, 1)))
+  
+  c(bias,bias^2, variance)
+}
+
 
 find_performance2 <- function(val, correct_em, continuous.cov){
   

@@ -20,7 +20,7 @@ original[original[,4] == "Placebo" & !is.na(original[,4]),4] <- "placebo"
 original[!is.na(original[,1]) & original[,1] == "Jefferson2000 (29060/785)" & original[,5] == "paroxetine CR", 4] <- "paroxetine"
 
 #setwd("C:/Users/mike/Desktop/Github/phd/martha")
-setwd("~/GitHub/phd/martha")
+setwd("~/GitHub/phd/kilim")
 source("useful functions for martha.R")
 
 
@@ -108,8 +108,8 @@ final <- rbind(final, aa)
 length(unique(studyID_all))
 
 final_data <- final
-final_data$Zscore <- final$Zscore.0 #specify which z score we want: differ on clinical difference
-#final_data$Zscore <- final$Zscore.1
+#final_data$Zscore <- final$Zscore.0 #specify which z score we want: differ on clinical difference
+final_data$Zscore <- final$Zscore.1
 final_data <- final_data[,c("outcome", "drug", "Zscore", "event.rate")]
 
 #add in placebo
@@ -148,9 +148,9 @@ ggplot(final_data2, aes(outcome, drug)) + geom_tile(aes(fill = round(Zscore2,1))
   labs(x = "",y = "") +
   theme(legend.title = element_blank(),
         legend.position = "left",
-        axis.text.x = element_text(size = 12),
-        axis.text.y = element_text(size = 12),
-        legend.text = element_text(size = 12)) +
+        axis.text.x = element_text(size = 11),
+        axis.text.y = element_text(size = 11),
+        legend.text = element_text(size = 11)) +
   scale_x_discrete(position = "top") 
   
 

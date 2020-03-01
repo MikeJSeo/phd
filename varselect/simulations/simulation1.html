@@ -187,11 +187,29 @@ summary {
 <div id="simulation" class="section level2">
 <h2>Simulation</h2>
 <pre><code>##             false em mse true em mse treatment mse patient specific trt mse
-## naive lasso 0.0004446682         NaN    0.01295476              0.008690308
-## ridge       0.0003224181         NaN    0.01295797              0.008141793
-##             continuous EM se binary EM se treatment se
-## naive lasso              NaN          NaN          NaN
-## ridge                    NaN          NaN          NaN</code></pre>
+## glmm oracle 0.0000000000         NaN   0.004054368              0.001928645
+## glmm full   0.0054973002         NaN   0.003612287              0.023820425
+## naive step  0.0031721026         NaN   0.004154092              0.016036366
+## naive lasso 0.0003589426         NaN   0.004153783              0.003628317
+## ridge       0.0001551935         NaN   0.004128786              0.002751343
+## bayesLASSO  0.0001602162         NaN   0.003614927              0.002526801
+## SSVS        0.0003860470         NaN   0.003639209              0.003570863
+##             continuous EM se binary EM se treatment se         bias
+## glmm oracle              NaN          NaN   0.11194584 -0.005350784
+## glmm full                NaN          NaN   0.11142509 -0.002801848
+## naive step               NaN          NaN   0.06627585 -0.003770819
+## naive lasso              NaN          NaN          NaN -0.003301087
+## ridge                    NaN          NaN          NaN -0.003440549
+## bayesLASSO               NaN          NaN   0.17188697 -0.002042945
+## SSVS                     NaN          NaN   0.17359223 -0.002218448
+##                   bias^2    variance
+## glmm oracle 0.0009205996 0.001008045
+## glmm full   0.0009693369 0.022851088
+## naive step  0.0010175933 0.015018773
+## naive lasso 0.0009800773 0.002648240
+## ridge       0.0009815426 0.001769801
+## bayesLASSO  0.0008425193 0.001684282
+## SSVS        0.0008605668 0.002710296</code></pre>
 </div>
 
 

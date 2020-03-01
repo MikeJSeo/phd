@@ -7,6 +7,7 @@ run.simulation <- function(){
   
   step_store_mse <- glmm_full_store_mse <- glmm_oracle_store_mse <- matrix(NA, nrow = niter, ncol = 4)
   step_store_sd <- glmm_full_store_sd <- glmm_oracle_store_sd <- matrix(NA, nrow = niter, ncol = 3)
+  step_store_bias <- glmm_full_store_bias <- glmm_oracle_store_bias <- matrix(NA, nrow = niter, ncol = 3)
   
   for(i in seq(niter)){
     
@@ -24,6 +25,7 @@ run.simulation <- function(){
     
     glmm_oracle_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em, as.matrix(data[,col_labels]))
     glmm_oracle_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
+    glmm_oracle_store_bias[i,] <- find_performance1(mean_values, correct_em_values, as.matrix(data[,col_labels]))
   }
 
   for(i in seq(niter)){
@@ -41,6 +43,7 @@ run.simulation <- function(){
     
     glmm_full_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em, as.matrix(data[,col_labels]))
     glmm_full_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
+    glmm_full_store_bias[i,] <- find_performance1(mean_values, correct_em_values, as.matrix(data[,col_labels]))
   }
   
   for(i in seq(niter)){
@@ -60,6 +63,7 @@ run.simulation <- function(){
     
     step_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em, as.matrix(data[,col_labels]))
     step_store_sd[i,] <- find_performance2(sd_values, correct_em, continuous.cov)
+    step_store_bias[i,] <- find_performance1(mean_values, correct_em_values, as.matrix(data[,col_labels]))
   }
   
   glmm_oracle_store_mse_mean <- apply(glmm_oracle_store_mse, 2, mean)
@@ -69,6 +73,10 @@ run.simulation <- function(){
   step_store_mse_mean <- apply(step_store_mse, 2, mean)
   step_store_sd_mean <- apply(step_store_sd, 2, mean, na.rm = TRUE)
 
+  glmm_oracle_store_bias_mean <- apply(glmm_oracle_store_bias, 2, mean)
+  glmm_full_store_bias_mean <- apply(glmm_full_store_bias, 2, mean)
+  step_store_bias_mean <- apply(step_store_bias, 2, mean)
+  
   result_matrix_mse <- matrix(NA, nrow = 3, ncol = 4)
   colnames(result_matrix_mse) <- c("false em mse", "true em mse","treatment mse", "patient specific trt mse")
   rownames(result_matrix_mse) <-  c("glmm oracle", "glmm full","naive step")
@@ -83,7 +91,14 @@ run.simulation <- function(){
   result_matrix_sd[2,] <- glmm_full_store_sd_mean
   result_matrix_sd[3,] <- step_store_sd_mean
 
-  cbind(result_matrix_mse, result_matrix_sd)
+  result_matrix_bias <- matrix(NA, nrow = 3, ncol = 3)
+  colnames(result_matrix_bias) <- c("bias", "bias^2","variance")
+  rownames(result_matrix_bias) <-  c("glmm oracle", "glmm full","naive step")
+  result_matrix_bias[1,] <- glmm_oracle_store_bias_mean
+  result_matrix_bias[2,] <- glmm_full_store_bias_mean
+  result_matrix_bias[3,] <- step_store_bias_mean
+  
+  cbind(result_matrix_mse, result_matrix_sd, result_matrix_bias)
 }
 
 
@@ -91,6 +106,8 @@ run.simulation2 <- function(){
   
   glmnet_store_mse <- ridge_store_mse <- matrix(NA, nrow = niter, ncol = 4)
   glmnet_store_sd <- ridge_store_sd <- matrix(NA, nrow = niter, ncol = 3)
+  glmnet_store_bias <- ridge_store_bias <- matrix(NA, nrow = niter, ncol = 3)
+  
   lambdas <- 10^seq(3, -3, by = -.1) #define predefined set of lambdas to cross validate
   
   for(i in seq(niter)){
@@ -111,7 +128,7 @@ run.simulation2 <- function(){
     
     mean_values <-  sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
     glmnet_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em, data_glmnet[,col_labels])
-
+    glmnet_store_bias[i,] <- find_performance1(mean_values, correct_em_values, data_glmnet[,col_labels])
   }
   
   for(i in seq(niter)){
@@ -132,12 +149,16 @@ run.simulation2 <- function(){
     
     mean_values <-  sapply(col_labels, function(x) ifelse(x %in% rownames(aa)[aa[,1] != 0], aa[x,1], 0))
     ridge_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em, data_glmnet[,col_labels])
+    ridge_store_bias[i,] <- find_performance1(mean_values, correct_em_values, data_glmnet[,col_labels])
   }
   
   glmnet_store_mse_mean <- apply(glmnet_store_mse, 2, mean)
   glmnet_store_sd_mean <- apply(glmnet_store_sd, 2, mean, na.rm = TRUE)
   ridge_store_mse_mean <- apply(ridge_store_mse, 2, mean)
   ridge_store_sd_mean <- apply(ridge_store_sd, 2, mean, na.rm = TRUE)
+  
+  glmnet_store_bias_mean <- apply(glmnet_store_bias, 2, mean)
+  ridge_store_bias_mean <- apply(ridge_store_bias, 2, mean)
   
   result_matrix_mse <- matrix(NA, nrow = 2, ncol = 4)
   colnames(result_matrix_mse) <- c("false em mse", "true em mse","treatment mse", "patient specific trt mse")
@@ -151,13 +172,20 @@ run.simulation2 <- function(){
   result_matrix_sd[1,] <- glmnet_store_sd_mean
   result_matrix_sd[2,] <- ridge_store_sd_mean
   
-  cbind(result_matrix_mse, result_matrix_sd)
+  result_matrix_bias <- matrix(NA, nrow = 2, ncol = 3)
+  colnames(result_matrix_bias) <- c("bias", "bias^2","variance")
+  rownames(result_matrix_bias) <-  c("naive lasso", "ridge")
+  result_matrix_bias[1,] <- glmnet_store_bias_mean
+  result_matrix_bias[2,] <- ridge_store_bias_mean
+  
+  cbind(result_matrix_mse, result_matrix_sd, result_matrix_bias)
 }
 
 run.simulation3 <- function(){
 
   SSVS_store_mse <- bayesLASSO_store_mse <- matrix(NA, nrow = niter, ncol = 4)
   SSVS_store_sd <- bayesLASSO_store_sd <- matrix(NA, nrow = niter, ncol = 3)
+  SSVS_store_bias <- bayesLASSO_store_bias <- matrix(NA, nrow = niter, ncol = 3)
   
   for(i in seq(niter)){
     
@@ -187,6 +215,7 @@ run.simulation3 <- function(){
     names(treat_mean) <- "treat"
     mean_values <- c(g_mean, treat_mean)
     bayesLASSO_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em, as.matrix(data[,col_labels]))
+    bayesLASSO_store_bias[i,] <- find_performance1(mean_values, correct_em_values, as.matrix(data[,col_labels]))
     
     g_sd <-  a$statistics[grep("gamma\\[", rownames(a$statistics)), "SD"]
     treat_sd <- a$statistics["delta[2]", "SD"]
@@ -222,6 +251,7 @@ run.simulation3 <- function(){
     names(treat_mean) <- "treat"
     mean_values <- c(g_mean, treat_mean)
     SSVS_store_mse[i,] <- find_performance(mean_values, correct_em_values, correct_em, as.matrix(data[,col_labels]))
+    SSVS_store_bias[i,] <- find_performance1(mean_values, correct_em_values, as.matrix(data[,col_labels]))
     
     g_sd <-  a$statistics[grep("gamma\\[", rownames(a$statistics)), "SD"]
     treat_sd <- a$statistics["delta[2]", "SD"]
@@ -235,6 +265,9 @@ run.simulation3 <- function(){
   SSVS_store_mse_mean <- apply(SSVS_store_mse, 2, mean)
   SSVS_store_sd_mean <- apply(SSVS_store_sd, 2, mean, na.rm = TRUE)
   
+  bayesLASSO_store_bias_mean <- apply(bayesLASSO_store_bias, 2, mean)
+  SSVS_store_bias_mean <- apply(SSVS_store_bias, 2, mean)
+  
   result_matrix_mse <- matrix(NA, nrow = 2, ncol = 4)
   colnames(result_matrix_mse) <- c("false em mse", "true em mse","treatment mse", "patient specific trt mse")
   rownames(result_matrix_mse) <-  c("bayesLASSO", "SSVS")
@@ -247,5 +280,11 @@ run.simulation3 <- function(){
   result_matrix_sd[1,] <- bayesLASSO_store_sd_mean
   result_matrix_sd[2,] <- SSVS_store_sd_mean
   
-  cbind(result_matrix_mse, result_matrix_sd)
+  result_matrix_bias <- matrix(NA, nrow = 2, ncol = 3)
+  colnames(result_matrix_bias) <- c("bias", "bias^2","variance")
+  rownames(result_matrix_bias) <-  c("bayesLASSO", "SSVS")
+  result_matrix_bias[1,] <- bayesLASSO_store_bias_mean
+  result_matrix_bias[2,] <- SSVS_store_bias_mean
+  
+  cbind(result_matrix_mse, result_matrix_sd, result_matrix_bias)
 }

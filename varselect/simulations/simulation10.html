@@ -190,12 +190,30 @@ summary {
 <div id="simulation" class="section level2">
 <h2>Simulation</h2>
 <pre><code>##             false em mse true em mse treatment mse patient specific trt mse
-## naive lasso  0.001457848  0.03265158     0.0145933               0.04809324
-## ridge        0.004237741  0.03397585     0.0145789               0.06395240
-##             continuous EM se binary EM se treatment se
-## naive lasso              NaN          NaN          NaN
-## ridge                    NaN          NaN          NaN</code></pre>
-<pre><code>## Time difference of 4.654625 mins</code></pre>
+## glmm oracle  0.000000000  0.02480000    0.00987500               0.02996445
+## glmm full    0.007061099  0.02506686    0.01028549               0.06897491
+## naive step   0.004011936  0.02600405    0.01024606               0.05393971
+## naive lasso  0.001572822  0.03440136    0.01025398               0.04833307
+## ridge        0.004223456  0.03400143    0.01019626               0.06149951
+## bayesLASSO   0.002305065  0.03472658    0.01028718               0.05282459
+## SSVS         0.001789335  0.03028828    0.01018800               0.04600158
+##             continuous EM se binary EM se treatment se        bias      bias^2
+## glmm oracle       0.07734331   0.07728413    0.1206894 0.005491504 0.002465618
+## glmm full         0.08745109   0.07985030    0.1198919 0.004339326 0.002466566
+## naive step        0.07954712   0.07858084    0.0777840 0.005656107 0.002486263
+## naive lasso              NaN          NaN          NaN 0.006063989 0.002537426
+## ridge                    NaN          NaN          NaN 0.005208804 0.002488946
+## bayesLASSO        0.08589990   0.08020600    0.1817364 0.005608493 0.002519933
+## SSVS              0.08460897   0.08081509    0.1815683 0.005377834 0.002507696
+##               variance
+## glmm oracle 0.02749883
+## glmm full   0.06650834
+## naive step  0.05145344
+## naive lasso 0.04579564
+## ridge       0.05901057
+## bayesLASSO  0.05030466
+## SSVS        0.04349388</code></pre>
+<pre><code>## Time difference of 34.86369 mins</code></pre>
 </div>
 
 
