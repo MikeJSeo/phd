@@ -17,19 +17,19 @@ library("readxl")
 library("rjags")
 library("caret") # for 10 fold cross-validation
 
-#setwd("C:/Users/ms19g661/Desktop")
-setwd("C:/Users/mike/Desktop")
+setwd("C:/Users/ms19g661/Desktop")
+#setwd("C:/Users/mike/Desktop")
 
 # xls files
 mydata <- read_excel("ra_dataset.xlsx")
 mydata <- as.data.frame(mydata)
 
-#setwd("~/GitHub/phd/ra")
-setwd("C:/Users/mike/Desktop/Github/phd/ra")
+setwd("~/GitHub/phd/ra")
+#setwd("C:/Users/mike/Desktop/Github/phd/ra")
 
 
 ## data with non-missing outcome
-mydata <- mydata[!is.na(mydata$change_das_bsr),]
+mydata <- mydata[!is.na(mydata$das_bsr),]
 #apply(mydata, 2, function(x) sum(is.na(x)))
 
 ## data with complete data: three covariates removed
@@ -82,7 +82,7 @@ This one doesn't have TCZ + DMARDs
 
 ```{r REFLEX, cache = TRUE}
 data <- REFLEX
-y <- data$change_das_bsr
+y <- data$das_bsr
 X <- data[,c("gender", "age", "disease_duration", "n_prev_dmards", "n_prev_antiTNF", "base_rf", "conc_stero", "base_bsr", "base_das_bsr")]
 Np <- length(y)
 Ncovariate <- ncol(X)
@@ -102,9 +102,13 @@ data_jags <- with(data,{
        )
 })
 
-jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
+jags_model <- jags.model("IPD-MA-stage1.txt", data_jags, n.chains = 3, n.adapt = 1000)
 REFLEX_samples <- coda.samples(jags_model, variable.names = c("alpha", "gamma", "beta", "delta"), n.iter = 10000)
 summary(REFLEX_samples)
+
+jags_model <- jags.model("IPD-MA-stage1-penalization.txt", data_jags, n.chains = 3, n.adapt = 1000)
+REFLEX_samples2 <- coda.samples(jags_model, variable.names = c("alpha", "gamma", "beta", "delta"), n.iter = 10000)
+summary(REFLEX_samples2)
 ```
 
 
@@ -114,10 +118,9 @@ This one doesn't have RTX + DMARDs
 
 "DMARDs" is assigned 1 (baseline); "TCZ + DMARDs" is assigned 2 (second column)
 
-
 ```{r TOWARD, cache = TRUE}
 data <- TOWARD
-y <- data$change_das_bsr
+y <- data$das_bsr
 X <- data[,c("gender", "age", "disease_duration", "n_prev_dmards", "n_prev_antiTNF", "base_rf", "conc_stero", "base_bsr", "base_das_bsr")]
 Np <- length(y)
 Ncovariate <- ncol(X)
@@ -136,16 +139,143 @@ data_jags <- with(data,{
        Ntreat = Ntreat)
 })
 
-jags_model <- jags.model("IPD-MA.txt", data_jags, n.chains = 3, n.adapt = 1000)
+jags_model <- jags.model("IPD-MA-stage1.txt", data_jags, n.chains = 3, n.adapt = 1000)
 TOWARD_samples <- coda.samples(jags_model, variable.names = c("alpha","gamma", "beta", "delta"), n.iter = 10000)
 summary(TOWARD_samples)
+
+jags_model <- jags.model("IPD-MA-stage1-penalization.txt", data_jags, n.chains = 3, n.adapt = 1000)
+TOWARD_samples2 <- coda.samples(jags_model, variable.names = c("alpha", "gamma", "beta", "delta"), n.iter = 10000)
+summary(TOWARD_samples2)
 ```
+
+## First stage analysis: SCQM
+
+"DMARDs" is assigned 1 (baseline); "RTX + DMARDs" is assigned 2 (second column); "TCZ + DMARDs" is assigned 3 (third column)
+
+```{r SCQM, cache = TRUE}
+data <- SCQM
+y <- data$das_bsr
+X <- data[,c("gender", "age", "disease_duration", "n_prev_dmards", "n_prev_antiTNF", "base_rf", "conc_stero", "base_bsr", "base_das_bsr")]
+Np <- length(y)
+Ncovariate <- ncol(X)
+
+data$treatment[data$treatment == "DMARDs"] <- 1
+data$treatment[data$treatment == "RTX + DMARDs"] <- 2
+data$treatment[data$treatment == "TCZ + DMARDs"] <- 3
+data$treatment <- as.numeric(data$treatment)
+Ntreat <- length(unique(data$treatment))
+
+data_jags <- with(data,{
+  list(y = y,
+       X = X,
+       Np = Np,
+       Ncovariate = Ncovariate,
+       treat = treatment,
+       Ntreat = Ntreat)
+})
+
+jags_model <- jags.model("IPD-MA-stage1.txt", data_jags, n.chains = 3, n.adapt = 1000)
+SCQM_samples <- coda.samples(jags_model, variable.names = c("alpha","gamma", "beta", "delta"), n.iter = 10000)
+summary(SCQM_samples)
+
+jags_model <- jags.model("IPD-MA-stage1-penalization.txt", data_jags, n.chains = 3, n.adapt = 1000)
+SCQM_samples2 <- coda.samples(jags_model, variable.names = c("alpha", "gamma", "beta", "delta"), n.iter = 10000)
+summary(SCQM_samples2)
+```
+
+
+## First stage analysis: BSRBR
+
+"DMARDs" is assigned 1 (baseline); "RTX + DMARDs" is assigned 2 (second column); "TCZ + DMARDs" is assigned 3 (third column)
+
+```{r BSRBR, cache = TRUE}
+data <- BSRBR
+y <- data$das_bsr
+X <- data[,c("gender", "age", "disease_duration", "n_prev_dmards", "n_prev_antiTNF", "base_rf", "conc_stero", "base_bsr", "base_das_bsr")]
+Np <- length(y)
+Ncovariate <- ncol(X)
+
+data$treatment[data$treatment == "DMARDs"] <- 1
+data$treatment[data$treatment == "RTX + DMARDs"] <- 2
+data$treatment[data$treatment == "TCZ + DMARDs"] <- 3
+data$treatment <- as.numeric(data$treatment)
+Ntreat <- length(unique(data$treatment))
+
+data_jags <- with(data,{
+  list(y = y,
+       X = X,
+       Np = Np,
+       Ncovariate = Ncovariate,
+       treat = treatment,
+       Ntreat = Ntreat)
+})
+
+jags_model <- jags.model("IPD-MA-stage1.txt", data_jags, n.chains = 3, n.adapt = 1000)
+BSRBR_samples <- coda.samples(jags_model, variable.names = c("alpha","gamma", "beta", "delta"), n.iter = 10000)
+summary(BSRBR_samples)
+
+jags_model <- jags.model("IPD-MA-stage1-penalization.txt", data_jags, n.chains = 3, n.adapt = 1000)
+BSRBR_samples2 <- coda.samples(jags_model, variable.names = c("alpha", "gamma", "beta", "delta"), n.iter = 10000)
+summary(BSRBR_samples2)
+```
+
+
+## Second stage: approach I
+
+```{r}
+full_colnames <- c("alpha", colnames(X),  "RTX", "TCZ", paste(colnames(X), "* RTX"), paste(colnames(X), "* TCZ"))
+partial_colnames1 <- c("alpha", colnames(X), "RTX", paste(colnames(X), "* RTX"))
+partial_colnames2 <- c("alpha", colnames(X), "TCZ", paste(colnames(X), "* TCZ"))
+
+# meta analyze treatment effect
+data_jags2 <- find_jags_data(samples1 = BSRBR_samples, samples2 = SCQM_samples, samples3 = REFLEX_samples, samples4 = TOWARD_samples, samples1_colnames = full_colnames, samples2_colnames = full_colnames, samples3_colnames = partial_colnames1, samples4_colnames = partial_colnames2, index1 = c("RTX", "TCZ"), index2 = c("RTX", "TCZ"), index3 = "RTX", index4 = "TCZ")
+
+jags_model2 <- jags.model("IPD-MA-stage2.txt", data_jags2, n.chains = 3, n.adapt = 1000)
+samples2 <- coda.samples(jags_model2, variable.names = c("delta", "Sigma", "sigma1", "sigma2"), n.iter = 10000)
+summary(samples2)
+
+# meta analyzing other paraameters assuming no correlations (i.e. univariate)
+data_jags3 <- find_jags_data(samples1 = BSRBR_samples, samples2 = SCQM_samples, samples3 = REFLEX_samples, samples4 = TOWARD_samples, samples1_colnames = full_colnames, samples2_colnames = full_colnames, samples3_colnames = partial_colnames1, samples4_colnames = partial_colnames2, index1 = full_colnames[!full_colnames %in% c("RTX", "TCZ")], index2 = full_colnames[!full_colnames %in% c("RTX", "TCZ")], index3 = partial_colnames1[!partial_colnames1 %in% "RTX"], index4 = partial_colnames2[!partial_colnames2 %in% "TCZ"])
+                 
+jags_model3 <- jags.model("IPD-MA-stage2-notreat.txt", data_jags3, n.chains = 3, n.adapt = 1000)
+samples3 <- coda.samples(jags_model3, variable.names = c("alpha", "beta", "gamma2", "gamma3"), n.iter = 10000)
+summary(samples3)
+```
+
+
+## Second stage: approach II
+
+```{r}
+# meta analyze treatment effect
+data_jags2 <- find_jags_data(samples1 = BSRBR_samples2, samples2 = SCQM_samples2, samples3 = REFLEX_samples2, samples4 = TOWARD_samples2, samples1_colnames = full_colnames, samples2_colnames = full_colnames, samples3_colnames = partial_colnames1, samples4_colnames = partial_colnames2, index1 = c("RTX", "TCZ"), index2 = c("RTX", "TCZ"), index3 = "RTX", index4 = "TCZ")
+
+jags_model2 <- jags.model("IPD-MA-stage2.txt", data_jags2, n.chains = 3, n.adapt = 1000)
+samples2 <- coda.samples(jags_model2, variable.names = c("delta", "Sigma", "sigma1", "sigma2"), n.iter = 10000)
+summary(samples2)
+
+# meta analyzing other paraameters assuming no correlations (i.e. univariate)
+data_jags3 <- find_jags_data(samples1 = BSRBR_samples2, samples2 = SCQM_samples2, samples3 = REFLEX_samples2, samples4 = TOWARD_samples2, samples1_colnames = full_colnames, samples2_colnames = full_colnames, samples3_colnames = partial_colnames1, samples4_colnames = partial_colnames2, index1 = full_colnames[!full_colnames %in% c("RTX", "TCZ")], index2 = full_colnames[!full_colnames %in% c("RTX", "TCZ")], index3 = partial_colnames1[!partial_colnames1 %in% "RTX"], index4 = partial_colnames2[!partial_colnames2 %in% "TCZ"])
+data_jags3$ncovariate <- 9
+                 
+jags_model3 <- jags.model("IPD-MA-stage2-notreat.txt", data_jags3, n.chains = 3, n.adapt = 1000)
+samples3 <- coda.samples(jags_model3, variable.names = c("alpha", "beta", "gamma2", "gamma3"), n.iter = 10000)
+summary(samples3)
+```
+
+
+
+
+
+
 
 
 
 ## Internal cross-validation with SCQM
 
-```{r SCQM, cache = TRUE}
+
+## External cross-validation with SCQM
+
+```{r SCQM2, cache = TRUE}
 full_colnames <- c("alpha", colnames(X),  "RTX", "TCZ", paste(colnames(X), "* RTX"), paste(colnames(X), "* TCZ"))
 partial_colnames1 <- c("alpha", colnames(X), "RTX", paste(colnames(X), "* RTX"))
 partial_colnames2 <- c("alpha", colnames(X), "TCZ", paste(colnames(X), "* TCZ"))
