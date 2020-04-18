@@ -2,39 +2,28 @@
 ### drawing heatplots: edited by Michael Seo
 
 #### R package used
-library("readxl")
 library("netmeta") # for pairwise, netmeta function
 library("ggplot2")
 library("grid") # for layering forest plots..
 
 
 #### Data cleaning
-#setwd("C:/Users/efthimiou/Google Drive/PROJECT/APPLIED PROJECTS/Martha/data") #change working directory
-#original <- read_excel("For Orestis 20.11.19.xlsx",  col_names = FALSE)
-
 setwd("C:/Users/ms19g661/Desktop")
 #setwd("C:/Users/mike/Desktop")
-original <- read_excel("Data Martha 06.10.19.xlsx",  col_names = FALSE)
-original <- as.data.frame(original)
-original[original[,4] == "Placebo" & !is.na(original[,4]),4] <- "placebo"
-original[!is.na(original[,1]) & original[,1] == "Jefferson2000 (29060/785)" & original[,5] == "paroxetine CR", 4] <- "paroxetine"
+load(file = "kilim_data.Rdata")
 
 #setwd("C:/Users/mike/Desktop/Github/phd/martha")
 setwd("~/GitHub/phd/kilim")
 source("useful functions for martha.R")
 
-
-treatment.selection <- c("vortioxetine", "venlafaxine", "reboxetine", "mirtazapine", "fluoxetine", "duloxetine", "amitriptyline", "placebo")
-outcome.selection <- c("NAUSEA", "HEADACHE", "DRY MOUTH", "INSOMNIA", "SEXUAL DYSFUNCTION","Diarrhoea", "SUICIDAL IDEATION", "AGGRESSION", "ACCIDENTAL OVERDOSE")  
+treatment.selection <- c("drug G", "drug F","drug E","drug D","drug C","drug B","drug A", "placebo")
+outcome.selection <- c("NAUSEA", "HEADACHE", "DRY MOUTH", "INSOMNIA", "SEXUAL DYSFUNCTION","DIARRHOEA", "SUICIDAL IDEATION", "AGGRESSION", "ACCIDENTAL OVERDOSE")  
 severe_ae <- c("SUICIDAL IDEATION", "AGGRESSION", "ACCIDENTAL OVERDOSE")
-
-outcome.renamed <- outcome.selection
-outcome.renamed[outcome.renamed == "Diarrhoea"] <- "DIARRHOEA"
 
 
 #########################  preliminary cleaning
 final <- data.frame()
-placebo.rate.store <- rep(NA, length(outcome.renamed))
+placebo.rate.store <- rep(NA, length(outcome.selection))
 
 studyID_all <- vector(mode = "character")
 
@@ -95,7 +84,7 @@ if(outcome %in% severe_ae){
 }
 
 # no clinical difference
-aa <- data.frame(outcome = rep(outcome.renamed[i], length(OR.pla$drug)), drug = OR.pla$drug, OR = OR.pla$OR,
+aa <- data.frame(outcome = rep(outcome.selection[i], length(OR.pla$drug)), drug = OR.pla$drug, OR = OR.pla$OR,
                  Zscore.0 = OR.pla$Zscore.0,  Zscore.1 = Zscore.1, 
                  event.rate = round(OR.pla$event.rate*100), rate.pla = rate.pla, logOR = OR.pla$logOR, seTE = OR.pla$seTE)
 
@@ -108,20 +97,20 @@ final <- rbind(final, aa)
 length(unique(studyID_all))
 
 final_data <- final
-#final_data$Zscore <- final$Zscore.0 #specify which z score we want: differ on clinical difference
-final_data$Zscore <- final$Zscore.1
+final_data$Zscore <- final$Zscore.0 #specify which z score we want: differ on clinical difference
+#final_data$Zscore <- final$Zscore.1
 final_data <- final_data[,c("outcome", "drug", "Zscore", "event.rate")]
 
 #add in placebo
-bb <- data.frame(outcome = outcome.renamed, drug = rep("placebo", length(outcome.renamed)), Zscore = rep(NA, length(outcome.renamed)), event.rate = placebo.rate.store )
+bb <- data.frame(outcome = outcome.selection, drug = rep("placebo", length(outcome.selection)), Zscore = rep(NA, length(outcome.selection)), event.rate = placebo.rate.store )
 final_data <- rbind(final_data, bb)
 
 final_data$drug <- factor(final_data$drug,
        level = treatment.selection,ordered = TRUE)
 
 final_data$Zscore2 <- final_data$Zscore #truncated zscore
-final_data$Zscore2[final_data$Zscore2 < -2.5] = -2.5
-final_data$Zscore2[final_data$Zscore2 > 2.5] = 2.5
+final_data$Zscore2[final_data$Zscore2 < -3] = -3
+final_data$Zscore2[final_data$Zscore2 > 3] = 3
 
 aa <- function(x){
   if(!is.na(x)){
@@ -143,8 +132,9 @@ final_data2[final_data2$drug != "placebo" & is.na(final_data2$Zscore), "event.ra
 ggplot(final_data2, aes(outcome, drug)) + geom_tile(aes(fill = round(Zscore2,1)), colour = "white") + 
   geom_text(aes(label= event.rate), size = 6) +
   scale_fill_gradient2(low = "green", mid = "white", high = "red", na.value = "lightskyblue1", 
-                       breaks = c(-2.326348, -1.281552, 0, 1.281552, 2.326348), limits = c(-2.5, 2.5),
-                       labels = c("p < 0.01", "p = 0.1", "p = 1.00", "p = 0.1", "p < 0.01")) +
+                       breaks = c(-2.575829, -1.959964, -1.644854, 0, 1.644854, 1.959964, 2.575829), limits = c(-3, 3),
+                       labels = c("p < 0.01", "p = 0.05", "p = 0.1", "p = 1.00", "p = 0.1", "p = 0.05","p < 0.01")) +
+  guides(fill = guide_colourbar(barwidth = 0.5, barheight = 15)) +
   labs(x = "",y = "") +
   theme(legend.title = element_blank(),
         legend.position = "left",
@@ -180,7 +170,7 @@ for(i in 1:9){
   
   pospos <- ifelse(i %% 3 == 0, 3, i %%3)
   pushViewport(viewport(layout.pos.col = ceiling(i/3), layout.pos.row = pospos))
-  forest(net1, sortvar = TE, reference.group = "placebo", smlab = outcome.renamed[i],
-         label.right = "Favours placebo", label.left = "Favours drug", digits=2, xlim=c(0.1,15), new = FALSE)
+  forest(net1, sortvar = TE, reference.group = "placebo", smlab = outcome.selection[i],
+         label.right = "Favours placebo", label.left = "Favours drug", digits=2, xlim=c(0.1,15), new = FALSE, squaresize = 0)
   popViewport()
 } 

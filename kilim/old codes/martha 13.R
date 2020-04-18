@@ -456,6 +456,12 @@ netgraph(net1, seq = "optimal", col = "black", plastic = FALSE,
          bg.points = "gray", thickness = "equal",lwd=0.1,
          multiarm = FALSE, number.of.studies = F)
 
+netgraph(net1, seq = "optimal", col = "black", plastic = FALSE,
+         points = TRUE, pch = 21, cex.points = 3, col.points = "black",
+         bg.points = "gray", thickness = "se.fixed",
+         multiarm = FALSE, number.of.studies = FALSE, lwd = 3)
+
+
 print(paste("A total of ",net1$n," treatments are included in the network.", sep=""))
 print(paste("A total of ",net1$k," studies are included in this analysis.", sep=""))
 print(paste("Estimated heterogeneity tau-squared",round(net1$tau^2,2)))

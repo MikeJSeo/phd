@@ -113,8 +113,8 @@ add_placebo <- data.frame(outcome = paste("outcome", 1:5), drug = rep(1, 5), Zsc
 final_data <- rbind(final_data, add_placebo)
 
 final_data$Zscore2 <- final_data$Zscore #truncated zscore
-final_data$Zscore2[final_data$Zscore2 < -2.5] = -2.5
-final_data$Zscore2[final_data$Zscore2 > 2.5] = 2.5
+final_data$Zscore2[final_data$Zscore2 < -3] = -3
+final_data$Zscore2[final_data$Zscore2 > 3] = 3
 
 add_percent <- function(x){if(!is.na(x)){paste0(x, "%")} else{x}}
 final_data$event.rate <- sapply(final_data$event.rate, add_percent)
@@ -128,8 +128,9 @@ final_data$drug <- factor(final_data$drug, level = paste("treatment", 7:1), orde
 ggplot(final_data, aes(outcome, drug)) + 
   geom_tile(aes(fill = round(Zscore2,2)), colour = "white") + 
   geom_text(aes(label= event.rate), size = 6) +
-  scale_fill_gradient2(low = "green", mid = "white", high = "red", na.value = "lightskyblue1", breaks = c(-2.326348, -1.281552, 0, 1.281552, 2.326348), limits = c(-2.5, 2.5), labels = c("p < 0.01", "p = 0.1", "p = 1.00", "p = 0.1", "p < 0.01"))+
+  scale_fill_gradient2(low = "green", mid = "white", high = "red", na.value = "lightskyblue1", breaks = c(-2.575829, -1.959964, -1.644854, 0, 1.644854, 1.959964, 2.575829), limits = c(-3, 3), labels = c("p < 0.01", "p = 0.05", "p = 0.1", "p = 1.00", "p = 0.1", "p = 0.05","p < 0.01"))+
+  guides(fill = guide_colourbar(barwidth = 0.5, barheight = 15)) +
   labs(x = "",y = "") +
-  theme(legend.title = element_blank(),axis.text.x = element_text(angle=30,hjust=1,vjust=1.0, size = 14),axis.text.y = element_text(size = 14),legend.position = "left", legend.text = element_text(size = 14))
-
+  theme(legend.title = element_blank(),axis.text.x = element_text(size = 12),axis.text.y = element_text(size = 12),legend.position = "left", legend.text = element_text(size = 12)) +
+  scale_x_discrete(position = "top") 
 
