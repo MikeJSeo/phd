@@ -21,16 +21,16 @@ REFLEX <- mydata %>% filter(study == "REFLEX")
 # first stage analysis
 
 ## REFLEX
-#setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
-#samples_REFLEX <- firstStage(REFLEX, "first stage.txt")
-#samples_TOWARD <- firstStage(TOWARD, "first stage.txt")
-#samples_BSRBR <- firstStage(BSRBR, "first stage.txt")
-#samples_SCQM <- firstStage(SCQM, "first stage.txt")
-
-#save(samples_REFLEX, file = "REFLEX-ApproachI.RData")
-#save(samples_TOWARD, file = "TOWARD-ApproachI.RData")
-#save(samples_BSRBR, file = "BSRBR-ApproachI.RData")
-#save(samples_SCQM, file = "SCQM-ApproachI.RData")
+# setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
+# samples_REFLEX <- firstStage(REFLEX, "first stage.txt")
+# samples_TOWARD <- firstStage(TOWARD, "first stage.txt")
+# samples_BSRBR <- firstStage(BSRBR, "first stage.txt")
+# samples_SCQM <- firstStage(SCQM, "first stage.txt")
+# 
+# save(samples_REFLEX, file = "REFLEX-ApproachI.RData")
+# save(samples_TOWARD, file = "TOWARD-ApproachI.RData")
+# save(samples_BSRBR, file = "BSRBR-ApproachI.RData")
+# save(samples_SCQM, file = "SCQM-ApproachI.RData")
 
 
 # second stage analysis

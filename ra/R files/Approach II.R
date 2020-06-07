@@ -22,10 +22,10 @@ REFLEX <- mydata %>% filter(study == "REFLEX")
 
 ## REFLEX
 setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
-samples_REFLEX <- firstStage(REFLEX, "first stage-bayesLASSO.txt", index = c("alpha", "beta", "gamma", "delta", "sigma", "sdGamma"))
-samples_TOWARD <- firstStage(TOWARD, "first stage-bayesLASSO.txt", index = c("alpha", "beta", "gamma", "delta", "sigma", "sdGamma"))
-samples_BSRBR <- firstStage(BSRBR, "first stage-bayesLASSO.txt", index = c("alpha", "beta", "gamma", "delta", "sigma", "sdGamma"))
-samples_SCQM <- firstStage(SCQM, "first stage-bayesLASSO.txt", index = c("alpha", "beta", "gamma", "delta", "sigma", "sdGamma"))
+samples_REFLEX <- firstStage(REFLEX, "first stage-bayesLASSO.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma"))
+samples_TOWARD <- firstStage(TOWARD, "first stage-bayesLASSO.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma"))
+samples_BSRBR <- firstStage(BSRBR, "first stage-bayesLASSO.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma"))
+samples_SCQM <- firstStage(SCQM, "first stage-bayesLASSO.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma"))
 
 save(samples_REFLEX, file = "REFLEX-ApproachI-bayesLASSO.RData")
 save(samples_TOWARD, file = "TOWARD-ApproachI-bayesLASSO.RData")

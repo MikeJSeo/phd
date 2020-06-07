@@ -14,7 +14,7 @@ add.mcmc <- function(x,y){
   mcmc.list(newobjects)
 }
 
-firstStage <- function(study_data, jags_file, mm = 20, index = c("alpha", "beta", "gamma", "delta", "sigma")){
+firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", "d", "sigma")){
   
   y <- study_data$DAS28
   X <- as.matrix(study_data[,c(-1,-2,-3)])
@@ -52,14 +52,6 @@ firstStage <- function(study_data, jags_file, mm = 20, index = c("alpha", "beta"
     samples <- add.mcmc(samples, sample_more)
   }
 
-  row_names <- rownames(summary(samples)[[1]])
-  result <- summary(samples)[[1]][,c(1,2)]
-  rounded_result <- apply(result, 2, round, digits = 2)
-  raw <- as.data.frame(cbind(row_names, result))
-  rounded <- as.data.frame(cbind(row_names, rounded_result))
-  write_xlsx(raw, path =  paste0(jags_file,"-", study_data$study,"-raw.xlsx"))
-  write_xlsx(rounded, path = paste0(jags_file,"-", study_data$study,"-rounded.xlsx"))
-
   return(samples)
 }
 
@@ -69,10 +61,10 @@ find_jags_data0 <- function(samples){
   samples_result <- as.matrix(samples)
   samples_result <- samples_result[, colSums(samples_result != 0) > 0]
   
-  Vars <- grep("^alpha", colnames(samples_result))
-  Vars <- c(Vars, grep("^beta", colnames(samples_result)))
-  Vars <- c(Vars, grep("^gamma", colnames(samples_result)))
-  Vars <- c(Vars, grep("^delta", colnames(samples_result)))
+  Vars <- grep("^a", colnames(samples_result))
+  Vars <- c(Vars, grep("^b", colnames(samples_result)))
+  Vars <- c(Vars, grep("^c", colnames(samples_result)))
+  Vars <- c(Vars, grep("^d", colnames(samples_result)))
 
   samples_result <- samples_result[,Vars]
   y <- apply(samples_result, 2, mean)
@@ -99,33 +91,48 @@ secondStage <- function(samples1 = NULL, samples2 = NULL, samples3 = NULL, sampl
     Omega5 <- diag(diag(Omega5))
   }
   
-  data_jags <-
-    list(y1 = r1[[1]],
-         y2 = r2[[1]],
-         y3 = r3[[1]],
-         y4 = r4[[1]],
-         y5 = y5,
-         Omega1 = r1[[2]],
-         Omega2 = r2[[2]],
-         Omega3 = r3[[2]],
-         Omega4 = r4[[2]],
-         Omega5 = Omega5,
-         w = w)
   
   if(!is.null(w)){
+    if(w != 0){
+      data_jags <-
+        list(y1 = r1[[1]],
+             y2 = r2[[1]],
+             y3 = r3[[1]][-(1:10)],
+             y4 = r4[[1]][-(1:10)],
+             y5 = y5[-(1:10)],
+             Omega1 = r1[[2]],
+             Omega2 = r2[[2]],
+             Omega3 = r3[[2]][11:20, 11:20],
+             Omega4 = r4[[2]][11:20, 11:20],
+             Omega5 = Omega5[11:20, 11:20],
+             w = w)  
+    } else if (w == 0){
+      data_jags <-
+        list(y1 = r1[[1]][1:10],
+             y2 = r2[[1]][1:10],
+             y3 = r3[[1]][-(1:10)],
+             y4 = r4[[1]][-(1:10)],
+             y5 = y5[-(1:10)],
+             Omega1 = r1[[2]][1:10,1:10],
+             Omega2 = r2[[2]][1:10,1:10],
+             Omega3 = r3[[2]][11:20, 11:20],
+             Omega4 = r4[[2]][11:20, 11:20],
+             Omega5 = Omega5[11:20, 11:20])  
+    } 
+  } else{ 
     data_jags <-
-      list(y1 = r1[[1]],
-           y2 = r2[[1]],
-           y3 = r3[[1]][-(1:10)],
-           y4 = r4[[1]][-(1:10)],
-           y5 = y5[-(1:10)],
-           Omega1 = r1[[2]],
-           Omega2 = r2[[2]],
-           Omega3 = r3[[2]][11:20, 11:20],
-           Omega4 = r4[[2]][11:20, 11:20],
-           Omega5 = Omega5[11:20, 11:20],
-           w = w)
+        list(y1 = r1[[1]],
+             y2 = r2[[1]],
+             y3 = r3[[1]],
+             y4 = r4[[1]],
+             y5 = y5,
+             Omega1 = r1[[2]],
+             Omega2 = r2[[2]],
+             Omega3 = r3[[2]],
+             Omega4 = r4[[2]],
+             Omega5 = Omega5)
   }
+  
   
   mod <- jags.model(jags_file, data_jags, n.chains = 3, n.adapt = 1000)
   samples <- coda.samples(mod, variable.names = c("alpha", "beta", "gamma", "d"), n.iter = 10000)

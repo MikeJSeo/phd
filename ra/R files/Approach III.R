@@ -45,3 +45,8 @@ result <- secondStage(samples1 = samples_BSRBR, samples2 = samples_SCQM, samples
                       y5 = y_TOWARD2, Omega5 = Omega_TOWARD2, jags_file = "second stage-ApproachIII.txt", w = 0.75)
 predictFn(SCQM, result)$MSE
 predictFn(BSRBR, result)$MSE
+
+result <- secondStage(samples1 = samples_BSRBR, samples2 = samples_SCQM, samples3 = samples_REFLEX, samples4 = samples_TOWARD, 
+                      y5 = y_TOWARD2, Omega5 = Omega_TOWARD2, jags_file = "second stage-ApproachIII-w0.txt", w = 0)
+predictFn(SCQM, result)$MSE
+predictFn(BSRBR, result)$MSE
