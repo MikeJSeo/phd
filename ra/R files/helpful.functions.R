@@ -76,7 +76,7 @@ find_jags_data0 <- function(samples){
 
 
 secondStage <- function(samples1 = NULL, samples2 = NULL, samples3 = NULL, samples4 = NULL,
-                         y5 = NULL, Omega5 = NULL, jags_file = NULL, univariate = FALSE, w = NULL){
+                         y5 = NULL, Omega5 = NULL, jags_file = NULL, univariate = FALSE, w = NULL, niter = 10000){
   
   r1 <- find_jags_data0(samples1)
   r2 <- find_jags_data0(samples2)
@@ -133,36 +133,185 @@ secondStage <- function(samples1 = NULL, samples2 = NULL, samples3 = NULL, sampl
              Omega5 = Omega5)
   }
   
-  
   mod <- jags.model(jags_file, data_jags, n.chains = 3, n.adapt = 1000)
-  samples <- coda.samples(mod, variable.names = c("alpha", "beta", "gamma", "d"), n.iter = 10000)
+  samples <- coda.samples(mod, variable.names = c("alpha", "beta", "gamma", "delta"), n.iter = niter, n.chains = 3)
   
   return(samples)
 }
 
-predictFn <- function(sample, result, ncov = 9) {
+
+#second stage analysis for external validation
+secondStage2 <- function(samples1 = NULL, samples2 = NULL, samples3 = NULL,
+                        y4 = NULL, Omega4 = NULL, jags_file = NULL, univariate = FALSE, w = NULL, niter = 10000){
   
-   # sample <- sample %>% filter(!is.na(DAS28))
+  r1 <- find_jags_data0(samples1)
+  r2 <- find_jags_data0(samples2)
+  r3 <- find_jags_data0(samples3)
+  
+  if(univariate == TRUE){
+    r1[[2]] <- diag(diag(r1[[2]]))
+    r2[[2]] <- diag(diag(r2[[2]]))
+    r3[[2]] <- diag(diag(r3[[2]]))
+    Omega4 <- diag(diag(Omega4))
+  }
+  
+  
+  if(!is.null(w)){
+    if(w != 0){
+      data_jags <-
+        list(y1 = r1[[1]],
+             y2 = r2[[1]][-(1:10)],
+             y3 = r3[[1]][-(1:10)],
+             y4 = y4[-(1:10)],
+             Omega1 = r1[[2]],
+             Omega2 = r2[[2]][11:20, 11:20],
+             Omega3 = r3[[2]][11:20, 11:20],
+             Omega4 = Omega4[11:20, 11:20],
+             w = w)  
+    } else if (w == 0){
+      data_jags <-
+        list(y1 = r1[[1]][1:10],
+             y2 = r2[[1]][-(1:10)],
+             y3 = r3[[1]][-(1:10)],
+             y4 = y4[-(1:10)],
+             Omega1 = r1[[2]][1:10,1:10],
+             Omega2 = r2[[2]][11:20, 11:20],
+             Omega3 = r3[[2]][11:20, 11:20],
+             Omega4 = Omega4[11:20, 11:20])  
+    } 
+  } else{ 
+    data_jags <-
+      list(y1 = r1[[1]],
+           y2 = r2[[1]],
+           y3 = r3[[1]],
+           y4 = y4,
+           Omega1 = r1[[2]],
+           Omega2 = r2[[2]],
+           Omega3 = r3[[2]],
+           Omega4 = Omega4)
+  }
+  
+  mod <- jags.model(jags_file, data_jags, n.chains = 3, n.adapt = 1000)
+  samples <- coda.samples(mod, variable.names = c("alpha", "beta", "gamma", "delta"), n.iter = niter, n.chains= 3)
+  
+  return(samples)
+}
+
+
+
+predictFn <- function(data, result, ncov = 9, measure = "mse") {
   
   options(na.action='na.pass')
-  abd <- model.matrix(~female + age + duration + baseBMI + baseRF + n_prev_dmards_antiTNF + baseHAQ + baseESR + baseDAS + treat, sample)
+  abd <- model.matrix(~ female + age + duration + baseBMI + baseRF + n_prev_dmards_antiTNF + baseHAQ + baseESR + baseDAS + treat, data)
   abd_scaled <- abd
-  abd_scaled[,-1] <- apply(abd[,-1], 2, scale)
+  abd_scaled[,c(-1,-11,-12)] <- apply(abd[,c(-1,-11,-12)], 2, scale)
   
-  g2 <- model.matrix(~ (female + age + duration + baseBMI + baseRF + n_prev_dmards_antiTNF + baseHAQ + baseESR + baseDAS)*I(sample$treat == 2),as.data.frame(abd_scaled))[,-c(1:(ncov+2))]
-  g3 <- model.matrix(~ (female + age + duration + baseBMI + baseRF + n_prev_dmards_antiTNF + baseHAQ + baseESR + baseDAS)*I(sample$treat == 3),as.data.frame(abd_scaled))[,-c(1:(ncov+2))]
+  g2 <- model.matrix(~ (female + age + duration + baseBMI + baseRF + n_prev_dmards_antiTNF + baseHAQ + baseESR + baseDAS)*I(data$treat == 2),as.data.frame(abd_scaled))[,-c(1:(ncov+2))]
+  g3 <- model.matrix(~ (female + age + duration + baseBMI + baseRF + n_prev_dmards_antiTNF + baseHAQ + baseESR + baseDAS)*I(data$treat == 3),as.data.frame(abd_scaled))[,-c(1:(ncov+2))]
   
   XX <- as.matrix(cbind(abd_scaled, g2, g3))
-  XX2 <- XX[complete.cases(XX),]
+  X <- XX[complete.cases(XX),]
   
   coefs <- summary(result)[[1]][,"Mean"]
   coefs <- coefs[coefs != 0]
-  pred <- XX2 %*% coefs
+  y <- data$DAS28[complete.cases(XX)]
+  treat <- data$treat[complete.cases(XX)]
   
-  y <- sample$DAS28[complete.cases(XX)]
-  err <- (y - pred)^2
-  err <- err[!is.na(err)] 
   
-  MSE <- mean(err, na.rm = TRUE)
-  return(list(pred = pred, y = y , err = err, MSE = MSE))
+  index0 <- rep(TRUE, length(y))
+  index1 <- X[,"treat2"] == 0 & X[,"treat3"] == 0
+  index2 <- X[,"treat2"] == 1
+  index3 <- X[,"treat3"] == 1
+  
+  X_full <- cbind(abd_scaled, abd_scaled[,2:10], abd_scaled[,2:10]) 
+  X_full <- X_full[complete.cases(X_full),]
+  
+  if(measure %in% c("mse","bias")){
+    full <- findPerformanceMetric(X, y, coefs, index0, measure)
+    DMARDs <- findPerformanceMetric(X, y, coefs, index1, measure)
+    RTX <- findPerformanceMetric(X, y, coefs, index2, measure)
+    TCZ <- findPerformanceMetric(X, y, coefs, index3, measure)  
+    return(list(full = full, DMARDs = DMARDs, RTX = RTX, TCZ = TCZ))
+  } else if(measure %in% c("benefit")){
+    full <- findPerformanceMetric2(X_full, y, coefs, treat, measure)
+    return(full)
+    
+  }
 }
+
+
+findPerformanceMetric <- function(X, y, coefs, index, measure){
+  
+  pred <- X[index,] %*% coefs
+  y <- y[index]
+  
+  if(measure == "mse"){
+    err_mse <- (pred - y)^2
+    err_mse <- err_mse[!is.na(err_mse)]
+    mse <- mean(err_mse, na.rm = TRUE)
+    return(mse)
+  } else if(measure == "bias"){
+    err_bias <- pred - y
+    err_bias <- err_bias[!is.na(err_bias)]
+    bias <- mean(err_bias, na.rm = TRUE)
+    return(bias)
+  }
+}
+
+findPerformanceMetric2 <- function(X_full, y, coefs, treat, measure){
+  
+  if(measure == "benefit"){
+    print(coefs)
+    coefs1 <- coefs * c(rep(1,10), rep(0, 2), rep(0, 9), rep(0, 9))
+    pred1 <- X_full %*% coefs1
+    
+    coefs2 <- coefs * c(rep(1,10), 1, 0, rep(1, 9), rep(0, 9))
+    pred2 <- X_full %*% coefs2
+    
+    coefs3 <- coefs * c(rep(1,10), 0, 1, rep(0, 9), rep(1, 9))
+    pred3 <- X_full %*% coefs3
+    
+    pred <- cbind(pred1, pred2, pred3)
+    
+    best_treat <- apply(pred, 1, function(x) which.min(x))
+    
+    pred1_b1 <- mean(pred[best_treat == 1,1])
+    pred2_b1 <- mean(pred[best_treat == 1,2])
+    pred3_b1 <- mean(pred[best_treat == 1,3])
+    
+    pred1_b2 <- mean(pred[best_treat == 2,1])
+    pred2_b2 <- mean(pred[best_treat == 2,2])
+    pred3_b2 <- mean(pred[best_treat == 2,3])
+    
+    pred1_b3 <- mean(pred[best_treat == 3,1])
+    pred2_b3 <- mean(pred[best_treat == 3,2])
+    pred3_b3 <- mean(pred[best_treat == 3,3])
+    
+  #  pred12 <- mean(pred[best_treat ==1,2] - pred[best_treat ==1,1])
+  #  pred13 <- mean(pred[best_treat ==1,3] - pred[best_treat ==1,1])
+  #  pred12 <- mean(pred[best_treat ==1,2] - pred[best_treat ==1,1])
+
+    n <- table(best_treat,treat)
+    
+    obs1_b1 <- mean(y[best_treat ==1 & treat == "1"], na.rm =TRUE)
+    obs2_b1 <- mean(y[best_treat ==1 & treat == "2"], na.rm =TRUE)
+    obs3_b1 <- mean(y[best_treat ==1 & treat == "3"], na.rm =TRUE)
+    obs1_b2 <- mean(y[best_treat ==2 & treat == "1"], na.rm =TRUE)
+    obs2_b2 <- mean(y[best_treat ==2 & treat == "2"], na.rm =TRUE)
+    obs3_b2 <- mean(y[best_treat ==2 & treat == "3"], na.rm =TRUE)
+    obs1_b3 <- mean(y[best_treat ==3 & treat == "1"], na.rm =TRUE)
+    obs2_b3 <- mean(y[best_treat ==3 & treat == "2"], na.rm =TRUE)
+    obs3_b3 <- mean(y[best_treat ==3 & treat == "3"], na.rm =TRUE)
+    
+     
+  #  obs12 <- mean(y[best_treat ==1 & treat == "2"] - pred[best_treat ==1,1])
+  #  obs13 <- mean(pred[best_treat ==1,3] - pred[best_treat ==1,1])
+    list(pred1_b1 = pred1_b1, pred2_b1 = pred2_b1, pred3_b1 = pred3_b1, pred1_b2 = pred1_b2,
+         pred2_b2 = pred2_b2, pred3_b2 = pred3_b2, pred1_b3 = pred1_b3, pred2_b3 = pred2_b3,
+         pred3_b3 = pred3_b3, 
+         obs1_b1 = obs1_b1, obs2_b1 = obs2_b1, obs3_b1 = obs3_b1, obs1_b2 = obs1_b2,
+         obs2_b2 = obs2_b2, obs3_b2 = obs3_b2, obs1_b3 = obs1_b3, obs2_b3 = obs2_b3,
+         obs3_b3 = obs3_b3, n = n)
+  }
+}
+

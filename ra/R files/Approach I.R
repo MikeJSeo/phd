@@ -13,59 +13,61 @@ setwd("C:/Users/ms19g661/Desktop")
 mydata <- read_excel("ra_dataset.xlsx")
 BSRBR <- mydata %>% filter(study == "BSRBR")
 SCQM <- mydata %>% filter(study == "SCQM")
-TOWARD <- mydata %>% filter(study == "TOWARD")
-REFLEX <- mydata %>% filter(study == "REFLEX")
-
-
-#################
-# first stage analysis
-
-## REFLEX
-# setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
-# samples_REFLEX <- firstStage(REFLEX, "first stage.txt")
-# samples_TOWARD <- firstStage(TOWARD, "first stage.txt")
-# samples_BSRBR <- firstStage(BSRBR, "first stage.txt")
-# samples_SCQM <- firstStage(SCQM, "first stage.txt")
-# 
-# save(samples_REFLEX, file = "REFLEX-ApproachI.RData")
-# save(samples_TOWARD, file = "TOWARD-ApproachI.RData")
-# save(samples_BSRBR, file = "BSRBR-ApproachI.RData")
-# save(samples_SCQM, file = "SCQM-ApproachI.RData")
-
 
 # second stage analysis
 setwd("C:/Users/ms19g661/Desktop/RData")
-load("REFLEX-ApproachI.RData")
-load("TOWARD-ApproachI.RData")
-load("BSRBR-ApproachI.RData")
-load("SCQM-ApproachI.Rdata")
-y_TOWARD2 <- c(4.96455891, 0.15079734, -0.11131923, 0.0217670, 0.07085947,
-               0.20328172, 0.02549393, 0.02943369, 0.18806348, 0.45842890,
-               -0.08158954, 0.18847061, -0.04329039, -0.17427219, -0.14564021,
-               -0.13871368, 0.08763985, -0.03790719, -0.03013991, -1.71212275)
-Omega_TOWARD2 <- as.matrix(read_excel("Omega_TOWARD2.xlsx", col_names = FALSE))
+load("BSRBR-ApproachI-bayesLASSO.RData")
+load("SCQM-ApproachI-bayesLASSO.Rdata")
+
+####################### train test split test
+SCQM2 <- SCQM %>% mutate(id = row_number())
+
+#Create training set
+train <- SCQM2 %>% sample_frac(.70)
+#Create test set
+test  <- anti_join(SCQM2, train, by = 'id')
+
+train$id <- NULL
+test$id <- NULL
+
+result_SCQM <- firstStage(train, "first stage.txt",mm =2)
+result <- result_SCQM[,c(1:10,39,40,20:37)]
+predictFn(test, result, measure = "mse")
+predictFn(test, result, measure = "bias")
+
+BSRBR2 <- BSRBR %>% mutate(id = row_number())
+
+#Create training set
+train <- BSRBR2 %>% sample_frac(.70)
+#Create test set
+test  <- anti_join(BSRBR2, train, by = 'id')
+
+train$id <- NULL
+test$id <- NULL
+
+result_BSRBR <- firstStage(train, "first stage.txt",mm =2)
+result <- result_BSRBR[,c(1:10,39,40,20:37)]
+predictFn(test, result, measure = "mse")
+predictFn(test, result, measure = "bias")
 
 
-#S <- solve(r1[[2]])
-#R <- cov2cor(S)
-# Check if Omega_TOWARD2 typed correctly
-# aa <- matrix(NA, nrow = 20, ncol = 20)
-# for(i in 1:20){
-#   for(j in 1:20){
-#     aa[i,j] <- Omega_TOWARD2[i,j] == Omega_TOWARD2[j,i]
-#   }
-# }
+#############ApproachI
+result <- samples_BSRBR[,c(1:10,39,40,20:37)]
+#internal
+predictFn(BSRBR, result, measure = "mse")
+predictFn(BSRBR, result, measure = "bias")
 
-setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
+#internal-external
+predictFn(SCQM, result, measure = "mse")
+predictFn(SCQM, result, measure = "bias")
 
-#univariate
-result <- secondStage(samples1 = samples_BSRBR, samples2 = samples_SCQM, samples3 = samples_REFLEX, samples4 = samples_TOWARD, 
-                      y5 = y_TOWARD2, Omega5 = Omega_TOWARD2, jags_file = "second stage-fixed.txt", univariate = TRUE)
-predictFn(SCQM, result)$MSE
-predictFn(BSRBR, result)$MSE
+result <- samples_SCQM[,c(1:10,39,40,20:37)]
 
-#multivariate
-result <- secondStage(samples1 = samples_BSRBR, samples2 = samples_SCQM, samples3 = samples_REFLEX, samples4 = samples_TOWARD, 
-                      y5 = y_TOWARD2, Omega5 = Omega_TOWARD2, jags_file = "second stage-fixed.txt")
-predictFn(SCQM, result)$MSE
-predictFn(BSRBR, result)$MSE
+#internal
+predictFn(SCQM, result, measure = "mse")
+predictFn(SCQM, result, measure = "bias")
+predictFn(SCQM, result, measure = "benefit")
+
+#internal-external
+predictFn(BSRBR, result, measure = "mse")
+predictFn(BSRBR, result, measure = "bias")
