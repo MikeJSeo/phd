@@ -51,7 +51,7 @@ y_TOWARD2 <- c(4.96455891, 0.15079734, -0.11131923, 0.0217670, 0.07085947,
                -0.08158954, 0.18847061, -0.04329039, -0.17427219, -0.14564021,
                -0.13871368, 0.08763985, -0.03790719, -0.03013991, -1.71212275)
 Omega_TOWARD2 <- as.matrix(read_excel("Omega_TOWARD2.xlsx", col_names = FALSE))
-
+setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
 
 #S <- solve(r1[[2]])
 #R <- cov2cor(S)
@@ -63,7 +63,7 @@ Omega_TOWARD2 <- as.matrix(read_excel("Omega_TOWARD2.xlsx", col_names = FALSE))
 #   }
 # }
 
-setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
+
 
 #multivariate
 result <- secondStage(samples1 = samples_BSRBR, samples2 = samples_SCQM, samples3 = samples_REFLEX, samples4 = samples_TOWARD, 
@@ -73,7 +73,8 @@ predictFn(SCQM, result, measure = "bias")
 predictFn(BSRBR, result, measure = "mse")
 predictFn(BSRBR, result, measure = "bias")
 
-predictFn(SCQM, result, measure= "benefit")
+predictFn(SCQM, result, measure= "calibration")
+predictFn(BSRBR, result, measure= "calibration")
 
 #univariate
 # result <- secondStage(samples1 = samples_BSRBR, samples2 = samples_SCQM, samples3 = samples_REFLEX, samples4 = samples_TOWARD, 
@@ -88,12 +89,13 @@ result <- secondStage2(samples1 = samples_BSRBR, samples2 = samples_REFLEX, samp
                       y4 = y_TOWARD2, Omega4 = Omega_TOWARD2, jags_file = "second stage-ApproachII-external.txt")
 predictFn(SCQM, result, measure = "mse")
 predictFn(SCQM, result, measure = "bias")
-
+predictFn(SCQM, result, measure = "calibration")
 
 result <- secondStage2(samples1 = samples_SCQM, samples2 = samples_REFLEX, samples3 = samples_TOWARD, 
                        y4 = y_TOWARD2, Omega4 = Omega_TOWARD2, jags_file = "second stage-ApproachII-external.txt")
 predictFn(BSRBR, result, measure = "mse")
 predictFn(BSRBR, result, measure = "bias")
+predictFn(BSRBR, result, measure = "calibration")
 
 #univariate
 # result <- secondStage2(samples1 = samples_BSRBR, samples2 = samples_REFLEX, samples3 = samples_TOWARD, 

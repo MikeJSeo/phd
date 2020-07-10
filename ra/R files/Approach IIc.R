@@ -58,38 +58,50 @@ setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
 result <- secondStage(samples1 = samples_BSRBR, samples2 = samples_SCQM, samples3 = samples_REFLEX, samples4 = samples_TOWARD, 
                       y5 = y_TOWARD2, Omega5 = Omega_TOWARD2, jags_file = "second stage-ApproachII.txt", niter = 200000)
 result_SCQM <- result
-result_SCQM[[1]][,1] <- samples_SCQM[[1]][,1]
-result_SCQM[[2]][,1] <- samples_SCQM[[2]][,1]
-result_SCQM[[3]][,1] <- samples_SCQM[[3]][,1]
+for(i in 1:10){
+  result_SCQM[[1]][,i] <- samples_SCQM[[1]][,i]
+  result_SCQM[[2]][,i] <- samples_SCQM[[2]][,i]
+  result_SCQM[[3]][,i] <- samples_SCQM[[3]][,i]
+}
 
 result_BSRBR <- result
-result_BSRBR[[1]][,1] <- samples_BSRBR[[1]][,1]
-result_BSRBR[[2]][,1] <- samples_BSRBR[[2]][,1]
-result_BSRBR[[3]][,1] <- samples_BSRBR[[3]][,1]
+for(i in 1:10){
+  result_BSRBR[[1]][,i] <- samples_BSRBR[[1]][,i]
+  result_BSRBR[[2]][,i] <- samples_BSRBR[[2]][,i]
+  result_BSRBR[[3]][,i] <- samples_BSRBR[[3]][,i]
+}
 
 predictFn(SCQM, result_SCQM, measure = "mse")
 predictFn(SCQM, result_SCQM, measure = "bias")
 predictFn(BSRBR, result_BSRBR, measure = "mse")
 predictFn(BSRBR, result_BSRBR, measure = "bias")
 
+predictFn(SCQM, result_SCQM, measure = "calibration")
+predictFn(BSRBR, result_BSRBR, measure = "calibration")
 
 #external
 result <- secondStage2(samples1 = samples_BSRBR, samples2 = samples_REFLEX, samples3 = samples_TOWARD, 
                        y4 = y_TOWARD2, Omega4 = Omega_TOWARD2, jags_file = "second stage-ApproachII-external.txt", niter = 200000)
 result_SCQM <- result
-result_SCQM[[1]][,1] <- samples_BSRBR[[1]][,1]
-result_SCQM[[2]][,1] <- samples_BSRBR[[2]][,1]
-result_SCQM[[3]][,1] <- samples_BSRBR[[3]][,1]
+for(i in 1:10){
+  result_SCQM[[1]][,i] <- samples_BSRBR[[1]][,i]
+  result_SCQM[[2]][,i] <- samples_BSRBR[[2]][,i]
+  result_SCQM[[3]][,i] <- samples_BSRBR[[3]][,i]
+}
 
 predictFn(SCQM, result_SCQM, measure = "mse")
 predictFn(SCQM, result_SCQM, measure = "bias")
-
+predictFn(SCQM, result_SCQM, measure = "calibration")
 
 result <- secondStage2(samples1 = samples_SCQM, samples2 = samples_REFLEX, samples3 = samples_TOWARD, 
                        y4 = y_TOWARD2, Omega4 = Omega_TOWARD2, jags_file = "second stage-ApproachII-external.txt", niter = 200000)
 result_BSRBR <- result
-result_BSRBR[[1]][,1] <- samples_SCQM[[1]][,1]
-result_BSRBR[[2]][,1] <- samples_SCQM[[2]][,1]
-result_BSRBR[[3]][,1] <- samples_SCQM[[3]][,1]
+for(i in 1:10){
+  result_BSRBR[[1]][,i] <- samples_SCQM[[1]][,i]
+  result_BSRBR[[2]][,i] <- samples_SCQM[[2]][,i]
+  result_BSRBR[[3]][,i] <- samples_SCQM[[3]][,i]  
+}
+
 predictFn(BSRBR, result_BSRBR, measure = "mse")
 predictFn(BSRBR, result_BSRBR, measure = "bias")
+predictFn(BSRBR, result_BSRBR, measure = "calibration")

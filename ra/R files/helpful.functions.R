@@ -51,7 +51,6 @@ firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", 
     sample_more <- coda.samples(mod, variable.names = index, n.iter = 10000)
     samples <- add.mcmc(samples, sample_more)
   }
-
   return(samples)
 }
 
@@ -76,24 +75,20 @@ find_jags_data0 <- function(samples){
 
 
 secondStage <- function(samples1 = NULL, samples2 = NULL, samples3 = NULL, samples4 = NULL,
-                         y5 = NULL, Omega5 = NULL, jags_file = NULL, univariate = FALSE, w = NULL, niter = 10000){
+                         y5 = NULL, Omega5 = NULL, jags_file = NULL, w = NULL, niter = 10000){
   
   r1 <- find_jags_data0(samples1)
   r2 <- find_jags_data0(samples2)
   r3 <- find_jags_data0(samples3)
   r4 <- find_jags_data0(samples4)
   
-  if(univariate == TRUE){
-    r1[[2]] <- diag(diag(r1[[2]]))
-    r2[[2]] <- diag(diag(r2[[2]]))
-    r3[[2]] <- diag(diag(r3[[2]]))
-    r4[[2]] <- diag(diag(r4[[2]]))
-    Omega5 <- diag(diag(Omega5))
-  }
-  
-  
   if(!is.null(w)){
     if(w != 0){
+      
+      W <- matrix(sqrt(w), nrow = 30, ncol = 30)
+      W[1:10,1:10] <- 1
+      W[11:30,11:30] <- w
+
       data_jags <-
         list(y1 = r1[[1]],
              y2 = r2[[1]],
@@ -105,7 +100,7 @@ secondStage <- function(samples1 = NULL, samples2 = NULL, samples3 = NULL, sampl
              Omega3 = r3[[2]][11:20, 11:20],
              Omega4 = r4[[2]][11:20, 11:20],
              Omega5 = Omega5[11:20, 11:20],
-             w = w)  
+             W = W)  
     } else if (w == 0){
       data_jags <-
         list(y1 = r1[[1]][1:10],
@@ -148,16 +143,13 @@ secondStage2 <- function(samples1 = NULL, samples2 = NULL, samples3 = NULL,
   r2 <- find_jags_data0(samples2)
   r3 <- find_jags_data0(samples3)
   
-  if(univariate == TRUE){
-    r1[[2]] <- diag(diag(r1[[2]]))
-    r2[[2]] <- diag(diag(r2[[2]]))
-    r3[[2]] <- diag(diag(r3[[2]]))
-    Omega4 <- diag(diag(Omega4))
-  }
-  
-  
   if(!is.null(w)){
     if(w != 0){
+      
+      W <- matrix(sqrt(w), nrow = 30, ncol = 30)
+      W[1:10,1:10] <- 1
+      W[11:30,11:30] <- w
+      
       data_jags <-
         list(y1 = r1[[1]],
              y2 = r2[[1]][-(1:10)],
@@ -167,7 +159,7 @@ secondStage2 <- function(samples1 = NULL, samples2 = NULL, samples3 = NULL,
              Omega2 = r2[[2]][11:20, 11:20],
              Omega3 = r3[[2]][11:20, 11:20],
              Omega4 = Omega4[11:20, 11:20],
-             w = w)  
+             W = W)  
     } else if (w == 0){
       data_jags <-
         list(y1 = r1[[1]][1:10],
@@ -217,7 +209,6 @@ predictFn <- function(data, result, ncov = 9, measure = "mse") {
   y <- data$DAS28[complete.cases(XX)]
   treat <- data$treat[complete.cases(XX)]
   
-  
   index0 <- rep(TRUE, length(y))
   index1 <- X[,"treat2"] == 0 & X[,"treat3"] == 0
   index2 <- X[,"treat2"] == 1
@@ -232,7 +223,7 @@ predictFn <- function(data, result, ncov = 9, measure = "mse") {
     RTX <- findPerformanceMetric(X, y, coefs, index2, measure)
     TCZ <- findPerformanceMetric(X, y, coefs, index3, measure)  
     return(list(full = full, DMARDs = DMARDs, RTX = RTX, TCZ = TCZ))
-  } else if(measure %in% c("benefit")){
+  } else if(measure %in% c("calibration")){
     full <- findPerformanceMetric2(X_full, y, coefs, treat, measure)
     return(full)
     
@@ -260,8 +251,8 @@ findPerformanceMetric <- function(X, y, coefs, index, measure){
 
 findPerformanceMetric2 <- function(X_full, y, coefs, treat, measure){
   
-  if(measure == "benefit"){
-    print(coefs)
+  if(measure == "calibration"){
+ 
     coefs1 <- coefs * c(rep(1,10), rep(0, 2), rep(0, 9), rep(0, 9))
     pred1 <- X_full %*% coefs1
     
@@ -275,43 +266,32 @@ findPerformanceMetric2 <- function(X_full, y, coefs, treat, measure){
     
     best_treat <- apply(pred, 1, function(x) which.min(x))
     
-    pred1_b1 <- mean(pred[best_treat == 1,1])
-    pred2_b1 <- mean(pred[best_treat == 1,2])
-    pred3_b1 <- mean(pred[best_treat == 1,3])
-    
-    pred1_b2 <- mean(pred[best_treat == 2,1])
-    pred2_b2 <- mean(pred[best_treat == 2,2])
-    pred3_b2 <- mean(pred[best_treat == 2,3])
-    
-    pred1_b3 <- mean(pred[best_treat == 3,1])
-    pred2_b3 <- mean(pred[best_treat == 3,2])
-    pred3_b3 <- mean(pred[best_treat == 3,3])
-    
-  #  pred12 <- mean(pred[best_treat ==1,2] - pred[best_treat ==1,1])
-  #  pred13 <- mean(pred[best_treat ==1,3] - pred[best_treat ==1,1])
-  #  pred12 <- mean(pred[best_treat ==1,2] - pred[best_treat ==1,1])
+    pred_matrix <- matrix(NA, nrow = 3, ncol = 3)
+    pred_matrix[1,] <- c(mean(pred[best_treat == 1,1]), mean(pred[best_treat == 1,2]), mean(pred[best_treat == 1,3]))
+    pred_matrix[2,] <- c(mean(pred[best_treat == 2,1]), mean(pred[best_treat == 2,2]), mean(pred[best_treat == 2,3]))
+    pred_matrix[3,] <- c(mean(pred[best_treat == 3,1]), mean(pred[best_treat == 3,2]), mean(pred[best_treat == 3,3]))
 
     n <- table(best_treat,treat)
     
-    obs1_b1 <- mean(y[best_treat ==1 & treat == "1"], na.rm =TRUE)
-    obs2_b1 <- mean(y[best_treat ==1 & treat == "2"], na.rm =TRUE)
-    obs3_b1 <- mean(y[best_treat ==1 & treat == "3"], na.rm =TRUE)
-    obs1_b2 <- mean(y[best_treat ==2 & treat == "1"], na.rm =TRUE)
-    obs2_b2 <- mean(y[best_treat ==2 & treat == "2"], na.rm =TRUE)
-    obs3_b2 <- mean(y[best_treat ==2 & treat == "3"], na.rm =TRUE)
-    obs1_b3 <- mean(y[best_treat ==3 & treat == "1"], na.rm =TRUE)
-    obs2_b3 <- mean(y[best_treat ==3 & treat == "2"], na.rm =TRUE)
-    obs3_b3 <- mean(y[best_treat ==3 & treat == "3"], na.rm =TRUE)
+    obs_matrix <- matrix(NA, nrow = 3, ncol = 3)
+    obs_matrix[1,] <- c(mean(y[best_treat ==1 & treat == "1"], na.rm =TRUE), mean(y[best_treat ==1 & treat == "2"], na.rm =TRUE), mean(y[best_treat ==1 & treat == "3"], na.rm =TRUE))
+    obs_matrix[2,] <- c(mean(y[best_treat ==2 & treat == "1"], na.rm =TRUE), mean(y[best_treat ==2 & treat == "2"], na.rm =TRUE), mean(y[best_treat ==2 & treat == "3"], na.rm =TRUE))
+    obs_matrix[3,] <- c(mean(y[best_treat ==3 & treat == "1"], na.rm =TRUE), mean(y[best_treat ==3 & treat == "2"], na.rm =TRUE), mean(y[best_treat ==3 & treat == "3"], na.rm =TRUE))
+
+    #calibration slope
+    pred12 <- pred[,2] - pred[,1]
+    pred12 <- pred12 * (treat == "2")
+    pred13 <- pred[,3] - pred[,1]
+    pred13 <- pred13 * (treat == "3")
+    slope1 <- lm(y ~ pred12 + pred13, na.action=na.exclude)
     
-     
-  #  obs12 <- mean(y[best_treat ==1 & treat == "2"] - pred[best_treat ==1,1])
-  #  obs13 <- mean(pred[best_treat ==1,3] - pred[best_treat ==1,1])
-    list(pred1_b1 = pred1_b1, pred2_b1 = pred2_b1, pred3_b1 = pred3_b1, pred1_b2 = pred1_b2,
-         pred2_b2 = pred2_b2, pred3_b2 = pred3_b2, pred1_b3 = pred1_b3, pred2_b3 = pred2_b3,
-         pred3_b3 = pred3_b3, 
-         obs1_b1 = obs1_b1, obs2_b1 = obs2_b1, obs3_b1 = obs3_b1, obs1_b2 = obs1_b2,
-         obs2_b2 = obs2_b2, obs3_b2 = obs3_b2, obs1_b3 = obs1_b3, obs2_b3 = obs2_b3,
-         obs3_b3 = obs3_b3, n = n)
+    pred1 <- pred[,1] * (treat == "1")
+    pred2 <- pred[,2] * (treat == "2")
+    pred3 <- pred[,3] * (treat == "3")
+    slope2 <- lm(y ~ -1 + pred1 + pred2 + pred3, na.action=na.exclude)
+    
+    list(pred_matrix = pred_matrix, obs_matrix = obs_matrix, n = n, slope1 = slope1, slope2 = slope2)
+    
   }
 }
 
