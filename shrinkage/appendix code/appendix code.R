@@ -69,21 +69,21 @@ coef(cvfit, s = "lambda.min")
 data_glmnet <- model.matrix(y~ studyid + (z1+z2)*treat, data = ds)
 data_glmnet <- data_glmnet[,-1]
 data_glmnet <- cbind(y = ds$y, data_glmnet = data_glmnet)
-cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac, family = "gaussian", alpha = 0, type.measure = "deviance", lambda = lambdas)
-coef(cvfit, s = "lambda.min")
+cvfit.ridge = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac, family = "gaussian", alpha = 0, type.measure = "deviance", lambda = lambdas)
+coef(cvfit.ridge, s = "lambda.min")
 
 # binary outcome
 data_glmnet <- model.matrix(y~ studyid + (w1+w2)*treat, data = ds2)
 data_glmnet <- data_glmnet[,-1]
 data_glmnet <- cbind(y = ds2$y, data_glmnet = data_glmnet)
-cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac, family = "binomial", alpha = 0, type.measure = "deviance", lambda = lambdas)
-coef(cvfit, s = "lambda.min")
+cvfit.ridge2 = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac, family = "binomial", alpha = 0, type.measure = "deviance", lambda = lambdas)
+coef(cvfit.ridge2, s = "lambda.min")
 
 
 ###### adaptive LASSO
 # continuous outcome
-glmm_coef <- summary(m1)$coefficients[,"Estimate"][-1]
-p.fac2 <- p.fac/ abs(glmm_coef)
+ridge_result <- coef(cvfit.ridge, s = "lambda.min")[-1]
+p.fac2 <- p.fac/ abs(ridge_result)
 
 data_glmnet <- model.matrix(y~ studyid + (z1+z2)*treat, data = ds)
 data_glmnet <- data_glmnet[,-1]
@@ -92,8 +92,8 @@ cvfit <- cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), pena
 coef(cvfit, s = "lambda.min")
 
 # binary outcome
-glmm_coef <- summary(m2)$coefficients[,"Estimate"][-1]
-p.fac2 <- p.fac/ abs(glmm_coef)
+ridge_result <- coef(cvfit.ridge2, s = "lambda.min")[-1]
+p.fac2 <- p.fac/ abs(ridge_result)
 
 data_glmnet <- model.matrix(y~ studyid + (w1+w2)*treat, data = ds2)
 data_glmnet <- data_glmnet[,-1]

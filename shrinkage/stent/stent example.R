@@ -206,8 +206,11 @@ quantile(predictions_group2, probs = c(0.025, 0.5, 0.975))
 
 
 ###### adaptive LASSO
-glmmresult <- summary(m2)$coefficients[,"Estimate"][-1]
-p.fac.stent2 <- p.fac.stent/ abs(glmmresult)
+set.seed(1)
+cvfit <- cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.stent, family = "binomial", type.measure = "deviance", standardize = FALSE, alpha = 0)
+ridge_result <- coef(cvfit, s = "lambda.min")[-1]
+
+p.fac.stent2 <- p.fac.stent/ abs(ridge_result)
 
 set.seed(1)
 cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac.stent2, family = "binomial", type.measure = "deviance", standardize = FALSE, alpha = 1)
