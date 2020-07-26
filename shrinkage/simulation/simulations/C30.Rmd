@@ -78,7 +78,9 @@ simulation.b2 <- run.simulation2.1()
 ```
 
 ```{r}
-simulation.result <- rbind(simulation.a, simulation.b, simulation.c, simulation.b2)
-simulation.result
+simulation.a
+simulation.b
+simulation.c
+simulation.b2
 #write_xlsx(as.data.frame(round(simulation.result,3)), "simulation7.xlsx")
 ```
