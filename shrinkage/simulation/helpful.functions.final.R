@@ -1,12 +1,18 @@
 ## Code to generate simulation
   
 generate.simulation <- function(Nstudies = NULL, Ncovariate = NULL, continuous.cov = NULL, pf = NULL, em = NULL,
-                                beta = NULL, gamma = NULL, sampleSize = c(50, 100), model.type = "gaussian", 
-                                tau = 0.2, tau_beta = 0.2, tau_gamma = 0.3){
+                                beta = NULL, gamma = NULL, sampleSize = NULL, model.type = "gaussian", 
+                                tau = 0.2, tau_beta = 0.2, tau_gamma = 0.3, t_dist = FALSE){
   
   #treatment effect
   delta <- 1
-  d <- rnorm(Nstudies, delta, tau)
+  
+  if(t_dist == FALSE){
+    d <- rnorm(Nstudies, delta, tau)  
+  } else{
+    d <- delta + runif(Nstudies, -tau * 2, tau * 2)
+  }
+  
   
   # prognostic effect (covariate effect)
   b <- matrix(NA, nrow = Nstudies, ncol = length(beta))

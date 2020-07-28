@@ -63,6 +63,8 @@ step_full_formula <-  as.formula("y ~ studyid + (X1 + X2 + X3 + X4 + X5 + X6 + X
 step_lower_formula <- as.formula(" ~ studyid + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + treat")
 
 model.type = "gaussian"
+t_dist = FALSE
+sampleSize = c(50, 100)
 ```
 
 ```{r simulationa, eval = FALSE}
