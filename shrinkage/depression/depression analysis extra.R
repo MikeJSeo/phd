@@ -48,7 +48,7 @@ data2 <- cbind(y = y, X, treat = treat, studyid = as.factor(studyid))
 mydata <- na.omit(data2)
 mydata2 <- data2[!complete.cases(data2),]
 
-scale_vars <- c("baseseverity.hamd_total_start.", "age", "sex_m1_f2", "onset",  "episode_frequency_1_2_3over", "episode_duration_wk", "gilty_agitationHAM10_11_12_15_17", "body_symptoms_HAM9_13_14", "sleep_problems", "anhedonia_redardationHAM1_2_3_16")
+scale_vars <- c("baseseverity.hamd_total_start.", "age", "sex", "onset",  "episode_frequency_1_2_3over", "episode_duration_wk", "gilty_agitationHAM10_11_12_15_17", "body_symptoms_HAM9_13_14", "sleep_problems", "anhedonia_redardationHAM1_2_3_16")
 
 mean_val <- apply(mydata[,scale_vars], 2, mean)
 sd_val <- apply(mydata[,scale_vars], 2, sd)
@@ -64,18 +64,18 @@ sd_val
 dim(mydata)
 dim(mydata2)
 
-apply(mydata2[,scale_vars], 2, mean)
-apply(mydata2[,scale_vars], 2, mean)
+apply(mydata2[,scale_vars], 2, mean, na.rm = TRUE)
+apply(mydata2[,scale_vars], 2, sd, na.rm = TRUE)
 
 mean(mydata$treat)
 sd(mydata$treat)
 mean(mydata$y)
 sd(mydata$y)
 
-mean(mydata2$treat)
-sd(mydata2$treat)
-mean(mydata2$y)
-sd(mydata2$y)
+mean(mydata2$treat, na.rm = TRUE)
+sd(mydata2$treat, na.rm = TRUE)
+mean(mydata2$y, na.rm = TRUE)
+sd(mydata2$y, na.rm = TRUE)
 
 ################## models
 bootstrap_function  <- function(model_data, ndraws, p.fac, family, alpha = 1, col_labels) {
@@ -108,7 +108,7 @@ bootstrap_function2  <- function(model_data, ndraws, p.fac, family, alpha = 1, c
     bootstrap_model <- cv.glmnet(as.matrix(bootstrap_data[,-1]), as.matrix(bootstrap_data[,1]), penalty.factor = p.fac, family = family, type.measure = "deviance", standardize = FALSE, alpha = alpha)  
     
     predictions_raw <- contr_vec %*% coef(bootstrap_model, s = "lambda.min")
-    predictions[ii] <- ifelse(family = "gaussian", predictions_raw, exp(predictions_raw))
+    predictions[ii] <- ifelse(family == "gaussian", predictions_raw, exp(predictions_raw))
   }
   return(predictions)
 }
