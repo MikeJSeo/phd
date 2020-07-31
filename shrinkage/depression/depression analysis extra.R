@@ -120,7 +120,7 @@ group2 <- c(25, 45, 0, 45, 0, 42, 5, 2, 1, 7)
 group2_std <- (group2 - mean_val)/sd_val
 
 set.seed(1)
-data_glmnet <- model.matrix(y~ studyid + (baseseverity.hamd_total_start. + age + sex_m1_f2 + onset + episode_frequency_1_2_3over + episode_duration_wk + gilty_agitationHAM10_11_12_15_17 + body_symptoms_HAM9_13_14 + sleep_problems + anhedonia_redardationHAM1_2_3_16) * treat, data = mydata)
+data_glmnet <- model.matrix(y~ studyid + (baseseverity.hamd_total_start. + age + sex + onset + episode_frequency_1_2_3over + episode_duration_wk + gilty_agitationHAM10_11_12_15_17 + body_symptoms_HAM9_13_14 + sleep_problems + anhedonia_redardationHAM1_2_3_16) * treat, data = mydata)
 data_glmnet <- data_glmnet[,-1]
 data_glmnet <- cbind(y = mydata$y, data_glmnet = data_glmnet)
 
@@ -136,7 +136,7 @@ cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penal
 coef(cvfit, s = "lambda.min")
 
 set.seed(1)
-col_labels <- c("baseseverity.hamd_total_start.", "age", "sex_m1_f2", "onset", "episode_frequency_1_2_3over", "episode_duration_wk","gilty_agitationHAM10_11_12_15_17", "body_symptoms_HAM9_13_14", "sleep_problems", "anhedonia_redardationHAM1_2_3_16", "baseseverity.hamd_total_start.:treat", "age:treat", "sex_m1_f2:treat", "onset:treat", "episode_frequency_1_2_3over:treat", "episode_duration_wk:treat", "gilty_agitationHAM10_11_12_15_17:treat", "body_symptoms_HAM9_13_14:treat", "sleep_problems:treat", "anhedonia_redardationHAM1_2_3_16:treat", "treat")
+col_labels <- c("baseseverity.hamd_total_start.", "age", "sex", "onset", "episode_frequency_1_2_3over", "episode_duration_wk","gilty_agitationHAM10_11_12_15_17", "body_symptoms_HAM9_13_14", "sleep_problems", "anhedonia_redardationHAM1_2_3_16", "baseseverity.hamd_total_start.:treat", "age:treat", "sex:treat", "onset:treat", "episode_frequency_1_2_3over:treat", "episode_duration_wk:treat", "gilty_agitationHAM10_11_12_15_17:treat", "body_symptoms_HAM9_13_14:treat", "sleep_problems:treat", "anhedonia_redardationHAM1_2_3_16:treat", "treat")
 sd_values <- bootstrap_function(model_data = data_glmnet, ndraws = 50, p.fac = p.fac.depression2, family = "gaussian", alpha = 1, col_labels)
 sd_values
 
