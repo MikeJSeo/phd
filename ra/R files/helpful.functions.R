@@ -75,7 +75,7 @@ find_jags_data0 <- function(samples){
 
 
 secondStage <- function(samples1 = NULL, samples2 = NULL, samples3 = NULL, samples4 = NULL,
-                         y5 = NULL, Omega5 = NULL, jags_file = NULL, w = NULL, niter = 10000){
+                         y5 = NULL, Omega5 = NULL, jags_file = NULL, w = NULL, niter = 10000, zero1= FALSE, zero2=FALSE){
   
   r1 <- find_jags_data0(samples1)
   r2 <- find_jags_data0(samples2)
@@ -128,8 +128,20 @@ secondStage <- function(samples1 = NULL, samples2 = NULL, samples3 = NULL, sampl
              Omega5 = Omega5)
   }
   
+  if(zero1 == TRUE){
+    data_jags$zero1 <- 0
+  }
+  if(zero2 == TRUE){
+    data_jags$zero2 <- 0
+  }
+  
   mod <- jags.model(jags_file, data_jags, n.chains = 3, n.adapt = 1000)
-  samples <- coda.samples(mod, variable.names = c("alpha", "beta", "gamma", "delta"), n.iter = niter, n.chains = 3)
+  
+  var.names <- c("alpha", "beta", "gamma", "delta")
+  if(zero1 == TRUE){
+    var.names <- c(var.names, "a0")
+  }
+  samples <- coda.samples(mod, variable.names = var.names, n.iter = niter, n.chains = 3)
   
   return(samples)
 }
@@ -206,6 +218,11 @@ predictFn <- function(data, result, ncov = 9, measure = "mse") {
   
   coefs <- summary(result)[[1]][,"Mean"]
   coefs <- coefs[coefs != 0]
+  
+  if(names(coefs)[1] == "a0"){
+    coefs <- coefs[-1]
+  }
+  
   y <- data$DAS28[complete.cases(XX)]
   treat <- data$treat[complete.cases(XX)]
   
