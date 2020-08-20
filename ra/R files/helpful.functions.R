@@ -219,9 +219,6 @@ predictFn <- function(data, result, ncov = 9, measure = "mse") {
   coefs <- summary(result)[[1]][,"Mean"]
   coefs <- coefs[coefs != 0]
   
-  if(names(coefs)[1] == "a0"){
-    coefs <- coefs[-1]
-  }
   
   y <- data$DAS28[complete.cases(XX)]
   treat <- data$treat[complete.cases(XX)]
@@ -247,7 +244,6 @@ predictFn <- function(data, result, ncov = 9, measure = "mse") {
   }
 }
 
-
 findPerformanceMetric <- function(X, y, coefs, index, measure){
   
   pred <- X[index,] %*% coefs
@@ -263,8 +259,9 @@ findPerformanceMetric <- function(X, y, coefs, index, measure){
     err_bias <- err_bias[!is.na(err_bias)]
     bias <- mean(err_bias, na.rm = TRUE)
     return(bias)
-  }
+  } 
 }
+
 
 findPerformanceMetric2 <- function(X_full, y, coefs, treat, measure){
   
