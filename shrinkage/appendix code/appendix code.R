@@ -110,7 +110,7 @@ coef(cvfit, s = "lambda.min")
 #"lambda" -  shrinkage parameter
 
 # continuous outcome
-ipd <- with(ds, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = cbind(z1, z2), response = "normal", shrinkage = "laplace", lambda.prior = list("dgamma",2,0.1)))
+ipd <- with(ds, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = cbind(z1, z2), response = "normal", approach = "deluded", shrinkage = "laplace", lambda.prior = list("dgamma",2,0.1)))
 ##To see the JAGS code used to run the model use the command: 
 cat(ipd$code) 
 samples <- ipd.run(ipd, pars.save = c("lambda", "beta", "gamma", "delta"), n.chains = 3, n.burnin = 500, n.iter = 5000)
@@ -124,7 +124,7 @@ coda::gelman.plot(samples) #gelman diagnostic plot
 treatment.effect(ipd, samples, newpatient = c(1,0.5))
 
 # binary outcome
-ipd <- with(ds2, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = cbind(w1, w2), response = "binomial", shrinkage = "laplace"))
+ipd <- with(ds2, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = cbind(w1, w2), response = "binomial", approach = "deluded", shrinkage = "laplace"))
 samples <- ipd.run(ipd, pars.save = c("lambda", "beta", "gamma", "delta"))
 summary(samples)
 
@@ -140,7 +140,7 @@ summary(samples2)
 #"Ind" - Indicator for assigning a slab prior (instead of a spike prior) i.e. indicator for including a covariate
 #"eta" - Standard deviation of the slab prior
 
-ipd <- with(ds, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = cbind(z1, z2), response = "normal", shrinkage = "SSVS", hy.prior.eta = list("dunif", 0, 5), g = 1000))
+ipd <- with(ds, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = cbind(z1, z2), response = "normal", approach = "deluded", shrinkage = "SSVS", hy.prior.eta = list("dunif", 0, 5), g = 1000))
 samples <- ipd.run(ipd, pars.save = c("beta", "gamma", "delta", "Ind", "eta"))
 
 samples <- samples[,-5] #remove delta[1] which is 0
@@ -149,8 +149,10 @@ plot(samples) #traceplot and posterior of parameters
 coda::gelman.plot(samples) #gelman diagnostic plot
 
 # binary outcome
-ipd <- with(ds2, ipdmd.model.onestage(y = y, study = studyid, treat = treat, X = cbind(w1, w2), response = "binomial", shrinkage = "SSVS"))
+ipd <- with(ds2, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = cbind(w1, w2), response = "binomial", approach = "deluded", shrinkage = "SSVS"))
 samples <- ipd.run(ipd, pars.save = c("beta", "gamma", "delta", "Ind", "eta"))
 summary(samples)
 treatment.effect(ipd, samples, newpatient = c(1,0.5)) # binary outcome reports odds ratio
 
+
+########################## Using "deft" approach

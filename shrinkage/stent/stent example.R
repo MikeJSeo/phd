@@ -234,7 +234,7 @@ quantile(predictions_group2, probs = c(0.025, 0.5, 0.975))
 
 
 ########### Bayesian LASSO (ie Laplacian shrinkage)
-ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = X, response = "binomial", shrinkage = "laplace", lambda.prior = list("dgamma",2,0.1)))
+ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = X, response = "binomial", approach = "deluded", shrinkage = "laplace", lambda.prior = list("dgamma",2,0.1)))
 
 samples <- ipd.run.parallel(ipd, pars.save = c("lambda", "beta", "gamma", "delta"))
 
@@ -243,7 +243,7 @@ treatment.effect(ipd, samples, newpatient = c(50, 1, 0, 1, 0, 0, 0, 1, 1), respo
 
 
 ########### SSVS
-ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = X, response = "binomial", shrinkage = "SSVS", g = 100))
+ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = X, response = "binomial", approach = "deluded", shrinkage = "SSVS", g = 100))
 samples <- ipd.run.parallel(ipd, pars.save = c("Ind", "eta", "beta", "gamma", "delta"))
 
 samples2 <- samples[,-19] #remove delta[1] which is 0
