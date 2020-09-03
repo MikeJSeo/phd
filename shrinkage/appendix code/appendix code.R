@@ -1,7 +1,7 @@
 
 #The github library ("bipd") contains functions for generating sample data and running Bayesian IPD-MA methods.
 library(devtools)
-#devtools::install_github("MikeJSeo/bipd") #parallel packages take a while to install
+#devtools::install_github("MikeJSeo/bipd") #parallel package take a while to install
 library(bipd) 
 
 ##load in data
@@ -160,13 +160,6 @@ ipd <- with(ds, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = 
 samples <- ipd.run(ipd, pars.save = c("beta", "gamma", "gamA", "delta"))
 treatment.effect(ipd, samples, newpatient= c(1,0.5), reference = c(0, 0))
 
-ipd <- with(ds2, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = cbind(z1, z2), response = "binomial", approach = "deft"))
+ipd <- with(ds2, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = cbind(w1, w2), response = "binomial", approach = "deft"))
 samples <- ipd.run(ipd, pars.save = c("beta", "gamma", "gamA", "delta"))
 treatment.effect(ipd, samples, newpatient= c(1,0.5), reference = c(0, 0))
-
-
-
-ipd <- with(ds, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = cbind(z1, z2), response = "normal", approach = "deluded"))
-samples <- ipd.run(ipd, pars.save = c("beta", "gamma", "delta"))
-
-treatment.effect(ipd, samples, newpatient = c(1,0.5))

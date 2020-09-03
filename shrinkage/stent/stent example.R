@@ -238,8 +238,8 @@ ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, 
 
 samples <- ipd.run.parallel(ipd, pars.save = c("lambda", "beta", "gamma", "delta"))
 
-treatment.effect(ipd, samples, newpatient = c(80, 0, 1, 0, 1, 1, 1, 0, 5), response = "binomial")
-treatment.effect(ipd, samples, newpatient = c(50, 1, 0, 1, 0, 0, 0, 1, 1), response = "binomial")
+treatment.effect(ipd, samples, newpatient = c(80, 0, 1, 0, 1, 1, 1, 0, 5))
+treatment.effect(ipd, samples, newpatient = c(50, 1, 0, 1, 0, 0, 0, 1, 1))
 
 
 ########### SSVS
@@ -251,6 +251,6 @@ summary(samples2)
 plot(samples2) #traceplot and posterior of parameters
 coda::gelman.plot(samples2) #gelman diagnostic plot
 
-treatment.effect(ipd, samples, newpatient = c(80, 0, 1, 0, 1, 1, 1, 0, 5), response = "binomial")
-treatment.effect(ipd, samples, newpatient = c(50, 1, 0, 1, 0, 0, 0, 1, 1), response = "binomial")
+treatment.effect(ipd, samples, newpatient = c(80, 0, 1, 0, 1, 1, 1, 0, 5))
+treatment.effect(ipd, samples, newpatient = c(50, 1, 0, 1, 0, 0, 0, 1, 1))
 
