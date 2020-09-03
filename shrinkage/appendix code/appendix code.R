@@ -155,4 +155,4 @@ summary(samples)
 treatment.effect(ipd, samples, newpatient = c(1,0.5)) # binary outcome reports odds ratio
 
 
-########################## Using "deft" approach
+########################## Using "deft" approach without penalization
