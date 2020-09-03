@@ -157,4 +157,9 @@ treatment.effect(ipd, samples, newpatient = c(1,0.5)) # binary outcome reports o
 
 ########################## Using "deft" approach without penalization
 ipd <- with(ds, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = cbind(z1, z2), response = "normal", approach = "deft"))
-samples <- ipd.run(ipd, pars.save = c("beta", "gamma", "delta", "Ind", "eta"))
+samples <- ipd.run(ipd, pars.save = c("beta", "gamma", "gamA", "delta"))
+
+treatment.effect
+
+ipd <- with(ds, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = cbind(z1, z2), response = "normal", approach = "deluded"))
+samples <- ipd.run(ipd, pars.save = c("beta", "gamma", "delta"))
