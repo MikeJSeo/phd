@@ -1,3 +1,5 @@
+### this approach is for testing purposes; penalizing all parameters including main effects, however separate lambda is used for prognostic effect and effect modifiers
+
 setwd("~/GitHub/phd/ra/R files")
 source("helpful.functions.R")
 
@@ -19,36 +21,36 @@ TOWARD <- mydata %>% filter(study == "TOWARD")
 REFLEX <- mydata %>% filter(study == "REFLEX")
 
 
-# first stage analysis
-
-## REFLEX
+#first stage analysis
 # setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
-# samples_REFLEX <- firstStage(REFLEX, "first stage-bayesLASSO.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma"))
-# samples_TOWARD <- firstStage(TOWARD, "first stage-bayesLASSO.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma"))
-# samples_BSRBR <- firstStage(BSRBR, "first stage-bayesLASSO.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma"))
-# samples_SCQM <- firstStage(SCQM, "first stage-bayesLASSO.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma"))
+# samples_REFLEX <- firstStage(REFLEX, "first stage-bayesLASSO-full2.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma", "sdGamma2"))
+# samples_TOWARD <- firstStage(TOWARD, "first stage-bayesLASSO-full2.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma", "sdGamma2"))
+# samples_BSRBR <- firstStage(BSRBR, "first stage-bayesLASSO-full2.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma", "sdGamma2"))
+# samples_SCQM <- firstStage(SCQM, "first stage-bayesLASSO-full2.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma", "sdGamma2"))
 # 
-# save(samples_REFLEX, file = "REFLEX-ApproachI-bayesLASSO.RData")
-# save(samples_TOWARD, file = "TOWARD-ApproachI-bayesLASSO.RData")
-# save(samples_BSRBR, file = "BSRBR-ApproachI-bayesLASSO.RData")
-# save(samples_SCQM, file = "SCQM-ApproachI-bayesLASSO.RData")
+# save(samples_REFLEX, file = "REFLEX-ApproachI-bayesLASSO-full2.RData")
+# save(samples_TOWARD, file = "TOWARD-ApproachI-bayesLASSO-full2.RData")
+# save(samples_BSRBR, file = "BSRBR-ApproachI-bayesLASSO-full2.RData")
+# save(samples_SCQM, file = "SCQM-ApproachI-bayesLASSO-full2.RData")
 
 # second stage analysis
 setwd("C:/Users/ms19g661/Desktop/RData")
-load("REFLEX-ApproachI-bayesLASSO.RData")
-load("TOWARD-ApproachI-bayesLASSO.RData")
-load("BSRBR-ApproachI-bayesLASSO.RData")
-load("SCQM-ApproachI-bayesLASSO.Rdata")
+load("REFLEX-ApproachI-bayesLASSO-full2.RData")
+load("TOWARD-ApproachI-bayesLASSO-full2.RData")
+load("BSRBR-ApproachI-bayesLASSO-full2.RData")
+load("SCQM-ApproachI-bayesLASSO-full2.Rdata")
 
-y_TOWARD2 <- c(4.9614, 0.1061, -0.0278, 0.0136, -0.0061, 0.1318, -0.0597, 0.1033, 0.1674, 0.4463, -0.0195, 0.0412, -0.0127, -0.0225, -0.0295, -0.0265, -0.0027, -0.0096, -0.0036, -1.6919)
-Omega_TOWARD2 <- as.matrix(read_excel("Omega_TOWARD2_bayesLASSO.xlsx", col_names = FALSE))
+#estimates when penalization is applied for all
+y_TOWARD2 <- c(4.9654, 0.0854, -0.0139, 0.0090, -0.0019, 0.1052, -0.0406, 0.0878, 0.1456, 0.4324, -0.0073, 0.0272, -0.0085, -0.0180, -0.0157, -0.025, 0.0044, -0.0020, 0.0037, -1.6943)
+Omega_TOWARD2 <- as.matrix(read_excel("Omega_TOWARD2_bayesLASSO_full2.xlsx", col_names = FALSE))
 # aa <- matrix(NA, nrow = 20, ncol = 20)
 # for(i in 1:20){
 #  for(j in 1:20){
 #    aa[i,j] <- Omega_TOWARD2[i,j] == Omega_TOWARD2[j,i]
 #  }
 # }
-setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files") #set the location to where JAGS file exists
+setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
+
 
 ################################################################################
 
@@ -88,4 +90,3 @@ Omega <- list(Omega1 = r2[[2]], Omega2 = r3[[2]], Omega3 = r4[[2]], Omega4 = Ome
 result <- secondStage(y = y, Omega = Omega, jags_file = "second stage-ApproachII-external.txt")
 prediction_BSRBR <- findPrediction(BSRBR, result)
 findPerformance(prediction_BSRBR)
-

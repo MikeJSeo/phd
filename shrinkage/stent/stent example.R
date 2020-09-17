@@ -234,17 +234,16 @@ quantile(predictions_group2, probs = c(0.025, 0.5, 0.975))
 
 
 ########### Bayesian LASSO (ie Laplacian shrinkage)
-ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = X, response = "binomial", approach = "deluded", shrinkage = "laplace", lambda.prior = list("dgamma",2,0.1)))
+ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = X, response = "binomial", shrinkage = "laplace", lambda.prior = list("dgamma",2,0.1)))
 
-samples <- ipd.run.parallel(ipd, pars.save = c("lambda", "beta", "gamma", "delta"))
+samples <- ipd.run.parallel(ipd, pars.save = c("lambda", "beta", "gamma", "delta", "sd"))
 
 treatment.effect(ipd, samples, newpatient = c(80, 0, 1, 0, 1, 1, 1, 0, 5))
 treatment.effect(ipd, samples, newpatient = c(50, 1, 0, 1, 0, 0, 0, 1, 1))
 
-
 ########### SSVS
-ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = X, response = "binomial", approach = "deluded", shrinkage = "SSVS", g = 100))
-samples <- ipd.run.parallel(ipd, pars.save = c("Ind", "eta", "beta", "gamma", "delta"))
+ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = X, response = "binomial", shrinkage = "SSVS", g = 100))
+samples <- ipd.run.parallel(ipd, pars.save = c("Ind", "eta", "beta", "gamma", "delta", "sd"))
 
 samples2 <- samples[,-19] #remove delta[1] which is 0
 summary(samples2)
@@ -254,3 +253,16 @@ coda::gelman.plot(samples2) #gelman diagnostic plot
 treatment.effect(ipd, samples, newpatient = c(80, 0, 1, 0, 1, 1, 1, 0, 5))
 treatment.effect(ipd, samples, newpatient = c(50, 1, 0, 1, 0, 0, 0, 1, 1))
 
+############### deluded approach with no penalization with no scaling
+ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = X, response = "binomial", approach = "deluded", shrinkage = "none", scale = FALSE))
+samples <- ipd.run.parallel(ipd, pars.save = c("beta", "gamma", "delta", "sd"))
+
+treatment.effect(ipd, samples, newpatient = c(80, 0, 1, 0, 1, 1, 1, 0, 5))
+treatment.effect(ipd, samples, newpatient = c(50, 1, 0, 1, 0, 0, 0, 1, 1))
+
+############### deft approach with no penalization with no scaling
+ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = X, response = "binomial", approach = "deft", shrinkage = "none", scale = FALSE))
+samples <- ipd.run.parallel(ipd, pars.save = c("beta", "gamma", "gamA", "delta", "sd"))
+
+#aggregate(cbind(mydata$y,X), list(mydata$studyid, mydata$treat), mean, is.na = TRUE)
+#table(mydata$studyid)

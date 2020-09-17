@@ -7,11 +7,11 @@ y3 ~ dmnorm(Mu3, Omega3[,])
 y4 ~ dmnorm(Mu4, Omega4[,])
 y5 ~ dmnorm(Mu5, Omega5[,])
 
-Mu1 <- c(alpha, beta[], gamma[,2], gamma[,3], delta[1:2])
-Mu2 <- c(alpha, beta[], gamma[,2], gamma[,3], delta[1:2])
-Mu3 <- c(alpha, beta[], gamma[,2], delta[1])
-Mu4 <- c(alpha, beta[], gamma[,3], delta[2])
-Mu5 <- c(alpha, beta[], gamma[,3], delta[2])
+Mu1 <- c(alpha, beta[], gamma[,1], gamma[,2], delta[1:2])
+Mu2 <- c(alpha, beta[], gamma[,1], gamma[,2], delta[1:2])
+Mu3 <- c(alpha, beta[], gamma[,1], delta[1])
+Mu4 <- c(alpha, beta[], gamma[,2], delta[2])
+Mu5 <- c(alpha, beta[], gamma[,2], delta[2])
 
 #parameters
 alpha ~ dnorm(0, 0.001)
@@ -20,9 +20,8 @@ for(i in 1:9){
 }
 
 for(i in 1:9){
-	gamma[i,1] <- 0
+	gamma[i,1] ~ dnorm(0, 0.001)
 	gamma[i,2] ~ dnorm(0, 0.001)
-	gamma[i,3] ~ dnorm(0, 0.001)
 }
 
 delta[1] ~ dnorm(0, 0.001)

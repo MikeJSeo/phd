@@ -37,11 +37,17 @@ C27 <- read_excel("C27.xlsx")
 C28 <- read_excel("C28.xlsx")
 C29 <- read_excel("C29.xlsx")
 C30 <- read_excel("C30.xlsx")
+C31 <- read_excel("C31.xlsx")
+C32 <- read_excel("C32.xlsx")
+C33 <- read_excel("C33.xlsx")
+C34 <- read_excel("C34.xlsx")
+C35 <- read_excel("C35.xlsx")
+C36 <- read_excel("C36.xlsx")
 
-maxy <- 0.2
-acc <- 0.01
+maxy <- 0.012
+acc <- 0.001
 
-make_data <- function(simulation_a, simulation_b, a_name, b_name, mse = 4, xlab){
+make_data <- function(simulation_a, simulation_b, a_name, b_name, mse = 1, xlab){
   
   
   data1 <- as.data.frame(simulation_a)[,mse, drop = FALSE]
@@ -107,13 +113,13 @@ data14 <- make_data(C14, C28, a_name = "C14 \n N = 5", b_name = "C28 \n N = 10",
 data15 <- make_data(C29, C30, a_name = "C29 \n \u03c4 = 0.2", b_name = "C30 \n \u03c4 = 0.5", 
                     xlab = "10 covariates, 10 effect modifiers \n N = 5, small effect modification")
 
-data16 <- make_data(C29, C30, a_name = "C31 \n Uniform(-0.4,0.4)", b_name = "C32 \n Uniform(-1.0,1.0)", 
+data16 <- make_data(C31, C32, a_name = "C31 \n Uniform(-0.4,0.4)", b_name = "C32 \n Uniform(-1.0,1.0)", 
                     xlab = "10 covariates, 1 effect modifier \n N = 5, small effect modification")
 
-data17 <- make_data(C29, C30, a_name = "C33 \n \u03c4 = 0.2", b_name = "C34 \n \u03c4 = 0.5", 
+data17 <- make_data(C33, C34, a_name = "C33 \n \u03c4 = 0.2", b_name = "C34 \n \u03c4 = 0.5", 
                     xlab = "10 covariates, 1 effect modifier \n N = 5, small effect modification \n sample size 50 to 500")
 
-data18 <- make_data(C29, C30, a_name = "C35 \n \u03c4 = 0.2", b_name = "C36 \n \u03c4 = 0.5", 
+data18 <- make_data(C35, C36, a_name = "C35 \n \u03c4 = 0.2", b_name = "C36 \n \u03c4 = 0.5", 
                     xlab = "30 covariates, 1 effect modifier \n N = 5, small effect modification")
 
 
@@ -163,18 +169,16 @@ data14 <- make_data(C27, C28, a_name = "C27 \n \u03c4 = 0.2", b_name = "C28 \n \
 data15 <- make_data(C29, C30, a_name = "C29 \n \u03c4 = 0.2", b_name = "C30 \n \u03c4 = 0.5", 
                     xlab = "10 covariates, 10 effect modifiers \n N = 5, small effect modification")
 
-data16 <- make_data(C29, C30, a_name = "C31 \n Uniform(-0.4,0.4)", b_name = "C32 \n Uniform(-1.0,1.0)", 
+data16 <- make_data(C31, C32, a_name = "C31 \n Uniform(-0.4,0.4)", b_name = "C32 \n Uniform(-1.0,1.0)", 
                     xlab = "10 covariates, 1 effect modifier \n N = 5, large effect modification")
 
-data17 <- make_data(C29, C30, a_name = "C33 \n \u03c4 = 0.2", b_name = "C34 \n \u03c4 = 0.5", 
+data17 <- make_data(C33, C34, a_name = "C33 \n \u03c4 = 0.2", b_name = "C34 \n \u03c4 = 0.5", 
                     xlab = "10 covariates, 1 effect modifier \n N = 5, large effect modification \n sample size 50 to 500")
 
-data18 <- make_data(C29, C30, a_name = "C35 \n \u03c4 = 0.2", b_name = "C36 \n \u03c4 = 0.5", 
+data18 <- make_data(C35, C36, a_name = "C35 \n \u03c4 = 0.2", b_name = "C36 \n \u03c4 = 0.5", 
                     xlab = "30 covariates, 1 effect modifier \n N = 5, large effect modification")
 
 ##########################
-
-
 
 plot1 <- ggplot(data=data1$data, aes(x=models, y=error)) +
   geom_bar(stat="identity") + facet_grid(~simulations) + 
@@ -345,7 +349,7 @@ grid.arrange(arrangeGrob(plot3,plot4,plot5,plot6,plot7,plot8,plot9, plot10, plot
 
 
 #false effect modifier
-grid.arrange(arrangeGrob(plot1,plot2,plot3,plot4,plot5,plot6,plot7,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot14, plot14, plot14,
+grid.arrange(arrangeGrob(plot1,plot2,plot3,plot4,plot5,plot6,plot7,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot16, plot17, plot18,
                          ncol=6, as.table = FALSE),
              left = textGrob("False effect modifier MSE", rot = 90, vjust = 0.5))
 

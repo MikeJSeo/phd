@@ -1,3 +1,5 @@
+### this approach is for testing purposes; penalizing all parameters including main effects
+
 setwd("~/GitHub/phd/ra/R files")
 source("helpful.functions.R")
 
@@ -19,36 +21,36 @@ TOWARD <- mydata %>% filter(study == "TOWARD")
 REFLEX <- mydata %>% filter(study == "REFLEX")
 
 
-# first stage analysis
-
-## REFLEX
+#first stage analysis
 # setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
-# samples_REFLEX <- firstStage(REFLEX, "first stage-bayesLASSO.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma"))
-# samples_TOWARD <- firstStage(TOWARD, "first stage-bayesLASSO.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma"))
-# samples_BSRBR <- firstStage(BSRBR, "first stage-bayesLASSO.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma"))
-# samples_SCQM <- firstStage(SCQM, "first stage-bayesLASSO.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma"))
+# samples_REFLEX <- firstStage(REFLEX, "first stage-bayesLASSO-full.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma"))
+# samples_TOWARD <- firstStage(TOWARD, "first stage-bayesLASSO-full.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma"))
+# samples_BSRBR <- firstStage(BSRBR, "first stage-bayesLASSO-full.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma"))
+# samples_SCQM <- firstStage(SCQM, "first stage-bayesLASSO-full.txt", index = c("a", "b", "c", "d", "sigma", "sdGamma"))
 # 
-# save(samples_REFLEX, file = "REFLEX-ApproachI-bayesLASSO.RData")
-# save(samples_TOWARD, file = "TOWARD-ApproachI-bayesLASSO.RData")
-# save(samples_BSRBR, file = "BSRBR-ApproachI-bayesLASSO.RData")
-# save(samples_SCQM, file = "SCQM-ApproachI-bayesLASSO.RData")
+# save(samples_REFLEX, file = "REFLEX-ApproachI-bayesLASSO-full.RData")
+# save(samples_TOWARD, file = "TOWARD-ApproachI-bayesLASSO-full.RData")
+# save(samples_BSRBR, file = "BSRBR-ApproachI-bayesLASSO-full.RData")
+# save(samples_SCQM, file = "SCQM-ApproachI-bayesLASSO-full.RData")
 
 # second stage analysis
 setwd("C:/Users/ms19g661/Desktop/RData")
-load("REFLEX-ApproachI-bayesLASSO.RData")
-load("TOWARD-ApproachI-bayesLASSO.RData")
-load("BSRBR-ApproachI-bayesLASSO.RData")
-load("SCQM-ApproachI-bayesLASSO.Rdata")
+load("REFLEX-ApproachI-bayesLASSO-full.RData")
+load("TOWARD-ApproachI-bayesLASSO-full.RData")
+load("BSRBR-ApproachI-bayesLASSO-full.RData")
+load("SCQM-ApproachI-bayesLASSO-full.Rdata")
 
-y_TOWARD2 <- c(4.9614, 0.1061, -0.0278, 0.0136, -0.0061, 0.1318, -0.0597, 0.1033, 0.1674, 0.4463, -0.0195, 0.0412, -0.0127, -0.0225, -0.0295, -0.0265, -0.0027, -0.0096, -0.0036, -1.6919)
-Omega_TOWARD2 <- as.matrix(read_excel("Omega_TOWARD2_bayesLASSO.xlsx", col_names = FALSE))
+#estimates when penalization is applied for all
+y_TOWARD2 <- c(4.9621, 0.0854, -0.0269, 0.0122, 0.0065, 0.1077, -0.0176, 0.0724, 0.1414, 0.4243, -0.0129, 0.0645, -0.0193, -0.0459, -0.0326, -0.0644, 0.0171, 0.0010, 0.0154, -1.6969)
+Omega_TOWARD2 <- as.matrix(read_excel("Omega_TOWARD2_bayesLASSO_full.xlsx", col_names = FALSE))
 # aa <- matrix(NA, nrow = 20, ncol = 20)
 # for(i in 1:20){
 #  for(j in 1:20){
 #    aa[i,j] <- Omega_TOWARD2[i,j] == Omega_TOWARD2[j,i]
 #  }
 # }
-setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files") #set the location to where JAGS file exists
+setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
+
 
 ################################################################################
 
