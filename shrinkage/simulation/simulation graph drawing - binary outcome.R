@@ -44,11 +44,19 @@ B34 <- read_excel("B34.xlsx")
 B35 <- read_excel("B35.xlsx")
 B36 <- read_excel("B36.xlsx")
 
-maxy <- 0.20
-acc <- 0.01
+#patient specific mse
+maxy <- 2.6; acc <- 0.1
+
+#treatment mse
+maxy <- 0.5 ;acc <- 0.01
+
+#True effect modifier MSE
+maxy <- 0.3; acc <- 0.1
+
+# False effect modifier MSE
+maxy <- 0.2; acc <- 0.01
 
 make_data <- function(simulation_a, simulation_b, a_name, b_name, mse = 1, xlab){
-  
   
   data1 <- as.data.frame(simulation_a)[,mse, drop = FALSE]
   colnames(data1) <- "error"

@@ -40,7 +40,8 @@ load("TOWARD-ApproachI-bayesLASSO.RData")
 load("BSRBR-ApproachI-bayesLASSO.RData")
 load("SCQM-ApproachI-bayesLASSO.Rdata")
 
-y_TOWARD2 <- c(4.9614, 0.1061, -0.0278, 0.0136, -0.0061, 0.1318, -0.0597, 0.1033, 0.1674, 0.4463, -0.0195, 0.0412, -0.0127, -0.0225, -0.0295, -0.0265, -0.0027, -0.0096, -0.0036, -1.6919)
+y_TOWARD2 <- c(4.9625, 0.1060, -0.0278, 0.0143, -0.0066, 0.1309, -0.0560, 0.0974, 0.1670, 0.4551,
+               -0.0196, 0.0416, -0.0129, -0.0222, -0.0291, -0.0275, -0.0015, -0.0100, -0.0043, -1.6943)
 Omega_TOWARD2 <- as.matrix(read_excel("Omega_TOWARD2_bayesLASSO.xlsx", col_names = FALSE))
 # aa <- matrix(NA, nrow = 20, ncol = 20)
 # for(i in 1:20){
@@ -66,11 +67,14 @@ y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]], y5 = y_TOWARD2
 Omega <- list(Omega1 = r1[[2]], Omega2 = r2[[2]], Omega3 = r3[[2]], Omega4 = r4[[2]], Omega5 = Omega_TOWARD2)
 
 result <- secondStage(y = y, Omega = Omega, jags_file = "second stage-ApproachII.txt")
-prediction_SCQM <- findPrediction(SCQM, result)
-prediction_BSRBR <- findPrediction(BSRBR, result)
-findPerformance(prediction_SCQM)
-findPerformance(prediction_BSRBR)
-
+prediction_SCQM_internal <- findPrediction(SCQM, result)
+prediction_BSRBR_internal <- findPrediction(BSRBR, result)
+performance_SCQM_internal <- findPerformance(prediction_SCQM_internal)
+performance_BSRBR_internal <- findPerformance(prediction_BSRBR_internal)
+lapply(performance_SCQM_internal, mean)
+lapply(performance_BSRBR_internal, mean)
+calibration_SCQM_internal <- findPerformance2(prediction_SCQM_internal)
+calibration_BSRBR_internal <- findPerformance2(prediction_BSRBR_internal)
 
 ####internal-external validation
 #all datasets except SCQM
@@ -78,14 +82,32 @@ y <- list(y1 = r1[[1]], y2 = r3[[1]], y3 = r4[[1]], y4 = y_TOWARD2)
 Omega <- list(Omega1 = r1[[2]], Omega2 = r3[[2]], Omega3 = r4[[2]], Omega4 = Omega_TOWARD2)
 
 result <- secondStage(y = y, Omega = Omega, jags_file = "second stage-ApproachII-external.txt")
-prediction_SCQM <- findPrediction(SCQM, result)
-findPerformance(prediction_SCQM)
+prediction_SCQM_external <- findPrediction(SCQM, result)
+performance_SCQM_external <- findPerformance(prediction_SCQM_external)
+lapply(performance_SCQM_external, mean)
+calibration_SCQM_external <- findPerformance2(prediction_SCQM_external)
 
 #all datasets except BSRBR
 y <- list(y1 = r2[[1]], y2 = r3[[1]], y3 = r4[[1]], y4 = y_TOWARD2)
 Omega <- list(Omega1 = r2[[2]], Omega2 = r3[[2]], Omega3 = r4[[2]], Omega4 = Omega_TOWARD2)
 
 result <- secondStage(y = y, Omega = Omega, jags_file = "second stage-ApproachII-external.txt")
-prediction_BSRBR <- findPrediction(BSRBR, result)
-findPerformance(prediction_BSRBR)
+prediction_BSRBR_external <- findPrediction(BSRBR, result)
+performance_BSRBR_external <- findPerformance(prediction_BSRBR_external)
+lapply(performance_BSRBR_external, mean)
+calibration_BSRBR_external <- findPerformance2(prediction_BSRBR_external)
+
+#weighted performance measure
+performance_weighted <- mapply(c, performance_SCQM_external, performance_BSRBR_external)
+lapply(performance_weighted, mean, na.rm = TRUE)
+
+Approach2b.result <- list(prediction_BSRBR_internal = prediction_BSRBR_internal, prediction_BSRBR_external = prediction_BSRBR_external,
+                          prediction_SCQM_internal = prediction_SCQM_internal, prediction_SCQM_external = prediction_SCQM_external,
+                          calibration_BSRBR_internal = calibration_BSRBR_internal, calibration_BSRBR_external = calibration_BSRBR_external,
+                          calibration_SCQM_internal = calibration_SCQM_internal, calibration_SCQM_external = calibration_SCQM_external) 
+
+setwd("~/GitHub/phd/ra/Result")
+save(Approach2b.result, file = "Approach2b.result.RData")
+
+
 

@@ -44,10 +44,20 @@ C34 <- read_excel("C34.xlsx")
 C35 <- read_excel("C35.xlsx")
 C36 <- read_excel("C36.xlsx")
 
-maxy <- 0.012
-acc <- 0.001
+#Patient specific MSE
+maxy <- 0.2; acc <- 0.01
 
-make_data <- function(simulation_a, simulation_b, a_name, b_name, mse = 1, xlab){
+#Treatment MSE
+maxy <- 0.1; acc <- 0.01
+
+#True effect modifier MSE
+maxy <- 0.12; acc <- 0.01
+
+#False effect modifier MSE
+maxy <- 0.012; acc <- 0.001
+
+
+make_data <- function(simulation_a, simulation_b, a_name, b_name, mse = 4, xlab){
   
   
   data1 <- as.data.frame(simulation_a)[,mse, drop = FALSE]
@@ -335,7 +345,6 @@ plot18 <- ggplot(data=data18$data, aes(x=models, y=error)) +
 grid.arrange(arrangeGrob(plot1,plot2, plot3,plot4,plot5,plot6,plot7,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot15, plot16, plot17, plot18,
                          top=NULL, ncol=6, as.table = FALSE),
              left = textGrob("Patient specific treatment MSE", rot = 90, vjust = 0.5))
-
 
 #treatment MSE
 grid.arrange(arrangeGrob(plot1,plot2,plot3,plot4,plot5,plot6,plot7,plot8,plot9, plot10, plot11, plot12, plot13, plot14, plot15, plot16, plot17, plot18,

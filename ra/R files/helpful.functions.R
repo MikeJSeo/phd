@@ -22,9 +22,9 @@ firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", 
   y <- study_data$DAS28
   X <- as.matrix(study_data[,c(-1,-2,-3)])
   X <- apply(X, 2, scale)
-  XX <- mice(X, m = mm)
+  XX <- mice(cbind(y,X), m = mm)
   
-  if(length(unique(study_data$treat)) == "2"){
+  if(length(unique(study_data$treat)) == 2){
     study_data$treat[study_data$treat == "3"] <- "2"
   }
   
@@ -34,11 +34,12 @@ firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", 
     Ncovariate = dim(X)[2],
     Ntreat = length(unique(study_data$treat)),
     y = y,
-    X = complete(XX, 1)
+    X = complete(XX, 1)[,-1]
   )
   mod <- jags.model(file = jags_file, data = jags_data, n.chains = 3, n.adapt = 1000)
   samples <- coda.samples(mod, variable.names = index, n.iter = 10000)
   
+  if(mm != 1){
   # add more samples
   for(i in 2:mm){
     
@@ -48,13 +49,14 @@ firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", 
       Ncovariate = dim(X)[2],
       Ntreat = length(unique(study_data$treat)),
       y = y,
-      X = complete(XX, i)
+      X = complete(XX, i)[,-1]
     )
     mod <- jags.model(file = jags_file, data = jags_data, n.chains = 3, n.adapt = 1000)
     stats::update(mod, 1000)
     sample_more <- coda.samples(mod, variable.names = index, n.iter = 10000)
     samples <- add.mcmc(samples, sample_more)
   }
+  }  
   return(samples)
 }
 
@@ -80,13 +82,12 @@ summarize_each_study <- function(samples){
 }
 
 #second stage analysis using results from first stage analysis
-secondStage <- function(y, Omega, y_weights_index = NULL, Omega_weights_index = NULL, jags_file = NULL, n.iter = 200000){
-  
-  if(!is.null(y_weights_index)){
-    print("implement")
-  }
+secondStage <- function(y, Omega, W = NULL, jags_file = NULL, n.iter = 200000){
   
   data_jags <- c(y, Omega)
+  if(!is.null(W)){
+    data_jags$W <- W  
+  }
   
   mod <- jags.model(jags_file, data_jags, n.chains = 3, n.adapt = 1000)
   stats::update(mod, 20000)
@@ -99,6 +100,7 @@ secondStage <- function(y, Omega, y_weights_index = NULL, Omega_weights_index = 
   
 # function to find predictions for a specified dataset using the second stage result
 # Note that this function is specific to the RA dataset and uses 9 specified covariates; i.e. will give an error if applied to other datasets
+# prediction is divided by three groups according to treatments assigned
 findPrediction <- function(data, result) {
   
   options(na.action='na.pass')
@@ -113,26 +115,109 @@ findPrediction <- function(data, result) {
   X <- XX[complete.cases(XX),] # use only the complete cases for predictions
   
   coefs <- summary(result)[[1]][,"Mean"]
+  coefs <- coefs[coefs != 0] #remove coefficients with zero values
   
-  pred <- X %*% coefs
   y <- data$DAS28[complete.cases(XX)]
   treat <- data$treat[complete.cases(XX)]
+  pred <- X %*% coefs
   
-  return(list(y = y, pred = pred, treat = treat, X = X, coefs = coefs))
+  index1 <- X[,"treat2"] == 0 & X[,"treat3"] == 0
+  index2 <- X[,"treat2"] == 1
+  index3 <- X[,"treat3"] == 1
+  
+  y1 <- y[index1]
+  y2 <- y[index2]
+  y3 <- y[index3]
+  
+  pred1 <- pred[index1]
+  pred2 <- pred[index2]
+  pred3 <- pred[index3]
+  
+  coefs1 <- coefs * c(rep(1,10), rep(0, 2), rep(0, 9), rep(0, 9))
+  pred_full_1 <- X %*% coefs1
+  
+  coefs2 <- coefs * c(rep(1,10), 1, 0, rep(1, 9), rep(0, 9))
+  pred_full_2 <- X %*% coefs2
+  
+  coefs3 <- coefs * c(rep(1,10), 0, 1, rep(0, 9), rep(1, 9))
+  pred_full_3 <- X %*% coefs3
+    
+  #calibration slope
+  pred_full_11 <- pred_full_1
+  
+  pred_full_12 <- pred_full_2 - pred_full_1
+  pred_full_12 <- pred_full_12 * (treat == "2")
+  
+  pred_full_13 <- pred_full_3 - pred_full_1
+  pred_full_13 <- pred_full_13 * (treat == "3")
+  
+  pred_full_1 <- pred_full_1 * (treat == "1")
+  pred_full_2 <- pred_full_2 * (treat == "2")
+  pred_full_3 <- pred_full_3 * (treat == "3")
+  
+  return(list(y = y, y1 = y1, y2 = y2, y3 = y3, treat = treat, X = X, pred = pred,
+              pred1 = pred1, pred2 = pred2, pred3 = pred3, coefs = coefs,
+              pred_full_11 = pred_full_11, pred_full_12 = pred_full_12, pred_full_13 = pred_full_13, 
+              pred_full_1 = pred_full_1, pred_full_2 = pred_full_2, pred_full_3 = pred_full_3))
 }
+
+findMSE <- function(y, pred){
+  err_mse <- (pred-y)^2
+  err_mse <- err_mse[!is.na(err_mse)]
+  err_mse
+}
+
+findBias <- function(y, pred){
+  err_bias <- pred-y
+  err_bias <- err_bias[!is.na(err_bias)]
+  err_bias
+}
+
 
 # find performance metric based on predictions
 findPerformance <- function(prediction){
   
+  result <-
   with(prediction,{
-    err_mse <- (pred - y)^2
-    err_mse <- err_mse[!is.na(err_mse)]
-    mse <- mean(err_mse, na.rm = TRUE)
+    mse <- findMSE(y, pred)
+    bias <- findBias(y, pred)
     
-    err_bias <- pred - y
-    err_bias <- err_bias[!is.na(err_bias)]
-    bias <- mean(err_bias, na.rm = TRUE)
+    mse1 <-  findMSE(y1, pred1)
+    bias1 <- findBias(y1, pred1)
     
-    list(mse = mse, bias = bias)  
+    mse2 <- findMSE(y2, pred2)
+    bias2 <- findBias(y2, pred2)
+    
+    mse3 <- findMSE(y3, pred3)
+    bias3 <- findBias(y3, pred3)
+    
+    list(mse = mse, bias = bias, mse1 = mse1, bias1 = bias1, mse2 = mse2, bias2 = bias2, 
+         mse3 = mse3, bias3 = bias3)
+  })
+  
+  result
+}
+
+# Calibration plot
+findPerformance2 <- function(prediction){
+  
+  result <- 
+  with(prediction,{
+    slope1 <- lm(y ~ pred_full_1 + pred_full_2 + pred_full_3, na.action=na.exclude)
+    slope2 <- lm(y ~ pred_full_11 + pred_full_12 + pred_full_13, na.action=na.exclude)  
+    list(slope1 = slope1, slope2 = slope2)
+  })
+  result
+}
+
+calibrationPlot <- function(prediction, treatment = 1){
+  
+  with(prediction,{
+    
+    if(treatment == 1){
+      data <- data.frame(y = y1, pred = pred_full_1[treat == "1"])
+      data <- data[complete.cases(data),]
+    }
+    ggplot(data = data, aes(x = pred, y = y)) + geom_point()
   })
 }

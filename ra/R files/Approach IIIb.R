@@ -23,17 +23,31 @@ load("REFLEX-ApproachI-bayesLASSO.RData")
 load("TOWARD-ApproachI-bayesLASSO.RData")
 load("BSRBR-ApproachI-bayesLASSO.RData")
 load("SCQM-ApproachI-bayesLASSO.Rdata")
-y_TOWARD2 <- c(4.961614, 0.116018, -0.043371, 0.018451, 0.007829, 0.148655,
-               -0.043279, 0.085000, 0.173144, 0.448602, -0.03,  0.072104, 
-               -0.021726, -0.049325, -0.054995, -0.049588, 0.008290, -0.021396,
-               -0.002223, -1.695539)
+y_TOWARD2 <- c(4.9625, 0.1060, -0.0278, 0.0143, -0.0066, 0.1309, -0.0560, 0.0974, 0.1670, 0.4551,
+               -0.0196, 0.0416, -0.0129, -0.0222, -0.0291, -0.0275, -0.0015, -0.0100, -0.0043, -1.6943)
 Omega_TOWARD2 <- as.matrix(read_excel("Omega_TOWARD2_bayesLASSO.xlsx", col_names = FALSE))
-
 
 setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
 
-result <- secondStage(samples1 = samples_BSRBR, samples2 = samples_SCQM, samples3 = samples_REFLEX, samples4 = samples_TOWARD, 
-                      y5 = y_TOWARD2, Omega5 = Omega_TOWARD2, jags_file = "second stage-ApproachIII-0.txt", w = 0, niter = 200000)
+###########################
+#find summary mean and covariance matrix for each study
+r1 <- summarize_each_study(samples_BSRBR)
+r2 <- summarize_each_study(samples_SCQM)
+r3 <- summarize_each_study(samples_REFLEX)
+r4 <- summarize_each_study(samples_TOWARD)
+
+W50 <- matrix(sqrt(0.5), nrow = 30, ncol = 30)
+W50[1:10,1:10] <- 1
+W50[11:30,11:30] <- 0.5
+
+W25 <- matrix(sqrt(0.25), nrow = 30, ncol = 30)
+W25[1:10,1:10] <- 1
+W25[11:30,11:30] <- 0.25
+
+###internal validation
+y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]][-(1:10)], y4 = r4[[1]][-(1:10)], y5 = y_TOWARD2[-(1:10)])
+Omega <- list(Omega1 = r1[[2]], Omega2 = r2[[2]], Omega3 = r3[[2]][11:20, 11:20], Omega4 = r4[[2]][11:20, 11:20], Omega5 = Omega_TOWARD2[11:20, 11:20])
+result <- secondStage(y = y, Omega = Omega, W = W25, jags_file = "second stage-ApproachIII.txt")
 
 result_SCQM <- result
 for(i in 1:10){
@@ -49,40 +63,17 @@ for(i in 1:10){
   result_BSRBR[[3]][,i] <- samples_BSRBR[[3]][,i]
 }
 
-predictFn(SCQM, result_SCQM, measure = "mse")
-predictFn(SCQM, result_SCQM, measure = "bias")
-predictFn(BSRBR, result_BSRBR, measure = "mse")
-predictFn(BSRBR, result_BSRBR, measure = "bias")
+prediction_SCQM_internal_25 <- findPrediction(SCQM, result_SCQM)
+prediction_BSRBR_internal_25 <- findPrediction(BSRBR, result_BSRBR)
+performance_SCQM_internal_25 <- findPerformance(prediction_SCQM_internal_25)
+performance_BSRBR_internal_25 <- findPerformance(prediction_BSRBR_internal_25)
+lapply(performance_SCQM_internal_25, mean)
+lapply(performance_BSRBR_internal_25, mean)
+calibration_SCQM_internal_25 <- findPerformance2(prediction_SCQM_internal_25)
+calibration_BSRBR_internal_25 <- findPerformance2(prediction_BSRBR_internal_25)
 
 
-
-result <- secondStage(samples1 = samples_BSRBR, samples2 = samples_SCQM, samples3 = samples_REFLEX, samples4 = samples_TOWARD, 
-                      y5 = y_TOWARD2, Omega5 = Omega_TOWARD2, jags_file = "second stage-ApproachIII.txt", w = 0.25, niter = 200000)
-
-result_SCQM <- result
-for(i in 1:10){
-  result_SCQM[[1]][,i] <- samples_SCQM[[1]][,i]
-  result_SCQM[[2]][,i] <- samples_SCQM[[2]][,i]
-  result_SCQM[[3]][,i] <- samples_SCQM[[3]][,i]
-}
-
-result_BSRBR <- result
-for(i in 1:10){
-  result_BSRBR[[1]][,i] <- samples_BSRBR[[1]][,i]
-  result_BSRBR[[2]][,i] <- samples_BSRBR[[2]][,i]
-  result_BSRBR[[3]][,i] <- samples_BSRBR[[3]][,i]
-}
-
-
-predictFn(SCQM, result_SCQM, measure = "mse")
-predictFn(SCQM, result_SCQM, measure = "bias")
-predictFn(BSRBR, result_BSRBR, measure = "mse")
-predictFn(BSRBR, result_BSRBR, measure = "bias")
-
-####
-
-result <- secondStage(samples1 = samples_BSRBR, samples2 = samples_SCQM, samples3 = samples_REFLEX, samples4 = samples_TOWARD, 
-                      y5 = y_TOWARD2, Omega5 = Omega_TOWARD2, jags_file = "second stage-ApproachIII.txt", w = 0.5, niter =200000)
+result <- secondStage(y = y, Omega = Omega, W = W50, jags_file = "second stage-ApproachIII.txt")
 
 result_SCQM <- result
 for(i in 1:10){
@@ -98,95 +89,97 @@ for(i in 1:10){
   result_BSRBR[[3]][,i] <- samples_BSRBR[[3]][,i]
 }
 
-predictFn(SCQM, result_SCQM, measure = "mse")
-predictFn(SCQM, result_SCQM, measure = "bias")
-predictFn(SCQM, result_SCQM, measure = "calibration")
+prediction_SCQM_internal_50 <- findPrediction(SCQM, result_SCQM)
+prediction_BSRBR_internal_50 <- findPrediction(BSRBR, result_BSRBR)
+performance_SCQM_internal_50 <- findPerformance(prediction_SCQM_internal_50)
+performance_BSRBR_internal_50 <- findPerformance(prediction_BSRBR_internal_50)
+lapply(performance_SCQM_internal_50, mean)
+lapply(performance_BSRBR_internal_50, mean)
+calibration_SCQM_internal_50 <- findPerformance2(prediction_SCQM_internal_50)
+calibration_BSRBR_internal_50 <- findPerformance2(prediction_BSRBR_internal_50)
 
-predictFn(BSRBR, result_BSRBR, measure = "mse")
-predictFn(BSRBR, result_BSRBR, measure = "bias")
-predictFn(BSRBR, result_BSRBR, measure = "calibration")
-
-
-###############################################
-### External
-
-result <- secondStage2(samples1 = samples_BSRBR, samples2 = samples_REFLEX, samples3 = samples_TOWARD, 
-                       y4 = y_TOWARD2, Omega4 = Omega_TOWARD2, jags_file = "second stage-ApproachIII-external-0.txt", w = 0, niter = 200000)
-
-result_SCQM <- result
-for(i in 1:10){
-  result_SCQM[[1]][,i] <- samples_BSRBR[[1]][,i]
-  result_SCQM[[2]][,i] <- samples_BSRBR[[2]][,i]
-  result_SCQM[[3]][,i] <- samples_BSRBR[[3]][,i]
-}
-
-predictFn(SCQM, result_SCQM, measure = "mse")
-predictFn(SCQM, result_SCQM, measure = "bias")
+#####################################################
 
 
-result <- secondStage2(samples1 = samples_SCQM, samples2 = samples_REFLEX, samples3 = samples_TOWARD, 
-                       y4 = y_TOWARD2, Omega4 = Omega_TOWARD2, jags_file = "second stage-ApproachIII-external-0.txt", w = 0, niter = 200000)
+###internal-external validation
+#all datasets except SCQM
+y <- list(y1 = r1[[1]], y2 = r3[[1]][-(1:10)], y3 = r4[[1]][-(1:10)], y4 = y_TOWARD2[-(1:10)])
+Omega <- list(Omega1 = r1[[2]], Omega2 = r3[[2]][11:20, 11:20], Omega3 = r4[[2]][11:20, 11:20], Omega4 = Omega_TOWARD2[11:20, 11:20])
+
+result <- secondStage(y = y, Omega = Omega, W = W25, jags_file = "second stage-ApproachIII-external.txt")
 result_BSRBR <- result
 for(i in 1:10){
-  result_BSRBR[[1]][,i] <- samples_SCQM[[1]][,i]
-  result_BSRBR[[2]][,i] <- samples_SCQM[[2]][,i]
-  result_BSRBR[[3]][,i] <- samples_SCQM[[3]][,i]  
+  result_BSRBR[[1]][,i] <- samples_BSRBR[[1]][,i]
+  result_BSRBR[[2]][,i] <- samples_BSRBR[[2]][,i]
+  result_BSRBR[[3]][,i] <- samples_BSRBR[[3]][,i]
 }
 
-predictFn(BSRBR, result_BSRBR, measure = "mse")
-predictFn(BSRBR, result_BSRBR, measure = "bias")
+prediction_SCQM_external_25 <- findPrediction(SCQM, result_BSRBR)
+performance_SCQM_external_25 <- findPerformance(prediction_SCQM_external_25)
+lapply(performance_SCQM_external_25, mean)
+calibration_SCQM_external_25 <- findPerformance2(prediction_SCQM_external_25)
 
-#####
-
-result <- secondStage2(samples1 = samples_BSRBR, samples2 = samples_REFLEX, samples3 = samples_TOWARD, 
-                       y4 = y_TOWARD2, Omega4 = Omega_TOWARD2, jags_file = "second stage-ApproachIII-external.txt", w = 0.25, niter = 200000)
-result_SCQM <- result
-for(i in 1:10){
-  result_SCQM[[1]][,i] <- samples_BSRBR[[1]][,i]
-  result_SCQM[[2]][,i] <- samples_BSRBR[[2]][,i]
-  result_SCQM[[3]][,i] <- samples_BSRBR[[3]][,i]
-}
-
-predictFn(SCQM, result_SCQM, measure = "mse")
-predictFn(SCQM, result_SCQM, measure = "bias")
-
-result <- secondStage2(samples1 = samples_SCQM, samples2 = samples_REFLEX, samples3 = samples_TOWARD, 
-                       y4 = y_TOWARD2, Omega4 = Omega_TOWARD2, jags_file = "second stage-ApproachIII-external.txt", w = 0.25, niter= 200000)
+result <- secondStage(y = y, Omega = Omega, W = W50, jags_file = "second stage-ApproachIII-external.txt")
 result_BSRBR <- result
 for(i in 1:10){
-  result_BSRBR[[1]][,i] <- samples_SCQM[[1]][,i]
-  result_BSRBR[[2]][,i] <- samples_SCQM[[2]][,i]
-  result_BSRBR[[3]][,i] <- samples_SCQM[[3]][,i]  
+  result_BSRBR[[1]][,i] <- samples_BSRBR[[1]][,i]
+  result_BSRBR[[2]][,i] <- samples_BSRBR[[2]][,i]
+  result_BSRBR[[3]][,i] <- samples_BSRBR[[3]][,i]
 }
 
-predictFn(BSRBR, result_BSRBR, measure = "mse")
-predictFn(BSRBR, result_BSRBR, measure = "bias")
+prediction_SCQM_external_50 <- findPrediction(SCQM, result_BSRBR)
+performance_SCQM_external_50 <- findPerformance(prediction_SCQM_external_50)
+lapply(performance_SCQM_external_50, mean)
+calibration_SCQM_external_50 <- findPerformance2(prediction_SCQM_external_50)
 
-############
+#all datasets except BSRBR
+y <- list(y1 = r2[[1]], y2 = r3[[1]][-(1:10)], y3 = r4[[1]][-(1:10)], y4 = y_TOWARD2[-(1:10)])
+Omega <- list(Omega1 = r2[[2]], Omega2 = r3[[2]][11:20, 11:20], Omega3 = r4[[2]][11:20, 11:20], Omega4 = Omega_TOWARD2[11:20, 11:20])
 
-
-result <- secondStage2(samples1 = samples_BSRBR, samples2 = samples_REFLEX, samples3 = samples_TOWARD, 
-                       y4 = y_TOWARD2, Omega4 = Omega_TOWARD2, jags_file = "second stage-ApproachIII-external.txt", w = 0.5, niter = 200000)
+result <- secondStage(y = y, Omega = Omega, W = W25, jags_file = "second stage-ApproachIII-external.txt")
 result_SCQM <- result
 for(i in 1:10){
-  result_SCQM[[1]][,i] <- samples_BSRBR[[1]][,i]
-  result_SCQM[[2]][,i] <- samples_BSRBR[[2]][,i]
-  result_SCQM[[3]][,i] <- samples_BSRBR[[3]][,i]
+  result_SCQM[[1]][,i] <- samples_SCQM[[1]][,i]
+  result_SCQM[[2]][,i] <- samples_SCQM[[2]][,i]
+  result_SCQM[[3]][,i] <- samples_SCQM[[3]][,i]
 }
 
-predictFn(SCQM, result_SCQM, measure = "mse")
-predictFn(SCQM, result_SCQM, measure = "bias")
-predictFn(SCQM, result_SCQM, measure= "calibration")
+prediction_BSRBR_external_25 <- findPrediction(BSRBR, result_SCQM)
+performance_BSRBR_external_25 <- findPerformance(prediction_BSRBR_external_25)
+lapply(performance_BSRBR_external_25, mean)
+calibration_BSRBR_external_25 <- findPerformance2(prediction_BSRBR_external_25)
 
-result <- secondStage2(samples1 = samples_SCQM, samples2 = samples_REFLEX, samples3 = samples_TOWARD, 
-                       y4 = y_TOWARD2, Omega4 = Omega_TOWARD2, jags_file = "second stage-ApproachIII-external.txt", w = 0.5, niter = 200000)
-result_BSRBR <- result
+result <- secondStage(y = y, Omega = Omega, W = W50, jags_file = "second stage-ApproachIII-external.txt")
+result_SCQM <- result
 for(i in 1:10){
-  result_BSRBR[[1]][,i] <- samples_SCQM[[1]][,i]
-  result_BSRBR[[2]][,i] <- samples_SCQM[[2]][,i]
-  result_BSRBR[[3]][,i] <- samples_SCQM[[3]][,i]  
+  result_SCQM[[1]][,i] <- samples_SCQM[[1]][,i]
+  result_SCQM[[2]][,i] <- samples_SCQM[[2]][,i]
+  result_SCQM[[3]][,i] <- samples_SCQM[[3]][,i]
 }
 
-predictFn(BSRBR, result_BSRBR, measure = "mse")
-predictFn(BSRBR, result_BSRBR, measure = "bias")
-predictFn(BSRBR, result_BSRBR, measure = "calibration")
+prediction_BSRBR_external_50 <- findPrediction(BSRBR, result_SCQM)
+performance_BSRBR_external_50 <- findPerformance(prediction_BSRBR_external_50)
+lapply(performance_BSRBR_external_50, mean)
+calibration_BSRBR_external_50 <- findPerformance2(prediction_BSRBR_external_50)
+
+#weighted performance measure
+performance_weighted25 <- mapply(c, performance_SCQM_external_25, performance_BSRBR_external_25)
+lapply(performance_weighted25, mean, na.rm = TRUE)
+
+performance_weighted50 <- mapply(c, performance_SCQM_external_50, performance_BSRBR_external_50)
+lapply(performance_weighted50, mean, na.rm = TRUE)
+
+
+Approach3b25.result <- list(prediction_BSRBR_internal = prediction_BSRBR_internal_25, prediction_BSRBR_external = prediction_BSRBR_external_25,
+                            prediction_SCQM_internal = prediction_SCQM_internal_25, prediction_SCQM_external = prediction_SCQM_external_25,
+                            calibration_BSRBR_internal = calibration_BSRBR_internal_25, calibration_BSRBR_external = calibration_BSRBR_external_25,
+                            calibration_SCQM_internal = calibration_SCQM_internal_25, calibration_SCQM_external = calibration_SCQM_external_25) 
+
+Approach3b50.result <- list(prediction_BSRBR_internal = prediction_BSRBR_internal_50, prediction_BSRBR_external = prediction_BSRBR_external_50,
+                            prediction_SCQM_internal = prediction_SCQM_internal_50, prediction_SCQM_external = prediction_SCQM_external_50,
+                            calibration_BSRBR_internal = calibration_BSRBR_internal_50, calibration_BSRBR_external = calibration_BSRBR_external_50,
+                            calibration_SCQM_internal = calibration_SCQM_internal_50, calibration_SCQM_external = calibration_SCQM_external_50)  
+
+setwd("~/GitHub/phd/ra/Result")
+save(Approach3b25.result, file = "Approach3b25.result.RData")
+save(Approach3b50.result, file = "Approach3b50.result.RData")

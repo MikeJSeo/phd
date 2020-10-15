@@ -46,14 +46,14 @@ load("REFLEX-ApproachI.RData")
 load("TOWARD-ApproachI.RData")
 load("BSRBR-ApproachI.RData")
 load("SCQM-ApproachI.Rdata")
-y_TOWARD2 <- c(4.96455891, 0.15079734, -0.11131923, 0.0217670, 0.07085947,
-               0.20328172, 0.02549393, 0.02943369, 0.18806348, 0.45842890,
-               -0.08158954, 0.18847061, -0.04329039, -0.17427219, -0.14564021,
-               -0.13871368, 0.08763985, -0.03790719, -0.03013991, -1.71212275)
+
+y_TOWARD2 <- c(4.9562, 0.1472, -0.1151, 0.0202, 0.0608, 0.1905, 0.0166,
+               0.0774, 0.1813, 0.4509, -0.0800, 0.1921, -0.0379, -0.1439,
+               -0.1313, -0.1356, 0.0382, -0.0359, -0.0117, -1.6994)
 Omega_TOWARD2 <- as.matrix(read_excel("Omega_TOWARD2.xlsx", col_names = FALSE))
-#S <- solve(r1[[2]])
-#R <- cov2cor(S)
-# Check if Omega_TOWARD2 typed correctly
+# S <- solve(r1[[2]])
+# R <- cov2cor(S)
+# #Check if Omega_TOWARD2 typed correctly
 # aa <- matrix(NA, nrow = 20, ncol = 20)
 # for(i in 1:20){
 #   for(j in 1:20){
@@ -70,17 +70,19 @@ r2 <- summarize_each_study(samples_SCQM)
 r3 <- summarize_each_study(samples_REFLEX)
 r4 <- summarize_each_study(samples_TOWARD)
 
-
 y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]], y5 = y_TOWARD2)
 Omega <- list(Omega1 = r1[[2]], Omega2 = r2[[2]], Omega3 = r3[[2]], Omega4 = r4[[2]], Omega5 = Omega_TOWARD2)
 
 #internal validation
 result <- secondStage(y = y, Omega = Omega, jags_file = "second stage-ApproachII.txt")
-prediction_SCQM <- findPrediction(SCQM, result)
-prediction_BSRBR <- findPrediction(BSRBR, result)
-findPerformance(prediction_SCQM)
-findPerformance(prediction_BSRBR)
-
+prediction_SCQM_internal <- findPrediction(SCQM, result)
+prediction_BSRBR_internal <- findPrediction(BSRBR, result)
+performance_SCQM_internal <- findPerformance(prediction_SCQM_internal)
+performance_BSRBR_internal <- findPerformance(prediction_BSRBR_internal)
+lapply(performance_SCQM_internal, mean)
+lapply(performance_BSRBR_internal, mean)
+calibration_SCQM_internal <- findPerformance2(prediction_SCQM_internal)
+calibration_BSRBR_internal <- findPerformance2(prediction_BSRBR_internal)
 
 #internal-external validation
 #all datasets except SCQM
@@ -88,14 +90,30 @@ y <- list(y1 = r1[[1]], y2 = r3[[1]], y3 = r4[[1]], y4 = y_TOWARD2)
 Omega <- list(Omega1 = r1[[2]], Omega2 = r3[[2]], Omega3 = r4[[2]], Omega4 = Omega_TOWARD2)
 
 result <- secondStage(y = y, Omega = Omega, jags_file = "second stage-ApproachII-external.txt")
-prediction_SCQM <- findPrediction(SCQM, result)
-findPerformance(prediction_SCQM)
+prediction_SCQM_external <- findPrediction(SCQM, result)
+performance_SCQM_external <- findPerformance(prediction_SCQM_external)
+lapply(performance_SCQM_external, mean)
+calibration_SCQM_external <- findPerformance2(prediction_SCQM_external)
 
 #all datasets except BSRBR
 y <- list(y1 = r2[[1]], y2 = r3[[1]], y3 = r4[[1]], y4 = y_TOWARD2)
 Omega <- list(Omega1 = r2[[2]], Omega2 = r3[[2]], Omega3 = r4[[2]], Omega4 = Omega_TOWARD2)
 
 result <- secondStage(y = y, Omega = Omega, jags_file = "second stage-ApproachII-external.txt")
-prediction_BSRBR <- findPrediction(BSRBR, result)
-findPerformance(prediction_BSRBR)
+prediction_BSRBR_external <- findPrediction(BSRBR, result)
+performance_BSRBR_external <- findPerformance(prediction_BSRBR_external)
+lapply(performance_BSRBR_external, mean)
+calibration_BSRBR_external <- findPerformance2(prediction_BSRBR_external)
+
+#weighted performance measure
+performance_weighted <- mapply(c, performance_SCQM_external, performance_BSRBR_external)
+lapply(performance_weighted, mean, na.rm = TRUE)
+
+Approach2a.result <- list(prediction_BSRBR_internal = prediction_BSRBR_internal, prediction_BSRBR_external = prediction_BSRBR_external,
+                         prediction_SCQM_internal = prediction_SCQM_internal, prediction_SCQM_external = prediction_SCQM_external,
+                         calibration_BSRBR_internal = calibration_BSRBR_internal, calibration_BSRBR_external = calibration_BSRBR_external,
+                         calibration_SCQM_internal = calibration_SCQM_internal, calibration_SCQM_external = calibration_SCQM_external) 
+
+setwd("~/GitHub/phd/ra/Result")
+save(Approach2a.result, file = "Approach2a.result.RData")
 
