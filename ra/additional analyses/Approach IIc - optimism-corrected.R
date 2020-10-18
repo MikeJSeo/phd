@@ -78,7 +78,7 @@ colnames(optimism) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3",
 for(ii in 1:200){
   
   SCQM_bootstrap <- SCQM[sample(1:dim(SCQM)[1], replace = TRUE),]
-  samples_SCQM_bootstrap <- firstStage(SCQM_bootstrap, "first stage.txt", mm = 1)
+  samples_SCQM_bootstrap <- firstStage(SCQM_bootstrap, "first stage-bayesLASSO.txt", mm = 1)
   r2 <- summarize_each_study(samples_SCQM_bootstrap)
   
   y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]], y5 = y_TOWARD2)
@@ -117,7 +117,7 @@ colnames(optimism2) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3"
 for(ii in 1:200){
   
   BSRBR_bootstrap <- BSRBR[sample(1:dim(BSRBR)[1], replace = TRUE),]
-  samples_BSRBR_bootstrap <- firstStage(BSRBR_bootstrap, "first stage.txt", mm = 1)
+  samples_BSRBR_bootstrap <- firstStage(BSRBR_bootstrap, "first stage-bayesLASSO.txt", mm = 1)
   r1 <- summarize_each_study(samples_BSRBR_bootstrap)
   
   y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]], y5 = y_TOWARD2)

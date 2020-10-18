@@ -16,33 +16,20 @@ SCQM <- mydata %>% filter(study == "SCQM")
 TOWARD <- mydata %>% filter(study == "TOWARD")
 REFLEX <- mydata %>% filter(study == "REFLEX")
 
-## REFLEX
-# setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
-# samples_REFLEX <- firstStage(REFLEX, "first stage.txt")
-# samples_TOWARD <- firstStage(TOWARD, "first stage.txt")
-# samples_BSRBR <- firstStage(BSRBR, "first stage.txt")
-# samples_SCQM <- firstStage(SCQM, "first stage.txt")
-# 
-# save(samples_REFLEX, file = "REFLEX-ApproachI.RData")
-# save(samples_TOWARD, file = "TOWARD-ApproachI.RData")
-# save(samples_BSRBR, file = "BSRBR-ApproachI.RData")
-# save(samples_SCQM, file = "SCQM-ApproachI.RData")
-
 
 #################
 # first stage analysis
 
-# second stage analysis - load datasets
+# second stage analysis
 setwd("C:/Users/ms19g661/Desktop/RData")
-load("REFLEX-ApproachI.RData")
-load("TOWARD-ApproachI.RData")
-load("BSRBR-ApproachI.RData")
-load("SCQM-ApproachI.Rdata")
+load("REFLEX-ApproachI-bayesLASSO.RData")
+load("TOWARD-ApproachI-bayesLASSO.RData")
+load("BSRBR-ApproachI-bayesLASSO.RData")
+load("SCQM-ApproachI-bayesLASSO.Rdata")
 
-y_TOWARD2 <- c(4.9562, 0.1472, -0.1151, 0.0202, 0.0608, 0.1905, 0.0166,
-               0.0774, 0.1813, 0.4509, -0.0800, 0.1921, -0.0379, -0.1439,
-               -0.1313, -0.1356, 0.0382, -0.0359, -0.0117, -1.6994)
-Omega_TOWARD2 <- as.matrix(read_excel("Omega_TOWARD2.xlsx", col_names = FALSE))
+y_TOWARD2 <- c(4.9625, 0.1060, -0.0278, 0.0143, -0.0066, 0.1309, -0.0560, 0.0974, 0.1670, 0.4551,
+               -0.0196, 0.0416, -0.0129, -0.0222, -0.0291, -0.0275, -0.0015, -0.0100, -0.0043, -1.6943)
+Omega_TOWARD2 <- as.matrix(read_excel("Omega_TOWARD2_bayesLASSO.xlsx", col_names = FALSE))
 setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files") #set the location to where JAGS file exists
 
 
@@ -68,6 +55,8 @@ apparent_performance_SCQM <- unlist(lapply(performance_SCQM, mean))
 apparent_performance_BSRBR <- unlist(lapply(performance_BSRBR, mean))
 
 
+
+
 ##### Finding optimism: SCQM
 r1 <- summarize_each_study(samples_BSRBR)
 #r2 <- summarize_each_study(samples_SCQM)
@@ -80,13 +69,13 @@ colnames(optimism) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3",
 for(ii in 1:200){
   
   SCQM_bootstrap <- SCQM[sample(1:dim(SCQM)[1], replace = TRUE),]
-  samples_SCQM_bootstrap <- firstStage(SCQM_bootstrap, "first stage.txt", mm = 1)
+  samples_SCQM_bootstrap <- firstStage(SCQM_bootstrap, "first stage-bayesLASSO.txt", mm = 1)
   r2 <- summarize_each_study(samples_SCQM_bootstrap)
   
   y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]], y5 = y_TOWARD2)
   Omega <- list(Omega1 = r1[[2]], Omega2 = r2[[2]], Omega3 = r3[[2]], Omega4 = r4[[2]], Omega5 = Omega_TOWARD2)
   result <- secondStage(y = y, Omega = Omega, jags_file = "second stage-ApproachII.txt", n.iter = 10000)
- 
+  
   prediction_SCQM_bootstrap <- findPrediction(SCQM_bootstrap, result)
   performance_SCQM_bootstrap <- findPerformance(prediction_SCQM_bootstrap)
   
@@ -110,7 +99,7 @@ colnames(optimism2) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3"
 for(ii in 1:200){
   
   BSRBR_bootstrap <- BSRBR[sample(1:dim(BSRBR)[1], replace = TRUE),]
-  samples_BSRBR_bootstrap <- firstStage(BSRBR_bootstrap, "first stage.txt", mm = 1)
+  samples_BSRBR_bootstrap <- firstStage(BSRBR_bootstrap, "first stage-bayesLASSO.txt", mm = 1)
   r1 <- summarize_each_study(samples_BSRBR_bootstrap)
   
   y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]], y5 = y_TOWARD2)
