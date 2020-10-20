@@ -209,15 +209,3 @@ findPerformance2 <- function(prediction){
   })
   result
 }
-
-calibrationPlot <- function(prediction, treatment = 1){
-  
-  with(prediction,{
-    
-    if(treatment == 1){
-      data <- data.frame(y = y1, pred = pred_full_1[treat == "1"])
-      data <- data[complete.cases(data),]
-    }
-    ggplot(data = data, aes(x = pred, y = y)) + geom_point()
-  })
-}
