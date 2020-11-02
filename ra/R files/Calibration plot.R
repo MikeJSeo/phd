@@ -122,11 +122,10 @@ data <- data[complete.cases(data),]
 
 ggplot(data, aes(x = pred, y = obs)) + 
   geom_jitter(position = position_jitter(width = 0.3), aes(color = treatment, shape = treatment), size = 1, alpha = 1) + 
-  geom_abline(aes(intercept = intercept, slope = slope, group = "approach_id", color = treatment, lty = treatment)) +
+  geom_abline(aes(intercept = intercept, slope = slope, group = "approach_id", color = treatment, lty = treatment), size = 1) +
   facet_wrap(~approach_id, ncol = 2) +
   geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed", size = 1) + 
-  labs(title="Calibration slope for outcome using British registry (internal validation)",
-       x = "predicted outcome",
+  labs(x = "predicted outcome",
        y = "observed outcome") +
   theme(legend.position="top") + 
   xlim(-1, 9) + ylim(-1, 9)
@@ -234,11 +233,10 @@ data <- data[complete.cases(data),]
 
 ggplot(data, aes(x = pred, y = obs)) + 
   geom_jitter(position = position_jitter(width = 0.3), aes(color = treatment, shape = treatment), size = 1, alpha = 1) + 
-  geom_abline(aes(intercept = intercept, slope = slope, group = "approach_id", color = treatment, lty = treatment)) +
+  geom_abline(aes(intercept = intercept, slope = slope, group = "approach_id", color = treatment, lty = treatment), size = 1) +
   facet_wrap(~approach_id, ncol = 2) +
   geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed", size = 1) + 
-  labs(title="Calibration slope for outcome using British registry (internal-external validation)",
-       x = "predicted outcome",
+  labs(x = "predicted outcome",
        y = "observed outcome") +
   theme(legend.position="top") +
   xlim(-1, 9) + ylim(-1, 9)
@@ -347,11 +345,10 @@ data <- data[complete.cases(data),]
 
 ggplot(data, aes(x = pred, y = obs)) + 
   geom_jitter(position = position_jitter(width = 0.3), aes(color = treatment, shape = treatment), size = 1, alpha = 1) + 
-  geom_abline(aes(intercept = intercept, slope = slope, group = "approach_id", color = treatment, lty = treatment)) +
+  geom_abline(aes(intercept = intercept, slope = slope, group = "approach_id", color = treatment, lty = treatment), size = 1) +
   facet_wrap(~approach_id, ncol = 2) +
   geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed", size = 1) + 
-  labs(title="Calibration slope for outcome using Swiss registry (internal validation)",
-       x = "predicted outcome",
+  labs(x = "predicted outcome",
        y = "observed outcome") +
   theme(legend.position="top") + 
   xlim(-1, 9) + ylim(-1, 9)
@@ -459,11 +456,10 @@ data <- data[complete.cases(data),]
 
 ggplot(data, aes(x = pred, y = obs)) + 
   geom_jitter(position = position_jitter(width = 0.3), aes(color = treatment, shape = treatment), size = 1, alpha = 1) + 
-  geom_abline(aes(intercept = intercept, slope = slope, group = "approach_id", color = treatment, lty = treatment)) +
+  geom_abline(aes(intercept = intercept, slope = slope, group = "approach_id", color = treatment, lty = treatment), size = 1) +
   facet_wrap(~approach_id, ncol = 2) +
   geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed", size = 1) + 
-  labs(title="Calibration slope for outcome using Swiss registry (internal-external validation)",
-       x = "predicted outcome",
+  labs(x = "predicted outcome",
        y = "observed outcome")+
   theme(legend.position="top") + 
   xlim(-1,9) + ylim(-1,9)
