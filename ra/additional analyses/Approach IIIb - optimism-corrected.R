@@ -51,16 +51,45 @@ y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]][-(1:10)], y4 = r4[[1]][-(1:10
 Omega <- list(Omega1 = r1[[2]], Omega2 = r2[[2]], Omega3 = r3[[2]][11:20, 11:20], Omega4 = r4[[2]][11:20, 11:20], Omega5 = Omega_TOWARD2[11:20, 11:20])
 result <- secondStage(y = y, Omega = Omega, W = W25, jags_file = "second stage-ApproachIII.txt")
 
-prediction_SCQM_25 <- findPrediction(SCQM, result)
-prediction_BSRBR_25 <- findPrediction(BSRBR, result)
+result_SCQM <- result
+for(i in 1:10){
+  result_SCQM[[1]][,i] <- samples_SCQM[[1]][,i]
+  result_SCQM[[2]][,i] <- samples_SCQM[[2]][,i]
+  result_SCQM[[3]][,i] <- samples_SCQM[[3]][,i]
+}
+
+result_BSRBR <- result
+for(i in 1:10){
+  result_BSRBR[[1]][,i] <- samples_BSRBR[[1]][,i]
+  result_BSRBR[[2]][,i] <- samples_BSRBR[[2]][,i]
+  result_BSRBR[[3]][,i] <- samples_BSRBR[[3]][,i]
+}
+
+
+prediction_SCQM_25 <- findPrediction(SCQM, result_SCQM)
+prediction_BSRBR_25 <- findPrediction(BSRBR, result_BSRBR)
 performance_SCQM_25 <- findPerformance(prediction_SCQM_25)
 performance_BSRBR_25 <- findPerformance(prediction_BSRBR_25)
 apparent_performance_SCQM_25 <- unlist(lapply(performance_SCQM_25, mean))
 apparent_performance_BSRBR_25 <- unlist(lapply(performance_BSRBR_25, mean))
 
 result <- secondStage(y = y, Omega = Omega, W = W50, jags_file = "second stage-ApproachIII.txt")
-prediction_SCQM_50 <- findPrediction(SCQM, result)
-prediction_BSRBR_50 <- findPrediction(BSRBR, result)
+result_SCQM <- result
+for(i in 1:10){
+  result_SCQM[[1]][,i] <- samples_SCQM[[1]][,i]
+  result_SCQM[[2]][,i] <- samples_SCQM[[2]][,i]
+  result_SCQM[[3]][,i] <- samples_SCQM[[3]][,i]
+}
+
+result_BSRBR <- result
+for(i in 1:10){
+  result_BSRBR[[1]][,i] <- samples_BSRBR[[1]][,i]
+  result_BSRBR[[2]][,i] <- samples_BSRBR[[2]][,i]
+  result_BSRBR[[3]][,i] <- samples_BSRBR[[3]][,i]
+}
+
+prediction_SCQM_50 <- findPrediction(SCQM, result_SCQM)
+prediction_BSRBR_50 <- findPrediction(BSRBR, result_BSRBR)
 performance_SCQM_50 <- findPerformance(prediction_SCQM_50)
 performance_BSRBR_50 <- findPerformance(prediction_BSRBR_50)
 apparent_performance_SCQM_50 <- unlist(lapply(performance_SCQM_50, mean))
@@ -88,11 +117,18 @@ for(ii in 1:200){
   y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]][-(1:10)], y4 = r4[[1]][-(1:10)], y5 = y_TOWARD2[-(1:10)])
   Omega <- list(Omega1 = r1[[2]], Omega2 = r2[[2]], Omega3 = r3[[2]][11:20, 11:20], Omega4 = r4[[2]][11:20, 11:20], Omega5 = Omega_TOWARD2[11:20, 11:20])
   result <- secondStage(y = y, Omega = Omega, W = W25, jags_file = "second stage-ApproachIII.txt")
-
-  prediction_SCQM_bootstrap <- findPrediction(SCQM_bootstrap, result)
+  
+  result_SCQM <- result
+  for(i in 1:10){
+    result_SCQM[[1]][,i] <- samples_SCQM[[1]][,i]
+    result_SCQM[[2]][,i] <- samples_SCQM[[2]][,i]
+    result_SCQM[[3]][,i] <- samples_SCQM[[3]][,i]
+  }
+  
+  prediction_SCQM_bootstrap <- findPrediction(SCQM_bootstrap, result_SCQM)
   performance_SCQM_bootstrap <- findPerformance(prediction_SCQM_bootstrap)
   
-  prediction_SCQM_test <- findPrediction(SCQM, result)
+  prediction_SCQM_test <- findPrediction(SCQM, result_SCQM)
   performance_SCQM_test <- findPerformance(prediction_SCQM_test)
   
   optimism[ii,] <- mapply('-',lapply(performance_SCQM_bootstrap, mean),lapply(performance_SCQM_test, mean),SIMPLIFY=TRUE)
@@ -115,10 +151,17 @@ for(ii in 1:200){
   Omega <- list(Omega1 = r1[[2]], Omega2 = r2[[2]], Omega3 = r3[[2]][11:20, 11:20], Omega4 = r4[[2]][11:20, 11:20], Omega5 = Omega_TOWARD2[11:20, 11:20])
   result <- secondStage(y = y, Omega = Omega, W = W50, jags_file = "second stage-ApproachIII.txt")
   
-  prediction_SCQM_bootstrap <- findPrediction(SCQM_bootstrap, result)
+  result_SCQM <- result
+  for(i in 1:10){
+    result_SCQM[[1]][,i] <- samples_SCQM[[1]][,i]
+    result_SCQM[[2]][,i] <- samples_SCQM[[2]][,i]
+    result_SCQM[[3]][,i] <- samples_SCQM[[3]][,i]
+  }
+  
+  prediction_SCQM_bootstrap <- findPrediction(SCQM_bootstrap, result_SCQM)
   performance_SCQM_bootstrap <- findPerformance(prediction_SCQM_bootstrap)
   
-  prediction_SCQM_test <- findPrediction(SCQM, result)
+  prediction_SCQM_test <- findPrediction(SCQM, result_SCQM)
   performance_SCQM_test <- findPerformance(prediction_SCQM_test)
   
   optimism2[ii,] <- mapply('-',lapply(performance_SCQM_bootstrap, mean),lapply(performance_SCQM_test, mean),SIMPLIFY=TRUE)
@@ -147,10 +190,17 @@ for(ii in 1:200){
   Omega <- list(Omega1 = r1[[2]], Omega2 = r2[[2]], Omega3 = r3[[2]][11:20, 11:20], Omega4 = r4[[2]][11:20, 11:20], Omega5 = Omega_TOWARD2[11:20, 11:20])
   result <- secondStage(y = y, Omega = Omega, W = W25, jags_file = "second stage-ApproachIII.txt")
   
-  prediction_BSRBR_bootstrap <- findPrediction(BSRBR_bootstrap, result)
+  result_BSRBR <- result
+  for(i in 1:10){
+    result_BSRBR[[1]][,i] <- samples_BSRBR[[1]][,i]
+    result_BSRBR[[2]][,i] <- samples_BSRBR[[2]][,i]
+    result_BSRBR[[3]][,i] <- samples_BSRBR[[3]][,i]
+  }
+  
+  prediction_BSRBR_bootstrap <- findPrediction(BSRBR_bootstrap, result_BSRBR)
   performance_BSRBR_bootstrap <- findPerformance(prediction_BSRBR_bootstrap)
   
-  prediction_BSRBR_test <- findPrediction(BSRBR, result)
+  prediction_BSRBR_test <- findPrediction(BSRBR, result_BSRBR)
   performance_BSRBR_test <- findPerformance(prediction_BSRBR_test)
   
   optimism3[ii,] <- mapply('-',lapply(performance_BSRBR_bootstrap, mean),lapply(performance_BSRBR_test, mean),SIMPLIFY=TRUE)
@@ -174,10 +224,17 @@ for(ii in 1:200){
   Omega <- list(Omega1 = r1[[2]], Omega2 = r2[[2]], Omega3 = r3[[2]][11:20, 11:20], Omega4 = r4[[2]][11:20, 11:20], Omega5 = Omega_TOWARD2[11:20, 11:20])
   result <- secondStage(y = y, Omega = Omega, W = W50, jags_file = "second stage-ApproachIII.txt")
   
-  prediction_BSRBR_bootstrap <- findPrediction(BSRBR_bootstrap, result)
+  result_BSRBR <- result
+  for(i in 1:10){
+    result_BSRBR[[1]][,i] <- samples_BSRBR[[1]][,i]
+    result_BSRBR[[2]][,i] <- samples_BSRBR[[2]][,i]
+    result_BSRBR[[3]][,i] <- samples_BSRBR[[3]][,i]
+  }
+  
+  prediction_BSRBR_bootstrap <- findPrediction(BSRBR_bootstrap, result_BSRBR)
   performance_BSRBR_bootstrap <- findPerformance(prediction_BSRBR_bootstrap)
   
-  prediction_BSRBR_test <- findPrediction(BSRBR, result)
+  prediction_BSRBR_test <- findPrediction(BSRBR, result_BSRBR)
   performance_BSRBR_test <- findPerformance(prediction_BSRBR_test)
   
   optimism4[ii,] <- mapply('-',lapply(performance_BSRBR_bootstrap, mean),lapply(performance_BSRBR_test, mean),SIMPLIFY=TRUE)
