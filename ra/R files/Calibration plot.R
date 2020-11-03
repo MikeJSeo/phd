@@ -110,7 +110,7 @@ approach_id3 <- rep(c("Approach I", "Approach IIa", "Approach IIb", "Approach II
                       "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5"), each = BSRBR.t3.length)
 approach_id <- c(approach_id1, approach_id2, approach_id3)
 
-treatment <- c(rep("Placebo + DMARDs", each = BSRBR.t1.length*8),
+treatment <- c(rep("DMARDs", each = BSRBR.t1.length*8),
                   rep("RTX + DMARDs", each = BSRBR.t2.length*8),
                   rep("TCZ + DMARDs", each = BSRBR.t3.length*8))
 
@@ -220,7 +220,7 @@ approach_id3 <- rep(c("Approach I", "Approach IIa", "Approach IIb", "Approach II
                       "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5"), each = BSRBR.t3.length)
 approach_id <- c(approach_id1, approach_id2, approach_id3)
 
-treatment <- c(rep("Placebo + DMARDs", each = BSRBR.t1.length*8),
+treatment <- c(rep("DMARDs", each = BSRBR.t1.length*8),
                rep("RTX + DMARDs", each = BSRBR.t2.length*8),
                rep("TCZ + DMARDs", each = BSRBR.t3.length*8)
 )
@@ -333,7 +333,7 @@ approach_id3 <- rep(c("Approach I", "Approach IIa", "Approach IIb", "Approach II
                       "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5"), each = SCQM.t3.length)
 approach_id <- c(approach_id1, approach_id2, approach_id3)
 
-treatment <- c(rep("Placebo + DMARDs", each = SCQM.t1.length*8),
+treatment <- c(rep("DMARDs", each = SCQM.t1.length*8),
                rep("RTX + DMARDs", each = SCQM.t2.length*8),
                rep("TCZ + DMARDs", each = SCQM.t3.length*8))
 
@@ -443,7 +443,7 @@ approach_id3 <- rep(c("Approach I", "Approach IIa", "Approach IIb", "Approach II
                       "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5"), each = SCQM.t3.length)
 approach_id <- c(approach_id1, approach_id2, approach_id3)
 
-treatment <- c(rep("Placebo + DMARDs", each = SCQM.t1.length*8),
+treatment <- c(rep("DMARDs", each = SCQM.t1.length*8),
                rep("RTX + DMARDs", each = SCQM.t2.length*8),
                rep("TCZ + DMARDs", each = SCQM.t3.length*8)
 )

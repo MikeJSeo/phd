@@ -82,17 +82,26 @@ summarize_each_study <- function(samples){
 }
 
 #second stage analysis using results from first stage analysis
-secondStage <- function(y, Omega, W = NULL, jags_file = NULL, n.iter = 200000){
+secondStage <- function(y, Omega, W = NULL, jags_file = NULL, n.iter = 200000, powerprior = FALSE){
   
   data_jags <- c(y, Omega)
   if(!is.null(W)){
     data_jags$W <- W  
+  }
+  if(powerprior == TRUE){
+    data_jags$zero1 <- 0
+    data_jags$zero2 <- 0
   }
   
   mod <- jags.model(jags_file, data_jags, n.chains = 3, n.adapt = 1000)
   stats::update(mod, 20000)
   
   var.names <- c("alpha", "beta", "gamma", "delta")
+  
+  if(powerprior == TRUE){
+    var.names <- c(var.names, "a0")
+  }
+  
   samples <- coda.samples(mod, variable.names = var.names, n.iter = n.iter, n.chains = 3)
   
   return(samples) 
