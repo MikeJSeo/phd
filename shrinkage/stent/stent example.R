@@ -261,7 +261,7 @@ treatment.effect(ipd, samples, newpatient = c(80, 0, 1, 0, 1, 1, 1, 0, 5))
 treatment.effect(ipd, samples, newpatient = c(50, 1, 0, 1, 0, 0, 0, 1, 1))
 
 ############### deft approach with no penalization with no scaling
-ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = X, response = "binomial", approach = "deft", shrinkage = "none", scale = FALSE))
+ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = X, response = "binomial", approach = "deft", shrinkage = "none"))
 samples <- ipd.run.parallel(ipd, pars.save = c("beta", "gamma", "gamA", "delta", "sd"))
 
 #aggregate(cbind(mydata$y,X), list(mydata$studyid, mydata$treat), mean, is.na = TRUE)
