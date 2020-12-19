@@ -20,9 +20,28 @@ add.mcmc <- function(x,y){
 firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", "d", "sigma")){
   
   y <- study_data$DAS28
+  treat <- study_data$treat
   X <- as.matrix(study_data[,c(-1,-2,-3)])
   X <- apply(X, 2, scale)
-  XX <- mice(cbind(y,X), m = mm)
+  ncov <- dim(X)[2]
+  options(na.action='na.pass')
+  X.ext <- model.matrix(y~ -1 + X + treat + X:treat)
+  colnames(X.ext) <- gsub("X","",colnames(X.ext))
+  X.ext <- cbind(y, X.ext)
+  X.ext[,grepl(":", colnames(X.ext))] <- NA
+  ini <- mice(X.ext, max = 0, print = FALSE)
+  meth <- ini$meth
+  
+  namess <- colnames(X.ext)[grep(":", colnames(X.ext))]
+  meth[grep(":", colnames(X.ext))] <- paste0("~I(", gsub(":", "*", namess),")")
+
+  pred<- ini$pred
+  XX <- mice(X.ext, meth = meth, pred = pred, maxit = 10, m = mm)
+  
+  #y <- study_data$DAS28
+  #X <- as.matrix(study_data[,c(-1,-2,-3)])
+  #X <- apply(X, 2, scale)
+  #XX <- mice(cbind(y,X), m = mm)
   
   if(length(unique(study_data$treat)) == 2){
     study_data$treat[study_data$treat == "3"] <- "2"
@@ -34,7 +53,8 @@ firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", 
     Ncovariate = dim(X)[2],
     Ntreat = length(unique(study_data$treat)),
     y = y,
-    X = complete(XX, 1)[,-1]
+    #X = complete(XX, 1)[,-1]
+    X = complete(XX, 1)[,2:(ncov+1)]
   )
   mod <- jags.model(file = jags_file, data = jags_data, n.chains = 3, n.adapt = 1000)
   samples <- coda.samples(mod, variable.names = index, n.iter = 10000)
@@ -49,7 +69,8 @@ firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", 
       Ncovariate = dim(X)[2],
       Ntreat = length(unique(study_data$treat)),
       y = y,
-      X = complete(XX, i)[,-1]
+      #X = complete(XX, i)[,-1]
+      X = complete(XX, i)[,2:(ncov+1)]
     )
     mod <- jags.model(file = jags_file, data = jags_data, n.chains = 3, n.adapt = 1000)
     stats::update(mod, 1000)
