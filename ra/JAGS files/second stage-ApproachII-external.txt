@@ -1,10 +1,15 @@
 model{
 
 #likelihood
-y1 ~ dmnorm(Mu1, Omega1[,])
-y2 ~ dmnorm(Mu2, Omega2[,])
-y3 ~ dmnorm(Mu3, Omega3[,])
-y4 ~ dmnorm(Mu4, Omega4[,])
+y1 ~ dmnorm(Mu1, Omega1)
+y2 ~ dmnorm(Mu2, Omega2)
+y3 ~ dmnorm(Mu3, Omega3)
+y4 ~ dmnorm(Mu4, Omega4)
+
+Omega1 <- inverse(Sigma1)
+Omega2 <- inverse(Sigma2)
+Omega3 <- inverse(Sigma3)
+Omega4 <- inverse(Sigma4)
 
 Mu1 <- c(alpha, beta[], gamma[,1], gamma[,2], delta[1:2])
 Mu2 <- c(alpha, beta[], gamma[,1], delta[1])

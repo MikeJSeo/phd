@@ -51,6 +51,8 @@ y_TOWARD2 <- c(4.9562, 0.1472, -0.1151, 0.0202, 0.0608, 0.1905, 0.0166,
                0.0774, 0.1813, 0.4509, -0.0800, 0.1921, -0.0379, -0.1439,
                -0.1313, -0.1356, 0.0382, -0.0359, -0.0117, -1.6994)
 Omega_TOWARD2 <- as.matrix(read_excel("Omega_TOWARD2.xlsx", col_names = FALSE))
+X_mean <- c(0.83, 52.33, 9.10, 27.74, 0.82, 1.59, 1.53, 46.39, 6.54)
+X_sd <- c(0.38, 12.11, 8.18, 6.44, 0.38, 1.46, 0.61, 24.74, 0.96)
 # S <- solve(r1[[2]])
 # R <- cov2cor(S)
 # #Check if Omega_TOWARD2 typed correctly
@@ -66,15 +68,25 @@ setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files") #set the location 
 
 #find summary mean and covariance matrix for each study
 r1 <- summarize_each_study(samples_BSRBR)
-r2 <- summarize_each_study(samples_SCQM)
-r3 <- summarize_each_study(samples_REFLEX)
-r4 <- summarize_each_study(samples_TOWARD)
+r1 <- unstandardize_coefficients(r1, BSRBR)
 
-y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]], y5 = y_TOWARD2)
-Omega <- list(Omega1 = r1[[2]], Omega2 = r2[[2]], Omega3 = r3[[2]], Omega4 = r4[[2]], Omega5 = Omega_TOWARD2)
+r2 <- summarize_each_study(samples_SCQM)
+r2 <- unstandardize_coefficients(r2, SCQM)
+
+r3 <- summarize_each_study(samples_REFLEX)
+r3 <- unstandardize_coefficients(r3, REFLEX)
+
+r4 <- summarize_each_study(samples_TOWARD)
+r4 <- unstandardize_coefficients(r4, TOWARD)
+
+r5 <- list(y = y_TOWARD2, Omega = Omega_TOWARD2)
+r5 <- unstandardize_coefficients(r5, X_mean = X_mean, X_sd = X_sd)
+
+y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]], y5 = r5[[1]])
+Sigma <- list(Sigma1 = r1[[2]], Sigma2 = r2[[2]], Sigma3 = r3[[2]], Sigma4 = r4[[2]], Sigma5 = r5[[2]])
 
 #internal validation
-result <- secondStage(y = y, Omega = Omega, jags_file = "second stage-ApproachII.txt")
+result <- secondStage(y = y, Sigma = Sigma, jags_file = "second stage-ApproachII.txt")
 prediction_SCQM_internal <- findPrediction(SCQM, result)
 prediction_BSRBR_internal <- findPrediction(BSRBR, result)
 performance_SCQM_internal <- findPerformance(prediction_SCQM_internal)

@@ -17,12 +17,14 @@ add.mcmc <- function(x,y){
 
 
 ######## first stage model
-firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", "d", "sigma")){
+firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", "d", "sigma"), scale = TRUE){
   
   y <- study_data$DAS28
   treat <- study_data$treat
   X <- as.matrix(study_data[,c(-1,-2,-3)])
-  X <- apply(X, 2, scale)
+  if(scale == TRUE){
+    X <- apply(X, 2, scale)  
+  }
   ncov <- dim(X)[2]
   options(na.action='na.pass')
   X.ext <- model.matrix(y~ -1 + X + treat + X:treat)
@@ -102,10 +104,68 @@ summarize_each_study <- function(samples){
   return(list(y = y, Omega = Omega))
 }
 
-#second stage analysis using results from first stage analysis
-secondStage <- function(y, Omega, W = NULL, jags_file = NULL, n.iter = 200000, powerprior = FALSE){
+# revert first stage standardized coefficients to unstandardized coefficients
+
+unstandardize_coefficients <- function(first_stage_result, study_data = NULL, X_mean = NULL, X_sd = NULL){
+
+  if(!is.null(study_data)){
+    X <- as.matrix(study_data[,c(-1,-2,-3)])
+    X_mean <- apply(X, 2, mean, na.rm = TRUE)
+    X_sd <- apply(X, 2, sd, na.rm = TRUE)  
+  }
   
-  data_jags <- c(y, Omega)
+  vec_length <- length(first_stage_result$y)
+  N_star <- matrix(0, nrow = vec_length, ncol = vec_length)
+  
+  if(is.null(study_data)){
+    N_star[1,] <- c(1, -X_mean/X_sd, rep(0, vec_length - 1 - length(X_mean)))
+    for(k in 1:length(X_mean)){
+      N_star[k+1,] <- c(rep(0,k), 1/X_sd[k], rep(0, length(X_mean) -  k), rep(0, vec_length - 1 - length(X_mean)))
+    }  
+    for(k in 1:length(X_mean)){
+      N_star[1+length(X_mean)+k,] <- c(rep(0, length(X_mean)+k), 1/X_sd[k], rep(0, length(X_mean) - k), 0)
+    } 
+    N_star[1+2*length(X_mean)+1,] <- c(rep(0, length(X_mean)+1), -X_mean/X_sd, 1)
+    
+  } else {
+    if(length(unique(study_data$treat)) == 3){
+      N_star[1,] <- c(1, -X_mean/X_sd, rep(0, vec_length - 1 - length(X_mean)))
+      for(k in 1:length(X_mean)){
+        N_star[k+1,] <- c(rep(0,k), 1/X_sd[k], rep(0, length(X_mean) -  k), rep(0, vec_length - 1 - length(X_mean)))
+      }  
+      for(k in 1:length(X_mean)){
+        N_star[1+length(X_mean)+k,] <- c(rep(0, length(X_mean)+k), 1/X_sd[k], rep(0, length(X_mean) - k), rep(0, vec_length - 1 - 2*length(X_mean)))
+      }
+      for(k in 1:length(X_mean)){
+        N_star[1+2*length(X_mean)+k,] <- c(rep(0, 2* length(X_mean)+k), 1/X_sd[k], rep(0, length(X_mean) - k), rep(0, vec_length - 1 - 3*length(X_mean)))
+      }
+      N_star[1+3*length(X_mean)+1,] <- c(rep(0, length(X_mean)+1), -X_mean/X_sd, rep(0, vec_length - 1 - 2*length(X_mean)-2), 1, 0)
+      N_star[1+3*length(X_mean)+2,] <- c(rep(0, 2*length(X_mean)+1), -X_mean/X_sd, rep(0, vec_length - 1 - 3*length(X_mean)-2), 0, 1)
+    } else if(length(unique(study_data$treat)) == 2){
+      
+      N_star[1,] <- c(1, -X_mean/X_sd, rep(0, vec_length - 1 - length(X_mean)))
+      for(k in 1:length(X_mean)){
+        N_star[k+1,] <- c(rep(0,k), 1/X_sd[k], rep(0, length(X_mean) -  k), rep(0, vec_length - 1 - length(X_mean)))
+      }  
+      for(k in 1:length(X_mean)){
+        N_star[1+length(X_mean)+k,] <- c(rep(0, length(X_mean)+k), 1/X_sd[k], rep(0, length(X_mean) - k), 0)
+      } 
+      N_star[1+2*length(X_mean)+1,] <- c(rep(0, length(X_mean)+1), -X_mean/X_sd, 1)
+    }  
+  }
+  
+  y <- N_star %*% first_stage_result$y
+  Sigma <- N_star %*% solve(first_stage_result$Omega) %*% t(N_star)
+  
+  list(y = y, Sigma = Sigma)
+}
+
+
+
+#second stage analysis using results from first stage analysis
+secondStage <- function(y, Sigma, W = NULL, jags_file = NULL, n.iter = 200000, powerprior = FALSE){
+  
+  data_jags <- c(y, Sigma)
   if(!is.null(W)){
     data_jags$W <- W  
   }
