@@ -25,7 +25,8 @@ load("SCQM-ApproachI-bayesLASSO.Rdata")
 y_TOWARD2 <- c(4.9625, 0.1060, -0.0278, 0.0143, -0.0066, 0.1309, -0.0560, 0.0974, 0.1670, 0.4551,
                -0.0196, 0.0416, -0.0129, -0.0222, -0.0291, -0.0275, -0.0015, -0.0100, -0.0043, -1.6943)
 Omega_TOWARD2 <- as.matrix(read_excel("Omega_TOWARD2_bayesLASSO.xlsx", col_names = FALSE))
-
+X_mean <- c(0.83, 52.33, 9.10, 27.74, 0.82, 1.59, 1.53, 46.39, 6.54)
+X_sd <- c(0.38, 12.11, 8.18, 6.44, 0.38, 1.46, 0.61, 24.74, 0.96)
 setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
 
 ###############################################################################
@@ -33,32 +34,26 @@ setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
 ### apparent performance
 #find summary mean and covariance matrix for each study
 r1 <- summarize_each_study(samples_BSRBR)
+r1 <- unstandardize_coefficients(r1, BSRBR)
+
 r2 <- summarize_each_study(samples_SCQM)
+r2 <- unstandardize_coefficients(r2, SCQM)
+
 r3 <- summarize_each_study(samples_REFLEX)
+r3 <- unstandardize_coefficients(r3, REFLEX)
+
 r4 <- summarize_each_study(samples_TOWARD)
+r4 <- unstandardize_coefficients(r4, TOWARD)
 
+r5 <- list(y = y_TOWARD2, Omega = Omega_TOWARD2)
+r5 <- unstandardize_coefficients(r5, X_mean = X_mean, X_sd = X_sd)
 
-###internal validation
-y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]], y5 = y_TOWARD2)
-Omega <- list(Omega1 = r1[[2]], Omega2 = r2[[2]], Omega3 = r3[[2]], Omega4 = r4[[2]], Omega5 = Omega_TOWARD2)
+y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]], y5 = r5[[1]])
+Sigma <- list(Sigma1 = r1[[2]], Sigma2 = r2[[2]], Sigma3 = r3[[2]], Sigma4 = r4[[2]], Sigma5 = r5[[2]])
 result <- secondStage(y = y, Omega = Omega, jags_file = "second stage-ApproachII.txt")
 
-result_SCQM <- result
-for(i in 1:10){
-  result_SCQM[[1]][,i] <- samples_SCQM[[1]][,i]
-  result_SCQM[[2]][,i] <- samples_SCQM[[2]][,i]
-  result_SCQM[[3]][,i] <- samples_SCQM[[3]][,i]
-}
-
-result_BSRBR <- result
-for(i in 1:10){
-  result_BSRBR[[1]][,i] <- samples_BSRBR[[1]][,i]
-  result_BSRBR[[2]][,i] <- samples_BSRBR[[2]][,i]
-  result_BSRBR[[3]][,i] <- samples_BSRBR[[3]][,i]
-}
-
-prediction_SCQM <- findPrediction(SCQM, result_SCQM)
-prediction_BSRBR <- findPrediction(BSRBR, result_BSRBR)
+prediction_SCQM <- findPrediction(SCQM, result, calibration = r2)
+prediction_BSRBR <- findPrediction(BSRBR, result, calibration = r1)
 performance_SCQM <- findPerformance(prediction_SCQM)
 performance_BSRBR <- findPerformance(prediction_BSRBR)
 apparent_performance_SCQM <- unlist(lapply(performance_SCQM, mean))

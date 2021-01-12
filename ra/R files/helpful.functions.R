@@ -191,21 +191,29 @@ secondStage <- function(y, Sigma, W = NULL, jags_file = NULL, n.iter = 200000, p
 # function to find predictions for a specified dataset using the second stage result
 # Note that this function is specific to the RA dataset and uses 9 specified covariates; i.e. will give an error if applied to other datasets
 # prediction is divided by three groups according to treatments assigned
-findPrediction <- function(data, result) {
+findPrediction <- function(data, result = NULL, coefs = NULL, calibration = NULL) {
   
   options(na.action='na.pass')
   abd <- model.matrix(~ female + age + duration + baseBMI + baseRF + n_prev_dmards_antiTNF + baseHAQ + baseESR + baseDAS + treat, data)
-  abd_scaled <- abd
-  abd_scaled[,c(-1,-11,-12)] <- apply(abd[,c(-1,-11,-12)], 2, scale) #scale except intercept and treatment indexes
+  #abd_scaled <- abd
+  #abd_scaled[,c(-1,-11,-12)] <- apply(abd[,c(-1,-11,-12)], 2, scale) #scale except intercept and treatment indexes
   
-  g2 <- model.matrix(~ (female + age + duration + baseBMI + baseRF + n_prev_dmards_antiTNF + baseHAQ + baseESR + baseDAS)*I(data$treat == 2),as.data.frame(abd_scaled))[,-c(1:(9+2))]
-  g3 <- model.matrix(~ (female + age + duration + baseBMI + baseRF + n_prev_dmards_antiTNF + baseHAQ + baseESR + baseDAS)*I(data$treat == 3),as.data.frame(abd_scaled))[,-c(1:(9+2))]
+  g2 <- model.matrix(~ (female + age + duration + baseBMI + baseRF + n_prev_dmards_antiTNF + baseHAQ + baseESR + baseDAS)*I(data$treat == 2),as.data.frame(abd))[,-c(1:(9+2))]
+  g3 <- model.matrix(~ (female + age + duration + baseBMI + baseRF + n_prev_dmards_antiTNF + baseHAQ + baseESR + baseDAS)*I(data$treat == 3),as.data.frame(abd))[,-c(1:(9+2))]
   
-  XX <- as.matrix(cbind(abd_scaled, g2, g3))
+  XX <- as.matrix(cbind(abd, g2, g3))
   X <- XX[complete.cases(XX),] # use only the complete cases for predictions
   
-  coefs <- summary(result)[[1]][,"Mean"]
-  coefs <- coefs[coefs != 0] #remove coefficients with zero values
+  if(is.null(coefs)){
+    coefs <- summary(result)[[1]][,"Mean"]
+    coefs <- coefs[coefs != 0] #remove coefficients with zero values
+  } else{
+    coefs <- coefs$y
+  }
+
+  if(!is.null(calibration)){
+    coefs[1:10] <- calibration$y[1:10]  
+  }
   
   y <- data$DAS28[complete.cases(XX)]
   treat <- data$treat[complete.cases(XX)]
@@ -284,7 +292,6 @@ findPerformance <- function(prediction){
     list(mse = mse, bias = bias, mse1 = mse1, bias1 = bias1, mse2 = mse2, bias2 = bias2, 
          mse3 = mse3, bias3 = bias3)
   })
-  
   result
 }
 

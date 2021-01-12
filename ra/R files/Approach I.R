@@ -21,32 +21,38 @@ load("SCQM-ApproachI-bayesLASSO.Rdata")
 
 
 #############ApproachI
-result <- samples_BSRBR[,c(1:10,39,40,20:37)]
+r1 <- summarize_each_study(samples_BSRBR)
+r1 <- unstandardize_coefficients(r1, BSRBR)
+r1$y <- r1$y[c(1:10,29,30,11:28)]
+r1$Omega <- r1$Omega[c(1:10,29,30,11:28), c(1:10,29,30,11:28)]
 
 #internal validation
-prediction_BSRBR_internal <- findPrediction(BSRBR, result)
+prediction_BSRBR_internal <- findPrediction(BSRBR, coefs = r1)
 performance_BSRBR_internal <- findPerformance(prediction_BSRBR_internal)
 lapply(performance_BSRBR_internal, mean)
 calibration_BSRBR_internal <- findPerformance2(prediction_BSRBR_internal)
 
 #internal-external validation
-prediction_SCQM_external <- findPrediction(SCQM, result)
+prediction_SCQM_external <- findPrediction(SCQM, coefs = r1)
 performance_SCQM_external <- findPerformance(prediction_SCQM_external)
 lapply(performance_SCQM_external, mean)
 calibration_SCQM_external <- findPerformance2(prediction_SCQM_external)
 
 ###################
-result <- samples_SCQM[,c(1:10,39,40,20:37)]
+r2 <- summarize_each_study(samples_SCQM)
+r2 <- unstandardize_coefficients(r2, SCQM)
+r2$y <- r2$y[c(1:10,29,30,11:28)]
+r2$Omega <- r2$Omega[c(1:10,29,30,11:28), c(1:10,29,30,11:28)]
 
 #internal validation
-prediction_SCQM_internal <- findPrediction(SCQM, result)
+prediction_SCQM_internal <- findPrediction(SCQM, coefs = r2)
 performance_SCQM_internal <- findPerformance(prediction_SCQM_internal)
 lapply(performance_SCQM_internal, mean)
 calibration_SCQM_internal <- findPerformance2(prediction_SCQM_internal)
 
 
 #internal-external validation
-prediction_BSRBR_external <- findPrediction(BSRBR, result)
+prediction_BSRBR_external <- findPrediction(BSRBR, coefs = r2)
 performance_BSRBR_external <- findPerformance(prediction_BSRBR_external)
 lapply(performance_BSRBR_external, mean)
 calibration_BSRBR_external <- findPerformance2(prediction_BSRBR_external)

@@ -98,20 +98,20 @@ calibration_BSRBR_internal <- findPerformance2(prediction_BSRBR_internal)
 
 #internal-external validation
 #all datasets except SCQM
-y <- list(y1 = r1[[1]], y2 = r3[[1]], y3 = r4[[1]], y4 = y_TOWARD2)
-Omega <- list(Omega1 = r1[[2]], Omega2 = r3[[2]], Omega3 = r4[[2]], Omega4 = Omega_TOWARD2)
+y <- list(y1 = r1[[1]], y2 = r3[[1]], y3 = r4[[1]], y4 = r5[[1]])
+Sigma <- list(Sigma1 = r1[[2]], Sigma2 = r3[[2]], Sigma3 = r4[[2]], Sigma4 = r5[[2]])
 
-result <- secondStage(y = y, Omega = Omega, jags_file = "second stage-ApproachII-external.txt")
+result <- secondStage(y = y, Sigma = Sigma, jags_file = "second stage-ApproachII-external.txt")
 prediction_SCQM_external <- findPrediction(SCQM, result)
 performance_SCQM_external <- findPerformance(prediction_SCQM_external)
 lapply(performance_SCQM_external, mean)
 calibration_SCQM_external <- findPerformance2(prediction_SCQM_external)
 
 #all datasets except BSRBR
-y <- list(y1 = r2[[1]], y2 = r3[[1]], y3 = r4[[1]], y4 = y_TOWARD2)
-Omega <- list(Omega1 = r2[[2]], Omega2 = r3[[2]], Omega3 = r4[[2]], Omega4 = Omega_TOWARD2)
+y <- list(y1 = r2[[1]], y2 = r3[[1]], y3 = r4[[1]], y4 = r5[[1]])
+Sigma <- list(Sigma1 = r2[[2]], Sigma2 = r3[[2]], Sigma3 = r4[[2]], Sigma4 = r5[[2]])
 
-result <- secondStage(y = y, Omega = Omega, jags_file = "second stage-ApproachII-external.txt")
+result <- secondStage(y = y, Sigma = Sigma, jags_file = "second stage-ApproachII-external.txt")
 prediction_BSRBR_external <- findPrediction(BSRBR, result)
 performance_BSRBR_external <- findPerformance(prediction_BSRBR_external)
 lapply(performance_BSRBR_external, mean)
