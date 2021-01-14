@@ -50,7 +50,7 @@ r5 <- unstandardize_coefficients(r5, X_mean = X_mean, X_sd = X_sd)
 
 y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]], y5 = r5[[1]])
 Sigma <- list(Sigma1 = r1[[2]], Sigma2 = r2[[2]], Sigma3 = r3[[2]], Sigma4 = r4[[2]], Sigma5 = r5[[2]])
-result <- secondStage(y = y, Omega = Omega, jags_file = "second stage-ApproachII.txt")
+result <- secondStage(y = y, Sigma = Sigma, jags_file = "second stage-ApproachII.txt")
 
 prediction_SCQM <- findPrediction(SCQM, result, calibration = r2)
 prediction_BSRBR <- findPrediction(BSRBR, result, calibration = r1)
@@ -62,11 +62,6 @@ apparent_performance_BSRBR <- unlist(lapply(performance_BSRBR, mean))
 ##########################
 
 ##### Finding optimism: SCQM
-r1 <- summarize_each_study(samples_BSRBR)
-#r2 <- summarize_each_study(samples_SCQM)
-r3 <- summarize_each_study(samples_REFLEX)
-r4 <- summarize_each_study(samples_TOWARD)
-
 set.seed(1)
 optimism <- matrix(NA, nrow = 200, ncol = 8)
 colnames(optimism) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3")
@@ -75,22 +70,16 @@ for(ii in 1:200){
   SCQM_bootstrap <- SCQM[sample(1:dim(SCQM)[1], replace = TRUE),]
   samples_SCQM_bootstrap <- firstStage(SCQM_bootstrap, "first stage-bayesLASSO.txt", mm = 1)
   r2 <- summarize_each_study(samples_SCQM_bootstrap)
+  r2 <- unstandardize_coefficients(r2, SCQM_bootstrap)
   
-  y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]], y5 = y_TOWARD2)
-  Omega <- list(Omega1 = r1[[2]], Omega2 = r2[[2]], Omega3 = r3[[2]], Omega4 = r4[[2]], Omega5 = Omega_TOWARD2)
-  result <- secondStage(y = y, Omega = Omega, jags_file = "second stage-ApproachII.txt", n.iter = 10000)
+  y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]], y5 = r5[[1]])
+  Sigma <- list(Sigma1 = r1[[2]], Sigma2 = r2[[2]], Sigma3 = r3[[2]], Sigma4 = r4[[2]], Sigma5 = r5[[2]])
+  result <- secondStage(y = y, Sigma = Sigma, jags_file = "second stage-ApproachII.txt", n.iter = 10000)
   
-  result_SCQM <- result
-  for(i in 1:10){
-    result_SCQM[[1]][,i] <- samples_SCQM_bootstrap[[1]][,i]
-    result_SCQM[[2]][,i] <- samples_SCQM_bootstrap[[2]][,i]
-    result_SCQM[[3]][,i] <- samples_SCQM_bootstrap[[3]][,i]
-  }
-  
-  prediction_SCQM_bootstrap <- findPrediction(SCQM_bootstrap, result_SCQM)
+  prediction_SCQM_bootstrap <- findPrediction(SCQM_bootstrap, result, calibration = r2)
   performance_SCQM_bootstrap <- findPerformance(prediction_SCQM_bootstrap)
   
-  prediction_SCQM_test <- findPrediction(SCQM, result_SCQM)
+  prediction_SCQM_test <- findPrediction(SCQM, result, calibration = r2)
   performance_SCQM_test <- findPerformance(prediction_SCQM_test)
   
   optimism[ii,] <- mapply('-',lapply(performance_SCQM_bootstrap, mean),lapply(performance_SCQM_test, mean),SIMPLIFY=TRUE)
@@ -101,11 +90,6 @@ optimism_corrected_performance_SCQM <- apparent_performance_SCQM - optimism_aver
 
 
 ##### Finding optimism: BSRBR
-#r1 <- summarize_each_study(samples_BSRBR)
-r2 <- summarize_each_study(samples_SCQM)
-r3 <- summarize_each_study(samples_REFLEX)
-r4 <- summarize_each_study(samples_TOWARD)
-
 set.seed(1)
 optimism2 <- matrix(NA, nrow = 200, ncol = 8)
 colnames(optimism2) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3")
@@ -114,22 +98,16 @@ for(ii in 1:200){
   BSRBR_bootstrap <- BSRBR[sample(1:dim(BSRBR)[1], replace = TRUE),]
   samples_BSRBR_bootstrap <- firstStage(BSRBR_bootstrap, "first stage-bayesLASSO.txt", mm = 1)
   r1 <- summarize_each_study(samples_BSRBR_bootstrap)
+  r1 <- unstandardize_coefficients(r1, BSRBR_bootstrap)
   
-  y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]], y5 = y_TOWARD2)
-  Omega <- list(Omega1 = r1[[2]], Omega2 = r2[[2]], Omega3 = r3[[2]], Omega4 = r4[[2]], Omega5 = Omega_TOWARD2)
-  result <- secondStage(y = y, Omega = Omega, jags_file = "second stage-ApproachII.txt", n.iter = 10000)
+  y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]], y5 = r5[[1]])
+  Sigma <- list(Sigma1 = r1[[2]], Sigma2 = r2[[2]], Sigma3 = r3[[2]], Sigma4 = r4[[2]], Sigma5 = r5[[2]])
+  result <- secondStage(y = y, Sigma = Sigma, jags_file = "second stage-ApproachII.txt", n.iter = 10000)
   
-  result_BSRBR <- result
-  for(i in 1:10){
-    result_BSRBR[[1]][,i] <- samples_BSRBR_bootstrap[[1]][,i]
-    result_BSRBR[[2]][,i] <- samples_BSRBR_bootstrap[[2]][,i]
-    result_BSRBR[[3]][,i] <- samples_BSRBR_bootstrap[[3]][,i]
-  }
-  
-  prediction_BSRBR_bootstrap <- findPrediction(BSRBR_bootstrap, result_BSRBR)
+  prediction_BSRBR_bootstrap <- findPrediction(BSRBR_bootstrap, result, calibration = r1)
   performance_BSRBR_bootstrap <- findPerformance(prediction_BSRBR_bootstrap)
   
-  prediction_BSRBR_test <- findPrediction(BSRBR, result_BSRBR)
+  prediction_BSRBR_test <- findPrediction(BSRBR, result, calibration = r1)
   performance_BSRBR_test <- findPerformance(prediction_BSRBR_test)
   
   optimism2[ii,] <- mapply('-',lapply(performance_BSRBR_bootstrap, mean),lapply(performance_BSRBR_test, mean),SIMPLIFY=TRUE)

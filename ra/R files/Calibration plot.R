@@ -239,7 +239,7 @@ ggplot(data, aes(x = pred, y = obs)) +
   labs(x = "predicted outcome",
        y = "observed outcome") +
   theme(legend.position="top") +
-  xlim(-1, 9) + ylim(-1, 9)
+  xlim(-1, 12) + ylim(-1, 12)
 
 
 ################SCQM

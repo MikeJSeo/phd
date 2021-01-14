@@ -1,0 +1,29 @@
+model{
+
+#likelihood
+y1 ~ dmnorm(Mu1, Omega1)
+y2 ~ dmnorm(Mu2, Omega2)
+y3 ~ dmnorm(Mu3, Omega3)
+y4 ~ dmnorm(Mu4, Omega4)
+
+Omega1 <- inverse(Sigma1)
+Omega2 <- inverse(Sigma2)
+Omega3 <- inverse(Sigma3)
+Omega4 <- inverse(Sigma4)
+
+Mu1 <- c(alpha, beta[], delta[1:2])
+Mu2 <- c(alpha, beta[], delta[1])
+Mu3 <- c(alpha, beta[], delta[2])
+Mu4 <- c(alpha, beta[], delta[2])
+
+#parameters
+alpha ~ dnorm(0, 0.001)
+for(i in 1:9){
+	beta[i] ~ dnorm(0, 0.001)
+}
+
+delta[1] ~ dnorm(0, 0.001)
+delta[2] ~ dnorm(0, 0.001)
+
+
+}

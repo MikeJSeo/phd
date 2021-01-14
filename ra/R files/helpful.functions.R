@@ -17,10 +17,10 @@ add.mcmc <- function(x,y){
 
 
 ######## first stage model
-firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", "d", "sigma"), scale = TRUE){
+firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", "d", "sigma"), scale = TRUE, no.interaction = FALSE){
   
   y <- study_data$DAS28
-  treat <- study_data$treat
+  treat <- factor(study_data$treat, level = c(1,2,3))
   X <- as.matrix(study_data[,c(-1,-2,-3)])
   if(scale == TRUE){
     X <- apply(X, 2, scale)  
@@ -28,6 +28,7 @@ firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", 
   ncov <- dim(X)[2]
   options(na.action='na.pass')
   X.ext <- model.matrix(y~ -1 + X + treat + X:treat)
+  X.ext <- X.ext[,colnames(X.ext) != "treat1"]
   colnames(X.ext) <- gsub("X","",colnames(X.ext))
   X.ext <- cbind(y, X.ext)
   X.ext[,grepl(":", colnames(X.ext))] <- NA
@@ -40,11 +41,22 @@ firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", 
   pred<- ini$pred
   XX <- mice(X.ext, meth = meth, pred = pred, maxit = 10, m = mm)
   
-  #y <- study_data$DAS28
-  #X <- as.matrix(study_data[,c(-1,-2,-3)])
-  #X <- apply(X, 2, scale)
-  #XX <- mice(cbind(y,X), m = mm)
-  
+  if(no.interaction == TRUE){
+    y <- study_data$DAS28
+    treat <- study_data$treat
+    X <- as.matrix(study_data[,c(-1,-2,-3)])
+    if(scale == TRUE){
+      X <- apply(X, 2, scale)  
+    }
+    ncov <- dim(X)[2]
+    options(na.action='na.pass')
+    X.ext <- model.matrix(y~ -1 + X + treat)
+    X.ext <- X.ext[,colnames(X.ext) != "treat1"]
+    colnames(X.ext) <- gsub("X","",colnames(X.ext))
+    X.ext <- cbind(y, X.ext)
+    XX <- mice(X.ext, maxit = 10, m = mm)
+  }
+
   if(length(unique(study_data$treat)) == 2){
     study_data$treat[study_data$treat == "3"] <- "2"
   }
@@ -160,10 +172,54 @@ unstandardize_coefficients <- function(first_stage_result, study_data = NULL, X_
   list(y = y, Sigma = Sigma)
 }
 
+# revert first stage standardized coefficients to unstandardized coefficients (used for model with no interaction)
+
+unstandardize_coefficients2 <- function(first_stage_result, study_data = NULL, X_mean = NULL, X_sd = NULL){
+  
+  if(!is.null(study_data)){
+    X <- as.matrix(study_data[,c(-1,-2,-3)])
+    X_mean <- apply(X, 2, mean, na.rm = TRUE)
+    X_sd <- apply(X, 2, sd, na.rm = TRUE)  
+  }
+  
+  vec_length <- length(first_stage_result$y)
+  N_star <- matrix(0, nrow = vec_length, ncol = vec_length)
+  
+  if(is.null(study_data)){
+    N_star[1,] <- c(1, -X_mean/X_sd, rep(0, vec_length - 1 - length(X_mean)))
+    for(k in 1:length(X_mean)){
+      N_star[k+1,] <- c(rep(0,k), 1/X_sd[k], rep(0, length(X_mean) -  k), rep(0, vec_length - 1 - length(X_mean)))
+    }  
+    N_star[1+length(X_mean)+1,] <- c(rep(0, length(X_mean)+1), 1)
+    
+  } else {
+    if(length(unique(study_data$treat)) == 3){
+      N_star[1,] <- c(1, -X_mean/X_sd, rep(0, vec_length - 1 - length(X_mean)))
+      for(k in 1:length(X_mean)){
+        N_star[k+1,] <- c(rep(0,k), 1/X_sd[k], rep(0, length(X_mean) -  k), rep(0, vec_length - 1 - length(X_mean)))
+      }  
+      N_star[1+length(X_mean)+1,] <- c(rep(0, length(X_mean)+1), 1, 0)
+      N_star[1+length(X_mean)+2,] <- c(rep(0, length(X_mean)+1), 0, 1)
+    } else if(length(unique(study_data$treat)) == 2){
+      
+      N_star[1,] <- c(1, -X_mean/X_sd, rep(0, vec_length - 1 - length(X_mean)))
+      for(k in 1:length(X_mean)){
+        N_star[k+1,] <- c(rep(0,k), 1/X_sd[k], rep(0, length(X_mean) -  k), rep(0, vec_length - 1 - length(X_mean)))
+      }  
+      N_star[1+length(X_mean)+1,] <- c(rep(0, length(X_mean)+1), 1)
+    }  
+  }
+  print(N_star)
+  y <- N_star %*% first_stage_result$y
+  Sigma <- N_star %*% solve(first_stage_result$Omega) %*% t(N_star)
+  
+  list(y = y, Sigma = Sigma)
+}
+
 
 
 #second stage analysis using results from first stage analysis
-secondStage <- function(y, Sigma, W = NULL, jags_file = NULL, n.iter = 200000, powerprior = FALSE){
+secondStage <- function(y, Sigma, W = NULL, jags_file = NULL, n.iter = 200000, powerprior = FALSE, no.interaction = FALSE){
   
   data_jags <- c(y, Sigma)
   if(!is.null(W)){
@@ -177,7 +233,12 @@ secondStage <- function(y, Sigma, W = NULL, jags_file = NULL, n.iter = 200000, p
   mod <- jags.model(jags_file, data_jags, n.chains = 3, n.adapt = 1000)
   stats::update(mod, 20000)
   
-  var.names <- c("alpha", "beta", "gamma", "delta")
+  if(no.interaction == TRUE){
+    var.names <- c("alpha", "beta", "delta")
+  } else{
+    var.names <- c("alpha", "beta", "gamma", "delta")    
+  }
+
   
   if(powerprior == TRUE){
     var.names <- c(var.names, "a0")
@@ -210,7 +271,7 @@ findPrediction <- function(data, result = NULL, coefs = NULL, calibration = NULL
   } else{
     coefs <- coefs$y
   }
-
+  
   if(!is.null(calibration)){
     coefs[1:10] <- calibration$y[1:10]  
   }
@@ -238,6 +299,68 @@ findPrediction <- function(data, result = NULL, coefs = NULL, calibration = NULL
   pred_full_2 <- X %*% coefs2
   
   coefs3 <- coefs * c(rep(1,10), 0, 1, rep(0, 9), rep(1, 9))
+  pred_full_3 <- X %*% coefs3
+  
+  #calibration slope
+  pred_full_11 <- pred_full_1
+  
+  pred_full_12 <- pred_full_2 - pred_full_1
+  pred_full_12 <- pred_full_12 * (treat == "2")
+  
+  pred_full_13 <- pred_full_3 - pred_full_1
+  pred_full_13 <- pred_full_13 * (treat == "3")
+  
+  pred_full_1 <- pred_full_1 * (treat == "1")
+  pred_full_2 <- pred_full_2 * (treat == "2")
+  pred_full_3 <- pred_full_3 * (treat == "3")
+  
+  return(list(y = y, y1 = y1, y2 = y2, y3 = y3, treat = treat, X = X, pred = pred,
+              pred1 = pred1, pred2 = pred2, pred3 = pred3, coefs = coefs,
+              pred_full_11 = pred_full_11, pred_full_12 = pred_full_12, pred_full_13 = pred_full_13, 
+              pred_full_1 = pred_full_1, pred_full_2 = pred_full_2, pred_full_3 = pred_full_3))
+}
+
+# findPrediction for no interaction model
+findPrediction2 <- function(data, result = NULL) {
+  
+  options(na.action='na.pass')
+  abd <- model.matrix(~ female + age + duration + baseBMI + baseRF + n_prev_dmards_antiTNF + baseHAQ + baseESR + baseDAS + treat, data)
+  #abd_scaled <- abd
+  #abd_scaled[,c(-1,-11,-12)] <- apply(abd[,c(-1,-11,-12)], 2, scale) #scale except intercept and treatment indexes
+  
+  #g2 <- model.matrix(~ (female + age + duration + baseBMI + baseRF + n_prev_dmards_antiTNF + baseHAQ + baseESR + baseDAS)*I(data$treat == 2),as.data.frame(abd))[,-c(1:(9+2))]
+  #g3 <- model.matrix(~ (female + age + duration + baseBMI + baseRF + n_prev_dmards_antiTNF + baseHAQ + baseESR + baseDAS)*I(data$treat == 3),as.data.frame(abd))[,-c(1:(9+2))]
+  
+  XX <- abd
+  #XX <- as.matrix(cbind(abd, g2, g3))
+  X <- XX[complete.cases(XX),] # use only the complete cases for predictions
+  
+  coefs <- summary(result)[[1]][,"Mean"]
+  coefs <- coefs[coefs != 0] #remove coefficients with zero values
+
+  y <- data$DAS28[complete.cases(XX)]
+  treat <- data$treat[complete.cases(XX)]
+  pred <- X %*% coefs
+  
+  index1 <- X[,"treat2"] == 0 & X[,"treat3"] == 0
+  index2 <- X[,"treat2"] == 1
+  index3 <- X[,"treat3"] == 1
+  
+  y1 <- y[index1]
+  y2 <- y[index2]
+  y3 <- y[index3]
+  
+  pred1 <- pred[index1]
+  pred2 <- pred[index2]
+  pred3 <- pred[index3]
+  
+  coefs1 <- coefs * c(rep(1,10), rep(0, 2))
+  pred_full_1 <- X %*% coefs1
+  
+  coefs2 <- coefs * c(rep(1,10), 1, 0)
+  pred_full_2 <- X %*% coefs2
+  
+  coefs3 <- coefs * c(rep(1,10), 0, 1)
   pred_full_3 <- X %*% coefs3
     
   #calibration slope
