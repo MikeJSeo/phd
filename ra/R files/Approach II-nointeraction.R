@@ -102,7 +102,7 @@ calibration_SCQM_external <- findPerformance2(prediction_SCQM_external)
 y <- list(y1 = r2[[1]], y2 = r3[[1]], y3 = r4[[1]], y4 = r5[[1]])
 Sigma <- list(Sigma1 = r2[[2]], Sigma2 = r3[[2]], Sigma3 = r4[[2]], Sigma4 = r5[[2]])
 
-result <- secondStage2(y = y, Sigma = Sigma, jags_file = "second stage-ApproachII-nointeraction-external.txt", no.interaction = TRUE)
+result <- secondStage(y = y, Sigma = Sigma, jags_file = "second stage-ApproachII-nointeraction-external.txt", no.interaction = TRUE)
 prediction_BSRBR_external <- findPrediction2(BSRBR, result)
 performance_BSRBR_external <- findPerformance(prediction_BSRBR_external)
 lapply(performance_BSRBR_external, mean)
