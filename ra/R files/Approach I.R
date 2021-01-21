@@ -50,7 +50,6 @@ performance_SCQM_internal <- findPerformance(prediction_SCQM_internal)
 lapply(performance_SCQM_internal, mean)
 calibration_SCQM_internal <- findPerformance2(prediction_SCQM_internal)
 
-
 #internal-external validation
 prediction_BSRBR_external <- findPrediction(BSRBR, coefs = r2)
 performance_BSRBR_external <- findPerformance(prediction_BSRBR_external)

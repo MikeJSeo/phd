@@ -209,7 +209,6 @@ unstandardize_coefficients2 <- function(first_stage_result, study_data = NULL, X
       N_star[1+length(X_mean)+1,] <- c(rep(0, length(X_mean)+1), 1)
     }  
   }
-  print(N_star)
   y <- N_star %*% first_stage_result$y
   Sigma <- N_star %*% solve(first_stage_result$Omega) %*% t(N_star)
   
@@ -394,6 +393,17 @@ findBias <- function(y, pred){
   err_bias
 }
 
+findRSquared <- function(y, pred){
+  
+  total <- (y - mean(y, na.rm = TRUE))^2 #total sum of squares
+  tss <- sum(total[!is.na(total)])
+  
+  residual <- (y - pred)^2
+  rss <- sum(residual[!is.na(residual)])#residual sum of squares
+  rsquared <- 1 - rss/tss
+  rsquared
+}
+
 
 # find performance metric based on predictions
 findPerformance <- function(prediction){
@@ -412,8 +422,10 @@ findPerformance <- function(prediction){
     mse3 <- findMSE(y3, pred3)
     bias3 <- findBias(y3, pred3)
     
+    rsquared <- findRSquared(y, pred)
+    
     list(mse = mse, bias = bias, mse1 = mse1, bias1 = bias1, mse2 = mse2, bias2 = bias2, 
-         mse3 = mse3, bias3 = bias3)
+         mse3 = mse3, bias3 = bias3, rsquared = rsquared)
   })
   result
 }

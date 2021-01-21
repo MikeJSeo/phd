@@ -82,8 +82,8 @@ apparent_performance_BSRBR <- unlist(lapply(performance_BSRBR, mean))
 
 ##### Finding optimism: SCQM
 set.seed(1)
-optimism <- matrix(NA, nrow = 200, ncol = 8)
-colnames(optimism) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3")
+optimism <- matrix(NA, nrow = 200, ncol = 9)
+colnames(optimism) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3", "rsquared")
 for(ii in 1:200){
   
   SCQM_bootstrap <- SCQM[sample(1:dim(SCQM)[1], replace = TRUE),]
@@ -109,13 +109,14 @@ optimism_corrected_performance_SCQM <- apparent_performance_SCQM - optimism_aver
 ##### Finding optimism: BSRBR
 
 set.seed(1)
-optimism2 <- matrix(NA, nrow = 200, ncol = 8)
-colnames(optimism2) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3")
+optimism2 <- matrix(NA, nrow = 200, ncol = 9)
+colnames(optimism2) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3", "rsquared")
 for(ii in 1:200){
   
   BSRBR_bootstrap <- BSRBR[sample(1:dim(BSRBR)[1], replace = TRUE),]
   samples_BSRBR_bootstrap <- firstStage(BSRBR_bootstrap, "first stage.txt", mm = 1)
   r1 <- summarize_each_study(samples_BSRBR_bootstrap)
+  r1 <- unstandardize_coefficients(r1, BSRBR_bootstrap)
   
   y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]], y5 = r5[[1]])
   Sigma <- list(Sigma1 = r1[[2]], Sigma2 = r2[[2]], Sigma3 = r3[[2]], Sigma4 = r4[[2]], Sigma5 = r5[[2]])

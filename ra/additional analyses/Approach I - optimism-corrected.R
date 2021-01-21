@@ -75,8 +75,8 @@ optimism_corrected_performance_SCQM <- apparent_performance_SCQM - optimism_aver
 ###########Calculating optimism: BSRBR
 
 set.seed(1)
-optimism2 <- matrix(NA, nrow = 200, ncol = 8)
-colnames(optimism2) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3")
+optimism2 <- matrix(NA, nrow = 200, ncol = 9)
+colnames(optimism2) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3", "rsquared")
 for(ii in 1:200){
   
   BSRBR_bootstrap <- BSRBR[sample(1:dim(BSRBR)[1], replace = TRUE),]
