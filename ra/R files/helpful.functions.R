@@ -71,6 +71,7 @@ firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", 
     X = complete(XX, 1)[,2:(ncov+1)]
   )
   mod <- jags.model(file = jags_file, data = jags_data, n.chains = 3, n.adapt = 1000)
+  stats::update(mod, 1000)
   samples <- coda.samples(mod, variable.names = index, n.iter = 10000)
   
   if(mm != 1){
