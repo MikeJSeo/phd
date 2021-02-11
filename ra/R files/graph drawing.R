@@ -1,6 +1,6 @@
 
 
-validation <- c(rep("internal", 8*4), c(rep("external", 8*4)))    
+validation <- c(rep("Internal validation", 8*4), c(rep("Internal-external validation", 8*4)))    
 Approach <- rep(c("Approach I", "Approach II(a)", "Approach II(b)", "Approach II(c)", "Approach III(a) w=0.25", "Approach III(a) w=0.5", "Approach III(b) w=0.25","Approach III(b) w=0.5"), 8)
 dataset <- rep(c("SCQM MSE", "SCQM Bias", "BSRBR-RA MSE", "BSRBR-RA Bias"), each = 8)
 #dataset <- factor(dataset, levels = c("SCQM MSE", "SCQM Bias", "BSRBR-RA MSE", "BSRBR-RA Bias"))
@@ -14,18 +14,18 @@ value <- c(1.44, 1.54, 1.59, 1.46, 1.54, 1.53, 1.47, 1.47,
            -0.05, 0.11, 0.02, -0.24, -0.17, -0.09, -0.38, -0.35
            )
 
-max.height <- c(rep(3, 8),
-                rep(0.5, 8),
-                rep(3, 8),
-                rep(0.5, 8),
-                rep(3, 8),
+max.height <- c(rep(2.5, 8),
+                rep(0.3, 8),
+                rep(2.5, 8),
+                rep(0.3, 8),
+                rep(2.5, 8),
                 rep(1, 8),
-                rep(3, 8),
-                rep(0.5, 8)
+                rep(2.5, 8),
+                rep(0.25, 8)
                 )
 dat <- data.frame(validation, Approach, value = value)
 dat$dataset <- factor(dataset, levels = c("SCQM MSE", "BSRBR-RA MSE", "SCQM Bias", "BSRBR-RA Bias"))
-dat$validation <- factor(validation, levels = c("internal", "external"))
+dat$validation <- factor(validation, levels = c("Internal validation", "Internal-external validation"))
 
 library(reshape2)
 library(ggplot2)
