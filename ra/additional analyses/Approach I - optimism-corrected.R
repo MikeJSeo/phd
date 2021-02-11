@@ -1,4 +1,6 @@
-setwd("~/GitHub/phd/ra/R files")
+
+setwd("C:/Users/mike/Desktop/Github/phd/ra/R files")
+#setwd("~/GitHub/phd/ra/R files")
 source("helpful.functions.R")
 
 library(readxl)
@@ -7,7 +9,8 @@ library(tidyverse)
 library(mice)
 library(rjags)
 
-setwd("C:/Users/ms19g661/Desktop")
+#setwd("C:/Users/ms19g661/Desktop")
+setwd("C:/Users/mike/Desktop/datasets/ra")
 
 # xlsx files
 mydata <- read_excel("ra_dataset.xlsx")
@@ -15,7 +18,8 @@ BSRBR <- mydata %>% filter(study == "BSRBR")
 SCQM <- mydata %>% filter(study == "SCQM")
 
 # second stage analysis
-setwd("C:/Users/ms19g661/Desktop/RData")
+#setwd("C:/Users/ms19g661/Desktop/RData")
+setwd("C:/Users/mike/Desktop/datasets/ra/RData")
 load("BSRBR-ApproachI-bayesLASSO.RData")
 load("SCQM-ApproachI-bayesLASSO.Rdata")
 
@@ -42,13 +46,14 @@ prediction_SCQM <- findPrediction(SCQM, coefs = r2)
 performance_SCQM <- findPerformance(prediction_SCQM)
 apparent_performance_SCQM <- unlist(lapply(performance_SCQM, mean))
 
-setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files") #set the location to where JAGS file exists
+setwd("C:/Users/mike/Desktop/Github/phd/ra/JAGS files")
+#setwd("C:/Users/ms19g661/Documents/GitHub/phd/ra/JAGS files")
 
 ###########Calculating optimism: SCQM
 
 set.seed(1)
-optimism <- matrix(NA, nrow = 200, ncol = 8)
-colnames(optimism) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3")
+optimism <- matrix(NA, nrow = 200, ncol = 9)
+colnames(optimism) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3", "rsquared")
 for(ii in 1:200){
  
   SCQM_bootstrap <- SCQM[sample(1:dim(SCQM)[1], replace = TRUE),]

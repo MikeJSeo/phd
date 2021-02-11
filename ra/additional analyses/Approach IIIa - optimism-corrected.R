@@ -84,8 +84,8 @@ apparent_performance_BSRBR_50 <- unlist(lapply(performance_BSRBR_50, mean))
 
 ##### Finding optimism: SCQM
 set.seed(1)
-optimism <- matrix(NA, nrow = 200, ncol = 8)
-colnames(optimism) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3")
+optimism <- matrix(NA, nrow = 200, ncol = 9)
+colnames(optimism) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3", "rsquared")
 for(ii in 1:200){
 
   SCQM_bootstrap <- SCQM[sample(1:dim(SCQM)[1], replace = TRUE),]
@@ -111,8 +111,8 @@ optimism_corrected_performance_SCQM_25 <- apparent_performance_SCQM_25 - optimis
 
 
 set.seed(1)
-optimism2 <- matrix(NA, nrow = 200, ncol = 8)
-colnames(optimism2) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3")
+optimism2 <- matrix(NA, nrow = 200, ncol = 9)
+colnames(optimism2) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3", "rsquared")
 for(ii in 1:200){
   
   SCQM_bootstrap <- SCQM[sample(1:dim(SCQM)[1], replace = TRUE),]
@@ -139,8 +139,8 @@ optimism2_corrected_performance_SCQM_50 <- apparent_performance_SCQM_50 - optimi
 
 ##### Finding optimism: BSRBR
 set.seed(1)
-optimism3 <- matrix(NA, nrow = 200, ncol = 8)
-colnames(optimism3) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3")
+optimism3 <- matrix(NA, nrow = 200, ncol = 9)
+colnames(optimism3) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3", "rsquared")
 for(ii in 1:200){
   
   BSRBR_bootstrap <- BSRBR[sample(1:dim(BSRBR)[1], replace = TRUE),]
@@ -167,8 +167,8 @@ optimism3_corrected_performance_BSRBR_25 <- apparent_performance_BSRBR_25 - opti
 
 
 set.seed(1)
-optimism4 <- matrix(NA, nrow = 200, ncol = 8)
-colnames(optimism4) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3")
+optimism4 <- matrix(NA, nrow = 200, ncol = 9)
+colnames(optimism4) <- c("mse", "bias", "mse1", "bias1", "mse2", "bias2", "mse3", "bias3", "rsquared")
 for(ii in 1:200){
   
   BSRBR_bootstrap <- BSRBR[sample(1:dim(BSRBR)[1], replace = TRUE),]
