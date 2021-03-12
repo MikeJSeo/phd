@@ -1,4 +1,4 @@
-
+library(RColorBrewer)
 
 validation <- c(rep("Internal validation", 8*4), c(rep("Internal-external validation", 8*4)))    
 Approach <- rep(c("Approach I", "Approach II(a)", "Approach II(b)", "Approach II(c)", "Approach III(a) w=0.25", "Approach III(a) w=0.5", "Approach III(b) w=0.25","Approach III(b) w=0.5"), 8)
