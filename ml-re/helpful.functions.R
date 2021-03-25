@@ -87,6 +87,29 @@ findPredictionCBT <- function(crossdata, modelname){
       }
       predictions[studyid] <- NULL
       predictions[[studyid]] <- colMeans(do.call(rbind, predictions_all))
+    } else if(modelname == "keras"){
+      model <- keras_model_sequential() %>%
+        layer_dense(units = 64, activation = "relu", input_shape = dim(data)[2] - 2) %>%
+        layer_dense(units = 64, activation = "relu") %>%
+        layer_dense(units = 1) %>%
+        
+        compile(
+          loss = "mse",
+          optimizer = optimizer_rmsprop(),
+          metrics = list("mean_squared_error")
+        )
+      
+      x_train <- as.matrix(training_set %>% select(-study, -y) %>% mutate_if(is.factor, as.numeric)) 
+      y_train <- as.numeric(training_set$y)
+      
+      fit1 <- model %>% 
+        fit(
+          x = x_train,
+          y = y_train
+        )
+      
+      predictions[[studyid]] <- predict(model, x = as.matrix(testing_set %>% select(-study, -y) %>% mutate_if(is.factor, as.numeric)) )
+      
     }
     print(paste0("finished: ", studyid))
   }

@@ -1,7 +1,8 @@
 # load up data
 library(dplyr)
 
-setwd("C:/Users/ms19g661/Desktop")
+#setwd("C:/Users/ms19g661/Desktop")
+setwd("C:/Users/mike/Desktop")
 data <- read.csv("dataCBT.csv")
 
 data <- as_tibble(data)
@@ -9,7 +10,8 @@ cols <- c("study", "gender", "relstat")
 data <- data %>% mutate_at(cols, as.factor)
 
 # use fully observed data
-data <- data %>% na.omit()
+data <- data %>% na.omit() %>%
+  mutate(across(c("baseline", "age"), scale))
 
 
 ###############################
@@ -24,7 +26,8 @@ library(lme4)
 library(gbm)
 library(keras)
 
-setwd("~/GitHub/phd/ml-re")
+#setwd("~/GitHub/phd/ml-re")
+setwd("C:/Users/mike/Desktop/Github/phd/ml-re")
 source("helpful.functions.R")
 
 #lm
@@ -59,27 +62,6 @@ apply(gbmperf2, 1, mean)
 
 #https://tensorflow.rstudio.com/tutorials/beginners/basic-ml/tutorial_basic_regression/
 #keras
-model <- keras_model_sequential() %>%
-  layer_dense(units = 64, activation= "relu", input_shape = 5) %>%
-  layer_dense(units = 64, activation = "relu") %>%
-  layer_dense(units = 1)
-
-# Backpropagation
-compile(
-  loss = 'mse',
-  optimizer = optimizer_rmsprop(),
-  metrics = list("mean_absolute_error")
-)
-
-fit1 <- model %>%
-  fit(
-    x = mnist_x,
-    y = mnist_y,
-    epochs = 25,
-    batch_size = 128,
-    validation_split = 0.2,
-    verbose = FALSE
-  )
-
-# Display output
-fit1
+keraspred1 <- findPredictionCBT(data, "keras")
+kerasperf1 <- findPerformanceCBT(data, keraspred1)
+apply(kerasperf1, 1, mean)
