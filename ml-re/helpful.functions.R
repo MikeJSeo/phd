@@ -3,7 +3,12 @@ findPredictionCBT <- function(crossdata, modelname){
   
   nstudy <- length(unique(crossdata$study))
   studyname <- unique(crossdata$study)
-  predictions <- list()
+  predictions0 <- list() #training prediction
+  predictions <- list() #testing prediction
+  
+  if(modelname == "randomforest_h2o"){
+    h2o.init()
+  }
   
   for(studyid in 1:nstudy){
     training_set <- crossdata %>% filter(study != studyname[studyid])
@@ -13,10 +18,61 @@ findPredictionCBT <- function(crossdata, modelname){
       lm.mod <- lm(y ~ (baseline + gender + age + relstat) * treat, data = training_set)
       bb <- model.matrix(y ~ (baseline + gender + age + relstat) * treat, data = testing_set)
       predictions[[studyid]] <- bb %*% coef(lm.mod)
+      
+      bb0 <- model.matrix(y ~ (baseline + gender + age + relstat) * treat, data = training_set)
+      predictions0[[studyid]] <- bb0 %*% coef(lm.mod)
     } else if(modelname == "lmer"){
       lmer.mod <- lmer(y ~ (baseline + gender + age + relstat) * treat + (1 |study), data = training_set)
       bb <- model.matrix(y ~ (baseline + gender + age + relstat) * treat, data = testing_set)
       predictions[[studyid]] <- bb %*% fixef(lmer.mod)
+      
+      bb0 <- model.matrix(y ~ (baseline + gender + age + relstat) * treat, data = training_set)
+      predictions0[[studyid]] <- bb0 %*% fixef(lmer.mod)
+    } else if(modelname == "randomforest_h2o"){
+      
+      training_set <-  as.matrix(training_set %>% select(-study) %>% mutate_if(is.factor, as.numeric))
+      testing_set <-  as.matrix(testing_set %>% select(-study) %>% mutate_if(is.factor, as.numeric))  
+      #  select(training_set, -c("study"))
+      #testing_set <- select(testing_set, -c("study"))
+      
+      training_set <- as.h2o(training_set)
+      testing_set <- as.h2o(testing_set)
+      
+      # best_rf <- h2o.randomForest(
+      #   x = c("treat", "baseline", "gender", "age", "relstat"), 
+      #   y = "y", training_frame = training_set, ntrees = 2000,
+      #   max_depth = 20, min_rows = 1, sample_rate = 0.8, nfolds = 10,
+      #   fold_assignment = "Modulo", keep_cross_validation_predictions = TRUE,
+      #   seed = 123, stopping_rounds = 50, stopping_metric = "RMSE",
+      #   stopping_tolerance = 0
+      # )
+      # best_rf <- h2o.randomForest(
+      #   x = c("treat", "baseline", "gender", "age", "relstat"), 
+      #   y = "y", training_frame = training_set, nfolds = 10,
+      #   fold_assignment = "Modulo", keep_cross_validation_predictions = TRUE,
+      #   seed = 123, stopping_rounds = 50, stopping_metric = "RMSE",
+      #   stopping_tolerance = 0
+      # )
+      # best_rf <- h2o.randomForest(
+      #   x = c("treat", "baseline", "gender", "age", "relstat"), 
+      #   y = "y", training_frame = training_set, stopping_rounds = 50, stopping_metric = "RMSE",
+      #   stopping_tolerance = 0
+      # )
+      
+      best_glm <- h2o.glm(
+        x = c("treat", "baseline", "gender", "age", "relstat"), 
+        y = "y", training_frame = training_set,
+        interaction_pairs = list(
+          c("treat", "baseline"),
+          c("treat", "gender"),
+          c("treat", "age"),
+          c("treat", "relstat")
+        )
+      )
+      predictions[[studyid]] <- as.vector(h2o.predict(best_glm, newdata = testing_set))
+      
+      h2o.removeAll()
+
     } else if(modelname == "randomforest_nostudy"){
       
       training_set <- select(training_set, -c("study"))
@@ -25,29 +81,38 @@ findPredictionCBT <- function(crossdata, modelname){
       rf1 <- ranger(
         y ~ .,
         data = training_set,
-        mtry = floor(n_features/3),
+        mtry = floor(5/3),
         respect.unordered.factors = TRUE,
         seed = 123
       )
       predictions[[studyid]] <- predict(rf1, data = testing_set)$prediction
+      predictions0[[studyid]] <- predict(rf1, data = training_set)$prediction
+      
     } else if(modelname == "randomforest_withstudy"){
       
       rf1 <- ranger(
         y ~ .,
         data = training_set,
-        mtry = floor(n_features/3),
+        mtry = floor(5 /3),
         respect.unordered.factors = TRUE,
         seed = 123
       )
       
       predictions_all <- list()
+      predictions0_all <- list()
       for(i in 1:nstudy){
         if(studyid != studyname[i]){
-          testing_set <- testing_set %>% mutate(study = studyname[i])
-          predictions_all[[i]] <- predict(rf1, data = testing_set)$prediction
+          testing_set_changed <- testing_set %>% mutate(study = studyname[i])
+          predictions_all[[i]] <- predict(rf1, data = testing_set_changed)$prediction
+          
+          training_set_changed <- training_set %>% mutate(study = studyname[i])
+          predictions0_all[[i]] <- predict(rf1, data = training_set_changed)$prediction
         }
       }
       predictions_all[studyid] <- NULL
+      predictions0_all[studyid] <- NULL
+      
+      predictions0[[studyid]] <- colMeans(do.call(rbind, predictions0_all))
       predictions[[studyid]] <- colMeans(do.call(rbind, predictions_all))
     } else if(modelname == "gbm_nostudy"){
       
@@ -85,7 +150,7 @@ findPredictionCBT <- function(crossdata, modelname){
           predictions_all[[i]] <- predict(gbm1, newdata = testing_set)
         }
       }
-      predictions[studyid] <- NULL
+      predictions_all[studyid] <- NULL
       predictions[[studyid]] <- colMeans(do.call(rbind, predictions_all))
     } else if(modelname == "keras"){
       model <- keras_model_sequential() %>%
@@ -110,13 +175,106 @@ findPredictionCBT <- function(crossdata, modelname){
       
       predictions[[studyid]] <- predict(model, x = as.matrix(testing_set %>% select(-study, -y) %>% mutate_if(is.factor, as.numeric)) )
       
+    } else if(modelname == "stacking"){
+      
+      #training_set <-  as.matrix(training_set %>% select(-study) %>% mutate_if(is.factor, as.numeric))
+      training_set <-  as.matrix(training_set %>% mutate_if(is.factor, as.numeric))
+      testing_set <-  as.matrix(testing_set %>% select(-study) %>% mutate_if(is.factor, as.numeric))  
+
+      training_set <- as.h2o(training_set)
+      testing_set <- as.h2o(testing_set)
+      
+      best_glm <- h2o.glm(
+        x = c("treat", "baseline", "gender", "age", "relstat"), 
+        y = "y", training_frame = training_set,
+        interaction_pairs = list(
+          c("treat", "baseline"),
+          c("treat", "gender"),
+          c("treat", "age"),
+          c("treat", "relstat")
+        ), fold_column = "study",
+        keep_cross_validation_predictions = TRUE
+      )
+      
+      
+      
     }
     print(paste0("finished: ", studyid))
+  }
+  return(list(predictions = predictions, predictions0 = predictions0))
+}
+
+find_stacked_result <- function(crossdata, Z_train, y_train, Z_test){
+
+  nstudy <- length(unique(crossdata$study))
+  studyname <- unique(crossdata$study)
+  
+  for(studyid in 1:nstudy){
+    Z <- Z_train[[studyid]]
+    colnames(Z) <- 1:dim(Z)[2]
+    y <- y_train[[studyid]]
+    
+    Z_t <- Z_test[[studyid]]
+    colnames(Z_t) <- 1:dim(Z_t)[2]
+    
+    data_new <- as.data.frame(cbind(y = y, Z = Z))
+    print(data_new)
+    
+    gbm1 <- gbm(
+      formula = y ~ .,
+      data = data_new,
+      distribution = "gaussian",
+      n.trees = 5000,
+      shrinkage = 0.1, 
+      interaction.depth = 3,
+      n.minobsinnode = 10,
+      cv.folds = 10
+    )
+    predictions[[studyid]] <- predict(gbm1, newdata = as.data.frame(Z_t))
   }
   return(predictions)
 }
 
-findPerformanceCBT <- function(crossdata, predictions){
+stacked_model_y <- function(crossdata){
+  
+  ystore <- list()
+  nstudy <- length(unique(crossdata$study))
+  studyname <- unique(crossdata$study)
+  
+  for(studyid in 1:nstudy){
+    training_set <- crossdata %>% filter(study != studyname[studyid])
+    ystore[[studyid]] <- training_set$y
+  }
+  return(ystore)
+}
+
+
+stacked_model_y_test <- function(crossdata){
+  
+  ystore <- list()
+  nstudy <- length(unique(crossdata$study))
+  studyname <- unique(crossdata$study)
+  
+  for(studyid in 1:nstudy){
+    testing_set <- crossdata %>% filter(study == studyname[studyid])
+    ystore[[studyid]] <- testing_set$y
+  }
+  return(ystore)
+}
+
+
+
+stacked_model <- function(pred){
+  
+  #matrix(unlist(pred0), ncol = length(pred0))
+  prednew <- pred[[1]]
+  for(i in 2:length(pred)){
+    prednew <- mapply(cbind, prednew, pred[[i]])
+  }
+  return(prednew)
+}
+
+findPerformanceCBT <- function(crossdata, pred){
   
   nstudy <- length(unique(crossdata$study))
   studyname <- unique(crossdata$study)
@@ -126,15 +284,15 @@ findPerformanceCBT <- function(crossdata, predictions){
     
     testing_set <- crossdata[crossdata$study == studyname[studyid],]
     
-    performances[1,studyid] <- findMSE(testing_set$y, predictions[[studyid]])
-    performances[2,studyid] <- findMAE(testing_set$y, predictions[[studyid]])
-    performances[3,studyid] <- findRsquared(testing_set$y, predictions[[studyid]])
+    performances[1,studyid] <- findMSE(testing_set$y, pred[[studyid]])
+    performances[2,studyid] <- findMAE(testing_set$y, pred[[studyid]])
+    performances[3,studyid] <- findRsquared(testing_set$y, pred[[studyid]])
     rownames(performances) <- c("MSE", "MAE", "Rsquared")
   }
   return(performances)
 }
 
-
+########################################
 
 findPrediction <- function(crossdata, modelname){
 
