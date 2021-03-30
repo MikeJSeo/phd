@@ -177,9 +177,12 @@ findPredictionCBT <- function(crossdata, modelname){
       
     } else if(modelname == "stacking"){
       
+      #change study label
+      
       #training_set <-  as.matrix(training_set %>% select(-study) %>% mutate_if(is.factor, as.numeric))
-      training_set <-  as.matrix(training_set %>% mutate_if(is.factor, as.numeric))
-      testing_set <-  as.matrix(testing_set %>% select(-study) %>% mutate_if(is.factor, as.numeric))  
+      training_set <-  as.matrix(training_set %>% mutate(study = factor(study)) %>% mutate_if(is.factor, as.numeric))
+      #testing_set <-  as.matrix(testing_set %>% select(-study) %>% mutate_if (is.factor, as.numeric))
+      testing_set <-  as.matrix(testing_set %>% mutate(study = factor(study)) %>% mutate_if(is.factor, as.numeric))
 
       training_set <- as.h2o(training_set)
       testing_set <- as.h2o(testing_set)
@@ -196,8 +199,39 @@ findPredictionCBT <- function(crossdata, modelname){
         keep_cross_validation_predictions = TRUE
       )
       
+      best_rf <- h2o.randomForest(
+        x = c("treat", "baseline", "gender", "age", "relstat"),
+        y = "y", training_frame = training_set, ntrees = 1000,
+        max_depth = 20, min_rows = 1, sample_rate = 0.632, 
+        fold_column = "study", keep_cross_validation_predictions = TRUE,
+        seed = 123, stopping_rounds = 50, stopping_metric = "RMSE",
+        stopping_tolerance = 0
+      )
       
+      best_gbm <- h2o.gbm(
+        x = c("treat", "baseline", "gender", "age", "relstat"),
+        y = "y", training_frame = training_set, ntrees = 5000, learn_rate = 0.01,
+        max_depth = 7, min_rows = 5, sample_rate = 0.8,
+        fold_column = "study", keep_cross_validation_predictions = TRUE,
+        seed = 123, stopping_rounds = 50, stopping_metric = "RMSE",
+        stopping_tolerance = 0  
+      )
       
+      ensemble_tree <- h2o.stackedEnsemble(
+        x = c("treat", "baseline", "gender", "age", "relstat"),
+        y = "y", training_frame = training_set, model_id = "my_tree_ensemble",
+        base_models = list(best_glm, best_rf, best_gbm),
+        metalearner_algorithm = "drf"
+      )
+      
+      # ensemble_tree <- h2o.stackedEnsemble(
+      #   x = X, y = Y, training_frame = train_h2o, model_id = "my_tree_ensemble",
+      #   base_models = list(best_glm, best_rf, best_gbm, best_xgb),
+      #   metalearner_algorithm = "drf"
+      # )
+      
+      predictions[[studyid]] <- as.data.frame(h2o.predict(object = ensemble_tree, newdata = testing_set))
+      h2o.removeAll()
     }
     print(paste0("finished: ", studyid))
   }

@@ -1,8 +1,8 @@
 # load up data
 library(dplyr)
 
-setwd("C:/Users/ms19g661/Desktop")
-#setwd("C:/Users/mike/Desktop")
+#setwd("C:/Users/ms19g661/Desktop")
+setwd("C:/Users/mike/Desktop")
 data <- read.csv("dataCBT.csv")
 
 data <- as_tibble(data)
@@ -25,9 +25,17 @@ library(lme4)
 library(gbm)
 library(keras)
 
-setwd("~/GitHub/phd/ml-re")
-#setwd("C:/Users/mike/Desktop/Github/phd/ml-re")
+#setwd("~/GitHub/phd/ml-re")
+setwd("C:/Users/mike/Desktop/Github/phd/ml-re")
 source("helpful.functions.R")
+
+
+#you could fit the same model per study, and then meta-analyse coefficients
+#two stage
+
+
+
+
 
 #lm
 lmpred1 <- findPredictionCBT(data, "lm")
@@ -82,3 +90,9 @@ Z_test <- stacked_model(pred)
 stackingpred1 <- find_stacked_result(data, Z_train, y_train, Z_test)
 stackingperf1 <- findPerformanceCBT(data, stackingpred1)
 apply(stackingperf1, 1, mean)
+
+#stacking
+stackpred1 <- findPredictionCBT(data, "stacking")
+stackperf1 <- findPerformanceCBT(data, stackpred1$predictions)
+apply(stackperf1, 1, mean)
+
