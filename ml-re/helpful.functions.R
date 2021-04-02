@@ -1,8 +1,8 @@
 
 findPredictionCBT <- function(crossdata, modelname){
   
-  nstudy <- length(unique(crossdata$study))
   studyname <- unique(crossdata$study)
+  nstudy <- length(studyname)
   predictions0 <- list() #training prediction
   predictions <- list() #testing prediction
   
@@ -14,7 +14,31 @@ findPredictionCBT <- function(crossdata, modelname){
     training_set <- crossdata %>% filter(study != studyname[studyid])
     testing_set <- crossdata %>% filter(study == studyname[studyid])
 
-    if(modelname == "lm"){
+    if(modelname == "two-stage"){
+      
+      studyname2 <- unique(training_set$study)
+      nstudy2 <- length(studyname2)
+      
+      varcov_store <- list()
+      coefs_store <- matrix(NA, nrow = length(unique(training_set$study)), ncol = 10)
+      
+      for(i in 1:nstudy2){
+        if(!studyname2[i] %in% c("Sheeber, 2012", "Pugh, 2016" )){
+          dsi <- training_set %>% filter(study == studyname2[i])
+          fit <- lm(y ~ (baseline + gender + age + relstat) * treat, data = dsi)
+          coefs_store[i,] <- coefficients(fit)
+          varcov_store[[i]] <- vcov(fit)  
+        }
+      }
+      coefs_store <- coefs_store[complete.cases(coefs_store),]
+      varcov_store <- plyr::compact(varcov_store)
+      fit2 <- mvmeta(coefs_store ~ 1, S = varcov_store)
+      
+      bb <- model.matrix(y ~ (baseline + gender + age + relstat) * treat, data = testing_set)
+      predictions[[studyid]] <- bb %*% summary(fit2)$coefficients[,1]
+    } else if(modelname == "average_prediction"){
+      
+    } else if(modelname == "lm"){
       lm.mod <- lm(y ~ (baseline + gender + age + relstat) * treat, data = training_set)
       bb <- model.matrix(y ~ (baseline + gender + age + relstat) * treat, data = testing_set)
       predictions[[studyid]] <- bb %*% coef(lm.mod)

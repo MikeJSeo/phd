@@ -9,6 +9,8 @@ data <- as_tibble(data)
 cols <- c("study", "gender", "relstat")
 data <- data %>% mutate_at(cols, as.factor)
 
+data %>% summarize_all(funs(sum(is.na(.))))
+
 # use fully observed data
 data <- data %>% na.omit() %>%
   mutate(across(c("baseline", "age"), scale))
@@ -24,6 +26,7 @@ library(ranger)
 library(lme4)
 library(gbm)
 library(keras)
+library(mvmeta)
 
 #setwd("~/GitHub/phd/ml-re")
 setwd("C:/Users/mike/Desktop/Github/phd/ml-re")
@@ -32,9 +35,9 @@ source("helpful.functions.R")
 
 #you could fit the same model per study, and then meta-analyse coefficients
 #two stage
-
-
-
+twostagepred1 <- findPredictionCBT(data, "two-stage")
+twostageperf1 <- findPerformanceCBT(data, twostagepred1$predictions)
+apply(twostageperf1, 1, mean)
 
 
 #lm
