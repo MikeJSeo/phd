@@ -1,8 +1,8 @@
 # load up data
 library(dplyr)
 
-#setwd("C:/Users/ms19g661/Desktop")
-setwd("C:/Users/mike/Desktop")
+setwd("C:/Users/ms19g661/Desktop")
+#setwd("C:/Users/mike/Desktop")
 data <- read.csv("dataCBT.csv")
 
 data <- as_tibble(data)
@@ -14,6 +14,9 @@ data %>% summarize_all(funs(sum(is.na(.))))
 # use fully observed data
 data <- data %>% na.omit() %>%
   mutate(across(c("baseline", "age"), scale))
+
+
+#quantifying heterogeneity
 
 ###############################
 #####machine learning methods
