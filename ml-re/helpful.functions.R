@@ -6,7 +6,7 @@ findPredictionCBT <- function(crossdata, modelname){
   predictions0 <- list() #training prediction
   predictions <- list() #testing prediction
   
-  if(modelname == "randomforest_h2o"){
+  if(modelname %in% c("stacking","randomforest_h2o")){
     h2o.init()
   }
   
@@ -38,6 +38,74 @@ findPredictionCBT <- function(crossdata, modelname){
       predictions[[studyid]] <- bb %*% summary(fit2)$coefficients[,1]
     } else if(modelname == "average_prediction"){
       
+      studyname2 <- unique(training_set$study)
+      nstudy2 <- length(studyname2)
+
+      bb <- model.matrix(y ~ (baseline + gender + age + relstat) * treat, data = testing_set)
+      bb2 <- model.matrix(y ~ (baseline + age + relstat) * treat, data = testing_set)
+      
+      prediction_store <- matrix(NA, dim(bb)[1], nstudy2)
+      
+      
+      for(i in 1:nstudy2){
+        if(!studyname2[i] %in% c("Sheeber, 2012", "Pugh, 2016" )){
+          dsi <- training_set %>% filter(study == studyname2[i])
+          fit <- lm(y ~ (baseline + gender + age + relstat) * treat, data = dsi)
+          prediction_store[,i] <- bb %*% summary(fit)$coefficients[,1]
+        } else {
+          dsi <- training_set %>% filter(study == studyname2[i])
+          fit <- lm(y ~ (baseline + age + relstat) * treat, data = dsi)
+          prediction_store[,i] <- bb2 %*% summary(fit)$coefficients[,1]
+        }
+      }
+      predictions[[studyid]] <- apply(prediction_store, 1, mean)
+      
+    } else if(modelname == "lasso"){
+      
+      data_glmnet <- model.matrix(y~ (baseline + gender + age + relstat)*treat, data = training_set)
+      data_glmnet <- data_glmnet[,-1]
+      data_glmnet <- cbind(y = training_set$y, data_glmnet = data_glmnet)
+      p.fac <- c(rep(0, 4), 0, rep(1,4)) #No shrinkage for treatment effect and baseline effect
+      
+      lambdas <- 10^seq(3, -3, by = -.1) #manually specify lambda value to cross validate
+      cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac, family = "gaussian", type.measure = "mse", standardize = FALSE, alpha = 1, lambda = lambdas)
+      coef(cvfit, s = "lambda.min")
+      best_coef <- as.numeric(coef(cvfit, s = "lambda.min"))
+      
+      bb <- model.matrix(y ~ (baseline + gender + age + relstat) * treat, data = testing_set)
+      predictions[[studyid]] <- bb %*% best_coef
+      
+    } else if(modelname == "ridge"){
+      
+      data_glmnet <- model.matrix(y~ (baseline + gender + age + relstat)*treat, data = training_set)
+      data_glmnet <- data_glmnet[,-1]
+      data_glmnet <- cbind(y = training_set$y, data_glmnet = data_glmnet)
+      p.fac <- c(rep(0, 4), 0, rep(1,4)) #No shrinkage for treatment effect and baseline effect
+      
+      lambdas <- 10^seq(3, -3, by = -.1) #manually specify lambda value to cross validate
+      cvfit = cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), penalty.factor = p.fac, family = "gaussian", type.measure = "mse", standardize = FALSE, alpha = 0, lambda = lambdas)
+      coef(cvfit, s = "lambda.min")
+      best_coef <- as.numeric(coef(cvfit, s = "lambda.min"))
+      
+      bb <- model.matrix(y ~ (baseline + gender + age + relstat) * treat, data = testing_set)
+      predictions[[studyid]] <- bb %*% best_coef
+      
+    } else if(modelname == "bipd"){
+      
+      #not complete
+      #X <- training_set %>% select(c("baseline", "gender", "age", "relstat")) %>% as.matrix()
+      #X <- apply(X, 2, as.numeric)
+      #ipd <- with(data, ipdma.model.onestage(y = y, study = as.numeric(study), treat = treat, X = X, response = "normal", shrinkage = "laplace", lambda.prior = list("dgamma",2,0.1)))
+      #samples <- ipd.run(ipd, pars.save = c("a", "beta", "gamma", "delta", "sd", "lambda"))
+      #coefs <- summary(samples)$statistics[,1]
+      
+    } else if(modelname == "lm0"){
+      lm.mod <- lm(y ~ baseline + gender + age + relstat + treat, data = training_set)
+      bb <- model.matrix(y ~ baseline + gender + age + relstat + treat, data = testing_set)
+      predictions[[studyid]] <- bb %*% coef(lm.mod)
+      
+      bb0 <- model.matrix(y ~ baseline + gender + age + relstat + treat, data = training_set)
+      predictions0[[studyid]] <- bb0 %*% coef(lm.mod)
     } else if(modelname == "lm"){
       lm.mod <- lm(y ~ (baseline + gender + age + relstat) * treat, data = training_set)
       bb <- model.matrix(y ~ (baseline + gender + age + relstat) * treat, data = testing_set)

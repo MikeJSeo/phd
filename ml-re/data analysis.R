@@ -1,3 +1,4 @@
+
 # load up data
 library(dplyr)
 
@@ -5,18 +6,27 @@ setwd("C:/Users/ms19g661/Desktop")
 #setwd("C:/Users/mike/Desktop")
 data <- read.csv("dataCBT.csv")
 
+#quantifying heterogeneity
+library(summarytools)
+#view(dfSummary(data), method = "browser")
+
+data %>% group_by(study) %>% summarize_all(~mean(., na.rm = TRUE))
+data %>% group_by(study) %>% summarize_all(~sd(., na.rm = TRUE))
+
+
+# change to factor
 data <- as_tibble(data)
 cols <- c("study", "gender", "relstat")
 data <- data %>% mutate_at(cols, as.factor)
 
-data %>% summarize_all(funs(sum(is.na(.))))
+# count number of NAs
+data %>% summarize_all(~sum(is.na(.)))
 
 # use fully observed data
 data <- data %>% na.omit() %>%
   mutate(across(c("baseline", "age"), scale))
 
 
-#quantifying heterogeneity
 
 ###############################
 #####machine learning methods
@@ -30,9 +40,10 @@ library(lme4)
 library(gbm)
 library(keras)
 library(mvmeta)
+library(bipd)
 
-#setwd("~/GitHub/phd/ml-re")
-setwd("C:/Users/mike/Desktop/Github/phd/ml-re")
+setwd("~/GitHub/phd/ml-re")
+#setwd("C:/Users/mike/Desktop/Github/phd/ml-re")
 source("helpful.functions.R")
 
 
@@ -42,6 +53,26 @@ twostagepred1 <- findPredictionCBT(data, "two-stage")
 twostageperf1 <- findPerformanceCBT(data, twostagepred1$predictions)
 apply(twostageperf1, 1, mean)
 
+#lasso
+lassopred1 <- findPredictionCBT(data, "lasso")
+lassoperf1 <- findPerformanceCBT(data, lassopred1$predictions)
+apply(lassoperf1, 1, mean)
+
+#ridge
+ridgepred1 <- findPredictionCBT(data, "ridge")
+ridgeperf1 <- findPerformanceCBT(data, ridgepred1$predictions)
+apply(ridgeperf1, 1, mean)
+
+
+#average_prediction
+avgpred1 <- findPredictionCBT(data, "average_prediction")
+avgperf1 <- findPerformanceCBT(data, avgpred1$predictions)
+apply(avgperf1, 1, mean)
+
+#lm
+lm0pred1 <- findPredictionCBT(data, "lm0")
+lm0perf1 <- findPerformanceCBT(data, lm0pred1$predictions)
+apply(lm0perf1, 1, mean)
 
 #lm
 lmpred1 <- findPredictionCBT(data, "lm")
