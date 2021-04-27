@@ -5,6 +5,7 @@ library(dplyr)
 setwd("C:/Users/ms19g661/Desktop")
 #setwd("C:/Users/mike/Desktop")
 data <- read.csv("dataCBT.csv")
+#data <- read.csv("data_ICBT.csv")
 
 #quantifying heterogeneity
 library(summarytools)

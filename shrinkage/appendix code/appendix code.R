@@ -1,6 +1,6 @@
 
 #The github library ("bipd") contains functions for generating sample data and running Bayesian IPD-MA methods.
-library(devtools)
+#library(devtools)
 #devtools::install_github("MikeJSeo/bipd") #parallel package take a while to install
 library(bipd) 
 
