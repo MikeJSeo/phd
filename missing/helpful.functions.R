@@ -55,6 +55,17 @@ generate_data <- function(){
 }
   
 
+# function to find complete dataset for each study
+findTestData <- function(testdata, na.count = 1500){
+  
+  sys_studies <- testdata %>% group_by(study) %>% summarise(na_count = sum(is.na(x2)), .groups = "drop" ) %>% filter(na_count == na.count) %>% pull(study)
+  
+  testdata[testdata$study %in% sys_studies,] <- testdata %>% filter(study %in% sys_studies) %>% replace_na(list(x2 = 9999))
+  testdata <- testdata %>% filter(complete.cases(.))
+  
+  return(testdata)
+}
+
 ###############################################################
 ####### cross validation for simulated data ###################
 
@@ -71,11 +82,20 @@ findPrediction <- function(crossdata, method){
     training_set <- crossdata[crossdata$study != studyid,]
     testing_set <- crossdata[crossdata$study == studyid,]
     
+    #use only complete cases to measure performance
+    if(studyid %in% sys_studies){
+      testing_set <- testing_set %>% select(-x2) %>% filter(complete.cases(.))
+    } else{
+      testing_set <- testing_set %>% filter(complete.cases(.))
+    }
+    
     if(method == "naive"){
       
       training_set <- training_set %>% select(-x2) %>% mutate(x1.treat = NA, x3.treat = NA, x4.treat = NA)
-      testing_set <- testing_set %>% select(-x2)
-      
+      if(!studyid %in% sys_studies){
+        testing_set <- testing_set %>% select(-x2)
+      }
+
       #### impute sporadically missing variables
       meth <- make.method(training_set)
       meth[c("x1", "x3", "x4")] <-"2l.pmm"
@@ -98,12 +118,12 @@ findPrediction <- function(crossdata, method){
       impc <- complete(imp, "long", include = "TRUE")
       
       imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
-      prediction.dummy <- matrix(NA, nrow = dim(imp.list[[1]])[1], ncol = length(imp.list))
+      prediction.dummy <- matrix(NA, nrow = dim(testing_set)[1], ncol = length(imp.list))
       
       for(ii in 1:length(imp.list)){
         imp.dummy <- imp.list[[ii]]
-        imp.model <- lmer(y ~ 1 + x1 + x3 + x4 + treat + x1*treat + x3*treat + x4*treat + (1| study), data = imp.dummy)
-        bb <- model.matrix(y ~ (x1 + x3 + x4) * treat, data = imp.dummy)
+        imp.model <- lmer(y ~ 1 + x1 + x3 + x4 + treat + x1*treat + x3*treat + x4*treat + (1| study) + (0 + treat|study), data = imp.dummy)
+        bb <- model.matrix(y ~ (x1 + x3 + x4) * treat, data = testing_set)
         prediction.dummy[,ii] <- bb %*% fixef(imp.model)
       }
       predictions[[studyid]] <- apply(prediction.dummy, 1, mean)
@@ -113,6 +133,54 @@ findPrediction <- function(crossdata, method){
       #coef_fit <- summary(pool(fit))
       #bb <- model.matrix(y ~ (x1 + x3 + x4) * treat, data = testing_set)
       #predictions[[studyid]] <- bb %*% coef_fit[,"estimate"]
+    } else if(method == "imputation"){
+      
+      training_set <- training_set %>% mutate(x1.treat = NA, x2.treat = NA, x3.treat = NA, x4.treat = NA)
+
+      meth <- make.method(training_set)
+      meth[c("x1","x2","x3","x4")] <- "2l.2stage.norm"
+      
+      pred <- make.predictorMatrix(training_set)
+      pred[,] <- 0
+      pred[, "study"] <- -2
+
+      codes <- c(1, 1, 1, 1, 2, rep(1, 3))
+      pred["x1", c("y", "x2", "x3", "x4", "treat", "x2.treat", "x3.treat", "x4.treat")] <- codes
+      pred["x2", c("y", "x1", "x3", "x4", "treat", "x1.treat", "x3.treat", "x4.treat")] <- codes
+      pred["x3", c("y", "x1", "x2", "x4", "treat", "x1.treat", "x2.treat", "x4.treat")] <- codes
+      pred["x4", c("y", "x1", "x2", "x3", "treat", "x1.treat", "x2.treat", "x3.treat")] <- codes
+      
+      # derive interactions
+      meth["x1.treat"] <- "~ I(x1 * treat)"
+      meth["x2.treat"] <- "~ I(x2 * treat)"
+      meth["x3.treat"] <- "~ I(x3 * treat)"
+      meth["x4.treat"] <- "~ I(x4 * treat)"
+      
+      imp <- mice(training_set, pred = pred, meth = meth)
+      impc <- complete(imp, "long", include = "TRUE")
+      
+      imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
+      prediction.dummy <- matrix(NA, nrow = dim(testing_set)[1], ncol = length(imp.list))
+      
+      if(studyid %in% sys_studies){
+        
+        for(ii in 1:length(imp.list)){
+          imp.dummy <- imp.list[[ii]]
+          imp.model <- lmer(y ~ 1 + x1 + x3 + x4 + treat + x1*treat + x3*treat + x4*treat + (1| study) + (0 + treat|study), data = imp.dummy)
+          bb <- model.matrix(y ~ (x1 + x3 + x4) * treat, data = testing_set)
+          prediction.dummy[,ii] <- bb %*% fixef(imp.model)  
+        }
+      } else{
+        
+        for(ii in 1:length(imp.list)){
+          imp.dummy <- imp.list[[ii]]
+          imp.model <- lmer(y ~ 1 + x1 + x2 + x3 + x4 + treat + x1*treat + x2*treat + x3*treat + x4*treat + (1| study) + (0 + treat|study), data = imp.dummy)
+          bb <- model.matrix(y ~ (x1 + x2 + x3 + x4) * treat, data = testing_set)
+          prediction.dummy[,ii] <- bb %*% fixef(imp.model)
+        }
+      }
+      predictions[[studyid]] <- apply(prediction.dummy, 1, mean)
+      
     } else if(method == "average_predictions"){
       
       studyname2 <- unique(training_set$study)
@@ -121,11 +189,9 @@ findPrediction <- function(crossdata, method){
       prediction_store <- matrix(NA, dim(testing_set)[1], nstudy2)
       
       for(i in 1:nstudy2){
-        if(studyname2[i] %in% sys_studies || studyname[i] %in% sys_studies){
+        if(studyname2[i] %in% sys_studies || studyid %in% sys_studies){
           
           training_set_dummy <- training_set %>% select(-x2) 
-          testing_set_dummy <- testing_set %>% select(-x2)
-          
           training_set_dummy <- training_set_dummy %>% filter(study == studyname2[i]) %>% 
             mutate(x1.treat = NA, x3.treat = NA, x4.treat = NA)
 
@@ -149,17 +215,17 @@ findPrediction <- function(crossdata, method){
           impc <- complete(imp, "long", include = "TRUE")
           
           imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
-          prediction.dummy <- matrix(NA, nrow = dim(imp.list[[1]])[1], ncol = length(imp.list))
+          prediction.dummy <- matrix(NA, nrow = dim(testing_set)[1], ncol = length(imp.list))
           
           for(ii in 1:length(imp.list)){
             imp.dummy <- imp.list[[ii]]
             imp.model <- lm(y ~ 1 + x1 + x3 + x4 + treat + x1*treat + x3*treat + x4*treat, data = imp.dummy)
-            bb <- model.matrix(y ~ (x1 + x3 + x4) * treat, data = imp.dummy)
+            bb <- model.matrix(y ~ (x1 + x3 + x4) * treat, data = testing_set)
             prediction.dummy[,ii] <- bb %*% coef(imp.model)
           }
           prediction_store[,i] <- apply(prediction.dummy, 1, mean)
           
-          print(paste0("1st one; ", studyname[i]))
+          print(paste0("1st one; ", studyname2[i]))
 
         } else{
           
@@ -188,12 +254,12 @@ findPrediction <- function(crossdata, method){
           impc <- complete(imp, "long", include = "TRUE")
           
           imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
-          prediction.dummy <- matrix(NA, nrow = dim(imp.list[[1]])[1], ncol = length(imp.list))
+          prediction.dummy <- matrix(NA, nrow = dim(testing_set)[1], ncol = length(imp.list))
           
           for(ii in 1:length(imp.list)){
             imp.dummy <- imp.list[[ii]]
             imp.model <- lm(y ~ 1 + x1 + x2 + x3 + x4 + treat + x1*treat + x2*treat+ x3*treat + x4*treat, data = imp.dummy)
-            bb <- model.matrix(y ~ (x1 + x2 + x3 + x4) * treat, data = imp.dummy)
+            bb <- model.matrix(y ~ (x1 + x2 + x3 + x4) * treat, data = testing_set)
             prediction.dummy[,ii] <- bb %*% coef(imp.model)
           }
           prediction_store[,i] <- apply(prediction.dummy, 1, mean)
@@ -217,15 +283,14 @@ findPrediction <- function(crossdata, method){
 ################################functions to calculate performance #############
 ################################################################################
 
-findPerformance <- function(crossdata, predictions){
+findPerformance <- function(testdata, predictions){
   
-  crossdata <- crossdata[complete.cases(crossdata),] #calculate performance only on complete data
-  nstudy <- length(unique(crossdata$study))
+  nstudy <- length(unique(testdata$study))
   performances <- matrix(NA, nrow = 3, ncol = nstudy)
   
   for(studyid in 1:nstudy){
 
-    testing_set <- crossdata[crossdata$study == studyid,]
+    testing_set <- testdata[testdata$study == studyid,]
 
     performances[1,studyid] <- findMSE(testing_set$y, predictions[[studyid]])
     performances[2,studyid] <- findMAE(testing_set$y, predictions[[studyid]])
