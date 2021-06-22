@@ -29,8 +29,8 @@ ui <- shinyUI(fluidPage(
                 choices=list("No"=0, "Yes"=1),selected=0),
     selectInput("AMNOTAP",label="Use of any medication other than antipsychotics at baseline",
                 choices=list("No"=0, "Yes"=1),selected=1),
-    sliderInput("ADAS_TRANSFORMED_BASE", "Baseline ADAS-cog total score", min = 6, max = 70, value = 34, step = 1),
-    sliderInput("CDR_TRANSFORMED_BASE", "Baseline CDR-SB total score", min = 2, max = 18, value = 9, step = 1)
+    sliderInput("ADAS_TRANSFORMED_BASE", "Baseline ADAS-cog total score", min = 6, max = 70, value = 34, step = 0.1),
+    sliderInput("CDR_TRANSFORMED_BASE", "Baseline CDR-SB total score", min = 2, max = 18, value = 9, step = 0.1)
   ),
   
   
@@ -101,7 +101,7 @@ server <- shinyServer(function(input, output) {
   })
   
   output$text5 <- renderText({
-    "CIBIC-Plus total score after 24 weeks "
+    "CIBIC-Plus score after 24 weeks "
   })
     
   output$text6 <- renderText({
