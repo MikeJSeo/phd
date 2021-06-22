@@ -22,25 +22,32 @@ ui <- shinyUI(fluidPage(
   
   # Sidebar with a slider input for number of bins 
   sidebarPanel(
-    sliderInput("AGE", label = "Age", min = 0, max = 100, value = 75, step = 1),
+    sliderInput("AGE", label = "Age", min = 60, max = 90, value = 75, step = 1),
     selectInput("SEX",label="Gender",
                 choices=list("Male"=0, "Female"=1),selected=1),
-    sliderInput("WEIGHT", label = "Weight (kg)", min = 0, max = 200, value = 62, step = 1),
+    sliderInput("WEIGHT", label = "Weight (kg)", min = 35, max = 115, value = 62, step = 1),
     selectInput("AP",label="Antipsychotic use at baseline",
                 choices=list("No"=0, "Yes"=1),selected=0),
     selectInput("AMNOTAP",label="Use of any medication other than antipsychotics at baseline",
                 choices=list("No"=0, "Yes"=1),selected=1),
-    sliderInput("ADAS_TRANSFORMED_BASE", "Baseline transformed ADAS-cog total score", min = 0, max = 100, value = 34, step = 1),
-    sliderInput("CDR_TRANSFORMED_BASE", "Baseline transformed CDR sum of boxes total score", min = 0, max = 20, value = 9, step = 1)
+    sliderInput("ADAS_TRANSFORMED_BASE", "Baseline transformed ADAS-cog total score", min = 6, max = 70, value = 34, step = 1),
+    sliderInput("CDR_TRANSFORMED_BASE", "Baseline transformed CDR sum of boxes total score", min = 2, max = 18, value = 9, step = 1)
   ),
   
   
   mainPanel(
-    span(textOutput("text0"), style="color:black; font-size: 400%; font-weight: bold"),
-    span(textOutput("text1"), style="color:black; font-size: 200%"),
-    span(textOutput("text2"), style="color:black; font-size: 200%"),
-    span(textOutput("text3"), style="color:black; font-size: 400%; font-weight: bold"),
-    span(textOutput("text4"), style="color:black; font-size: 200%")
+    span(textOutput("text0", inline = TRUE), style="color:black; font-size: 400%; font-weight: bold"),
+    HTML('<br/>'),
+    span(textOutput("text1", inline = TRUE), style="color:black; font-size: 200%"),
+    span(textOutput("text2", inline = TRUE), style="color:blue; font-size: 200%; font-weight: bold"),
+    HTML('<br/>'),
+    span(textOutput("text3", inline = TRUE), style="color:black; font-size: 200%"),
+    span(textOutput("text4", inline = TRUE), style="color:blue; font-size: 200%; font-weight: bold"),
+    HTML('<br/>'),
+    HTML('<br/>'),
+    span(textOutput("text5", inline = TRUE), style="color:black; font-size: 400%; font-weight: bold"),
+    span(textOutput("text6", inline = TRUE), style="color:black; font-size: 200%"),
+    span(textOutput("text7", inline = TRUE), style="color:blue; font-size: 200%; font-weight: bold")
   )      
   ))
   
@@ -76,23 +83,34 @@ server <- shinyServer(function(input, output) {
   })
   
   output$text1 <- renderText({
+    "Predicted outcome for patients taking placebo: "
+  })
+    
+  output$text2 <- renderText({
     data = getOutput()
-    paste0("Predicted outcome for patients taking placebo: ", round(data$ADAS_ypred_mean, digits = 2), ", 95% CrI [", round(data$ADAS_ypred_CrI[1], digits =2), "; ", round(data$ADAS_ypred_CrI[2], digits = 2),"]")
+    paste0(round(data$ADAS_ypred_mean, digits = 1), ", 95% CrI [", round(data$ADAS_ypred_CrI[1], digits = 1), "; ", round(data$ADAS_ypred_CrI[2], digits = 1),"]")
   })
   
-  
-  output$text2 = renderText({
-    data = getOutput()
-    paste0("Patient-specific treatment effect of taking Donepezil: ", round(data$ADAS_IPDMA_mean, digits = 2), ", 95% CrI [", round(data$ADAS_IPDMA_CrI[1], digits =2), "; ", round(data$ADAS_IPDMA_CrI[2], digits = 2),"]")
+  output$text3 = renderText({
+    "Patient-specific treatment effect of taking Donepezil: "
   })
-
-  output$text3 <- renderText({
+  
+  output$text4 <- renderText({
+    data = getOutput()
+    paste0(round(data$ADAS_IPDMA_mean, digits = 1), ", 95% CrI [", round(data$ADAS_IPDMA_CrI[1], digits = 1), "; ", round(data$ADAS_IPDMA_CrI[2], digits = 1),"]")
+  })
+  
+  output$text5 <- renderText({
     "Secondary outcome: CIBIC PLUS TRANSFORMED"
   })
     
-  output$text4 = renderText({
+  output$text6 <- renderText({
+    "Patient-specific treatment effect of taking Donepezil: "
+  })
+  
+  output$text7 <- renderText({
     data = getOutput()
-    paste0("Patient-specific treatment effect of taking Donepezil: ", round(data$CIBIC_IPDMA_mean, digits = 2), ", 95% CrI [", round(data$CIBIC_IPDMA_CrI[1], digits =2), "; ", round(data$CIBIC_IPDMA_CrI[2], digits = 2),"]")
+    paste0(round(data$CIBIC_IPDMA_mean, digits = 1), ", 95% CrI [", round(data$CIBIC_IPDMA_CrI[1], digits = 1), "; ", round(data$CIBIC_IPDMA_CrI[2], digits = 1),"]")
   })
 })
 
