@@ -14,11 +14,10 @@ load("IPDMA-CIBIC-result.RData")
 CIBIC_IPDMA_matrix <- as.matrix(samples[,c("d",paste0("gamma[", 1:7,"]"))])
 
 
-
-
 ui <- shinyUI(fluidPage(
   # Application title
-  titlePanel(h1("IPD-MA and prediction analysis for Donepezil study")),
+  titlePanel(h1("IPD-MA and prediction analysis for donepezil", style="color:black; font-size: 400%; font-weight: bold")), 
+  
   
   # Sidebar with a slider input for number of bins 
   sidebarPanel(
@@ -30,8 +29,8 @@ ui <- shinyUI(fluidPage(
                 choices=list("No"=0, "Yes"=1),selected=0),
     selectInput("AMNOTAP",label="Use of any medication other than antipsychotics at baseline",
                 choices=list("No"=0, "Yes"=1),selected=1),
-    sliderInput("ADAS_TRANSFORMED_BASE", "Baseline transformed ADAS-cog total score", min = 6, max = 70, value = 34, step = 1),
-    sliderInput("CDR_TRANSFORMED_BASE", "Baseline transformed CDR sum of boxes total score", min = 2, max = 18, value = 9, step = 1)
+    sliderInput("ADAS_TRANSFORMED_BASE", "Baseline ADAS-cog total score", min = 6, max = 70, value = 34, step = 1),
+    sliderInput("CDR_TRANSFORMED_BASE", "Baseline CDR-SB total score", min = 2, max = 18, value = 9, step = 1)
   ),
   
   
@@ -46,6 +45,7 @@ ui <- shinyUI(fluidPage(
     HTML('<br/>'),
     HTML('<br/>'),
     span(textOutput("text5", inline = TRUE), style="color:black; font-size: 400%; font-weight: bold"),
+    HTML('<br/>'),
     span(textOutput("text6", inline = TRUE), style="color:black; font-size: 200%"),
     span(textOutput("text7", inline = TRUE), style="color:blue; font-size: 200%; font-weight: bold")
   )      
@@ -79,11 +79,11 @@ server <- shinyServer(function(input, output) {
   })
    
   output$text0<- renderText({
-    "Primary outcome: ADAS TRANSFORMED"
+    "ADAS-cog total score after 24 weeks"
   })
   
   output$text1 <- renderText({
-    "Predicted outcome for patients taking placebo: "
+    "Predicted outcome for patients taking placebo "
   })
     
   output$text2 <- renderText({
@@ -92,7 +92,7 @@ server <- shinyServer(function(input, output) {
   })
   
   output$text3 = renderText({
-    "Patient-specific treatment effect of taking Donepezil: "
+    "Patient-specific treatment effect of taking donepezil over placebo "
   })
   
   output$text4 <- renderText({
@@ -101,11 +101,11 @@ server <- shinyServer(function(input, output) {
   })
   
   output$text5 <- renderText({
-    "Secondary outcome: CIBIC PLUS TRANSFORMED"
+    "CIBIC-Plus total score after 24 weeks "
   })
     
   output$text6 <- renderText({
-    "Patient-specific treatment effect of taking Donepezil: "
+    "Patient-specific treatment effect of taking donepezil over placebo "
   })
   
   output$text7 <- renderText({
