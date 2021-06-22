@@ -442,3 +442,11 @@ findPerformance2 <- function(prediction){
   })
   result
 }
+
+relabel.vec <- function(x, order)
+{
+  old.x <- x
+  x <- rep(NA, length(old.x))
+  for (i in seq(length(order))) x[old.x == order[i]] <- i #relabel studies in numerical order starting with one
+  return(x)
+}

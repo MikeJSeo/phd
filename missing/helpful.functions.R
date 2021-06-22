@@ -74,6 +74,7 @@ findPrediction <- function(crossdata, method){
   nstudy <- length(unique(crossdata$study))
   studyname <- unique(crossdata$study)
   predictions <- list()
+  testing_set_store <- list()
   
   # find studies that are systematically missing in x2
   sys_studies <- crossdata %>% group_by(study) %>% summarise(na_count = sum(is.na(x2)), .groups = "drop" ) %>% filter(na_count == 1500) %>% pull(study)
@@ -127,7 +128,7 @@ findPrediction <- function(crossdata, method){
         prediction.dummy[,ii] <- bb %*% fixef(imp.model)
       }
       predictions[[studyid]] <- apply(prediction.dummy, 1, mean)
-      
+      testing_set_store[[studyid]] <- testing_set
       #fit <- with(imp, lmer(y ~ 1 + x1 + x3 + x4 + treat + x1*treat + x3*treat + x4*treat + (1| study)))
       #t(sapply(fit$analyses, fixef))
       #coef_fit <- summary(pool(fit))
@@ -180,6 +181,7 @@ findPrediction <- function(crossdata, method){
         }
       }
       predictions[[studyid]] <- apply(prediction.dummy, 1, mean)
+      testing_set_store[[studyid]] <- testing_set
       
     } else if(method == "average_predictions"){
       
@@ -268,11 +270,295 @@ findPrediction <- function(crossdata, method){
         }
       }
       predictions[[studyid]] <- apply(prediction_store, 1, mean)
+      testing_set_store[[studyid]] <- testing_set
     } 
     
     print(paste0("finished: ", studyid))
   }
   return(predictions)
+}
+
+
+###############################################################
+####### cross validation for real dataset ###################
+
+
+findPrediction2 <- function(crossdata, method){
+    
+  nstudy <- length(unique(crossdata$study))
+  studyname <- unique(crossdata$study)
+  predictions <- list()
+  testing_set_store <- list()
+    
+  for(studyid in 1:nstudy){
+    training_set <- crossdata[crossdata$study != studyid,]
+    testing_set <- crossdata[crossdata$study == studyid,]
+  
+    if(method == "naive"){
+      
+      covariates_naive <- c("baseline", "gender")
+      #covariates_naive <- c("baseline", "gender", "age")
+      #covariates_naive <- c("baseline", "gender", "age", "relstat")
+      
+      training_set <- training_set %>% select(study, y, treat, all_of(covariates_naive))
+      training_set <- createinteractions(training_set, covariates_naive)
+      
+      testing_set <- testing_set %>% select(study, y, treat, all_of(covariates_naive)) %>% filter(complete.cases(.))
+      
+      missingPattern <- findMissingPattern(training_set, covariates_naive)  
+
+      meth <- getCorrectMeth(training_set, missingPattern, method)
+      pred <- getCorrectPred(training_set, missingPattern, method)
+      
+      imp <- mice(training_set, pred = pred, meth = meth)
+      impc <- complete(imp, "long", include = "TRUE")
+      
+      imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
+      prediction.dummy <- matrix(NA, nrow = dim(testing_set)[1], ncol = length(imp.list))
+      
+      for(ii in 1:length(imp.list)){
+        imp.dummy <- imp.list[[ii]]
+        imp.model <- lmer(y ~ (baseline + gender) * treat + (1| study) + (0 + treat|study), data = imp.dummy)
+        bb <- model.matrix(y ~ (baseline + gender) * treat, data = testing_set)
+       
+        #imp.model <- lmer(y ~ (baseline + gender + age) * treat + (1| study) + (0 + treat|study), data = imp.dummy)
+        #bb <- model.matrix(y ~ (baseline + gender + age) * treat, data = testing_set)
+        
+        #imp.model <- lmer(y ~ (baseline + gender + age + relstat) * treat + (1| study) + (0 + treat|study), data = imp.dummy)
+        #bb <- model.matrix(y ~ (baseline + gender + age + relstat) * treat, data = testing_set)
+        prediction.dummy[,ii] <- bb %*% fixef(imp.model)
+      }
+      predictions[[studyid]] <- apply(prediction.dummy, 1, mean)
+      testing_set_store[[studyid]] <- testing_set
+    } else if(method == "imputation"){
+      
+      covariates_all <- c("baseline", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol")
+      
+      training_set <- training_set %>% select(study, y, treat, all_of(covariates_all))
+      training_set <- createinteractions(training_set, covariates_all)
+      #training_set$study <- relabel.vec(training_set$study, order = unique(training_set$study))
+      
+      missingPatternTest <- findMissingPattern(testing_set, covariates_all)  
+      testing_set <- testing_set %>% select(study, y, treat, all_of(missingPatternTest$without_sys_covariates)) %>% filter(complete.cases(.))
+      
+      missingPattern <- findMissingPattern(training_set, covariates_all)  
+      
+      meth <- getCorrectMeth(training_set, missingPattern, method)
+      pred <- getCorrectPred(training_set, missingPattern, method)
+      
+      imp <- mice(training_set, pred = pred, meth = meth)
+      impc <- complete(imp, "long", include = "TRUE")
+      
+      imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
+      prediction.dummy <- matrix(NA, nrow = dim(testing_set)[1], ncol = length(imp.list))
+      
+      for(ii in 1:length(imp.list)){
+        imp.dummy <- imp.list[[ii]]
+        form <- as.formula(paste0("y ~ ", "(", paste(missingPatternTest$without_sys_covariates, collapse= "+"), ") * treat + (1|study) + (0 + treat|study)" ))
+        imp.model <- lmer(form, data = imp.dummy)
+
+        form2 <- as.formula(paste0("y ~ ", "(", paste(missingPatternTest$without_sys_covariates, collapse= "+"), ") * treat" ))
+        bb <- model.matrix(form2, data = testing_set)
+        prediction.dummy[,ii] <- bb %*% fixef(imp.model)
+      }
+      predictions[[studyid]] <- apply(prediction.dummy, 1, mean)
+      testing_set_store[[studyid]] <- testing_set
+    } else if(method == "average_prediction"){
+      
+      covariates_all <- c("baseline", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol")
+      
+      studyname2 <- unique(training_set$study)
+      nstudy2 <- length(studyname2)
+      
+      missingPatternTest <- findMissingPattern(testing_set, covariates_all)  
+      testing_set <- testing_set %>% select(study, y, treat, all_of(missingPatternTest$without_sys_covariates)) %>% filter(complete.cases(.))
+      
+      prediction_store <- matrix(NA, dim(testing_set)[1], nstudy2)
+      
+      for(i in 1:nstudy2){
+        
+        training_set_dummy <- training_set %>% filter(study == studyname2[i])
+        missingPattern <- findMissingPattern(training_set_dummy, covariates_all)  
+        
+        training_set_dummy <- training_set_dummy %>% select(study, y, treat, all_of(missingPattern$without_sys_covariates))
+        training_set_dummy <- createinteractions(training_set_dummy, missingPattern$without_sys_covariates)
+        
+        meth <- getCorrectMeth(training_set_dummy, missingPattern, "average_prediction")
+        pred <- getCorrectPred(training_set_dummy, missingPattern, "average_prediction")
+        
+        imp <- mice(training_set_dummy, pred = pred, meth = meth)
+        impc <- complete(imp, "long", include = "TRUE")
+        imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
+        
+        prediction.dummy <- matrix(NA, nrow = dim(testing_set)[1], ncol = length(imp.list))
+        
+        #use covariates that are not systematically missing in both training and testing dataset
+        without_sys_cov <- intersect(missingPatternTest$without_sys_covariates, missingPattern$without_sys_covariates)
+        
+        for(ii in 1:length(imp.list)){
+          imp.dummy <- imp.list[[ii]]
+          form <- as.formula(paste0("y ~ ", "(", paste(without_sys_cov, collapse= "+"), ") * treat" ))
+          imp.model <- lm(form, data = imp.dummy)
+          
+          bb <- model.matrix(form, data = testing_set)
+          prediction.dummy[,ii] <- bb %*% coef(imp.model)
+        }
+        prediction_store[,i] <- apply(prediction.dummy, 1, mean)
+        
+        print(paste0("2nd one; ", studyname2[i]))
+      }
+      predictions[[studyid]] <- apply(prediction_store, 1, mean)
+      testing_set_store[[studyid]] <- testing_set
+    }
+  }
+  
+  list(predictions = predictions, testing_set_store = testing_set_store)
+
+}
+
+
+#### imputation related tools
+
+getCorrectPred <- function(dummydata, missingPattern, method, outcome_name = "y", cluster_name = "study"){
+  
+
+  if(length(unique(dummydata$study)) == 1){
+    
+    with(missingPattern, {
+      pred <- make.predictorMatrix(dummydata)
+      pred[,] <- 0
+      
+      if(length(spor_covariates) != 0){
+        pred[c(outcome_name, spor_covariates),] <- 1
+        diag(pred) <- 0
+        
+        for(i in 1:length(spor_covariates)){
+          pred[spor_covariates[i], paste0(spor_covariates[i], "treat")] <- 0
+        }
+        pred[c(outcome_name, spor_covariates), cluster_name] <- 0
+      } else{
+        
+        pred[outcome_name,] <- 1
+        diag(pred) <- 0
+        pred[outcome_name, cluster_name] <- 0
+        
+      }
+      pred
+    })
+  } else{
+    
+    with(missingPattern, {
+      pred <- make.predictorMatrix(dummydata)
+      pred[,] <- 0
+      
+      if(method == "naive"){
+        if(length(spor_covariates) != 0){
+          pred[c(outcome_name, spor_covariates),] <- 1
+          pred[c(outcome_name, spor_covariates), "treat"] <- 2 
+          diag(pred) <- 0
+          
+          for(i in 1:length(spor_covariates)){
+            pred[spor_covariates[i], paste0(spor_covariates[i], "treat")] <- 0
+          }
+          pred[c(outcome_name, spor_covariates), cluster_name] <- -2
+        } else{
+          
+          pred[outcome_name,] <- 1
+          pred[outcome_name, "treat"] <- 2
+          diag(pred) <- 0
+          pred[outcome_name, cluster_name] <- -2
+        }  
+      } else if(method == "imputation"){
+        
+        if(length(spor_covariates) != 0){
+          pred[c(outcome_name, spor_covariates),] <- 1
+          pred[c(outcome_name, spor_covariates), "treat"] <- 2 
+          
+          for(i in 1:length(spor_covariates)){
+            pred[spor_covariates[i], paste0(spor_covariates[i], "treat")] <- 0
+          }
+          pred[c(outcome_name, spor_covariates), cluster_name] <- -2
+        }
+        
+        if(length(sys_covariates) != 0){
+          pred[c(outcome_name, sys_covariates),] <- 1
+          pred[c(outcome_name, sys_covariates), "treat"] <- 2 
+          
+          for(i in 1:length(sys_covariates)){
+            pred[sys_covariates[i], paste0(sys_covariates[i], "treat")] <- 0
+          }
+          pred[c(outcome_name, sys_covariates), cluster_name] <- -2
+        }
+        diag(pred) <- 0
+      }
+      
+      pred
+    })
+  }
+}
+
+getCorrectMeth <- function(dummydata, missingP, method, outcome_name = "y", multilevel.meth = "2l.pmm"){
+  
+  meth <- make.method(dummydata)
+  if(length(unique(dummydata$study)) == 1){
+    
+    meth[paste0(missingP$without_sys_covariates, "treat")] <- paste0("~ I(", missingP$without_sys_covariates, " * treat)")
+
+  } else{
+    
+    meth[outcome_name] <- multilevel.meth
+    
+    if(length(missingP$without_sys_covariates) != 0){
+      meth[missingP$without_sys_covariates] <- "2l.2stage.norm"
+    }
+    
+    if(length(missingP$without_sys_covariates) != 0){
+      meth[missingP$without_sys_covariates] <- multilevel.meth
+    }
+    meth[paste0(missingP$without_sys_covariates, "treat")] <- paste0("~ I(", missingP$without_sys_covariates, " * treat)")
+    
+    if(method == "imputation"){
+      if(length(missingP$without_sys_covariates) != 0){
+        meth[paste0(missingP$without_sys_covariates, "treat")] <- paste0("~ I(", missingP$without_sys_covariates, " * treat)")  
+      }
+    }
+  }
+  return(meth)
+}
+
+findMissingPattern <- function(dummydata, covariates){
+  
+  if(length(unique(dummydata$study)) == 1){
+    
+    numberofNAs <- dummydata %>% select(all_of(covariates)) %>% summarize_all(~sum(is.na(.)))
+    studysize = dim(dummydata)[1]
+    sys_missing <- numberofNAs == studysize
+    spor_missing <- numberofNAs < studysize & numberofNAs > 0
+    sys_covariates <- colnames(sys_missing)[which(sys_missing == TRUE)]
+    spor_covariates <- colnames(spor_missing)[which(spor_missing == TRUE)]
+    without_sys_covariates <- colnames(sys_missing)[which(sys_missing == FALSE)]
+  } else{
+    
+    numberofNAs <- dummydata %>% select(study, all_of(covariates)) %>% group_by(study) %>% summarize_all(~sum(is.na(.)))
+    studysize <- dummydata %>% select(study, all_of(covariates)) %>% group_by(study) %>% summarize_all(~length(.))
+    
+    sys_missing <- apply(numberofNAs[,covariates] == studysize[,covariates], 2, any)
+    sys_covariates <- names(sys_missing)[which(sys_missing == TRUE)]
+    
+    spor_missing <- apply(numberofNAs[,covariates], 2, sum) > 0 & !sys_missing
+    spor_covariates <- names(spor_missing)[which(spor_missing == TRUE)]
+    without_sys_covariates <- names(sys_missing)[which(sys_missing == FALSE)]
+  }
+  
+  return(list(sys_missing = sys_missing, spor_missing = spor_missing, sys_covariates = sys_covariates, spor_covariates = spor_covariates, without_sys_covariates = without_sys_covariates))
+}
+
+createinteractions <- function(df, cov) {
+  for(i in 1:length(cov)){
+    varname <- paste0(cov[i], "treat")
+    df[[varname]] <- NA  
+  }
+  df
 }
 
 
@@ -285,12 +571,12 @@ findPrediction <- function(crossdata, method){
 
 findPerformance <- function(testdata, predictions){
   
-  nstudy <- length(unique(testdata$study))
+  nstudy <- length(testdata)
   performances <- matrix(NA, nrow = 3, ncol = nstudy)
   
   for(studyid in 1:nstudy){
 
-    testing_set <- testdata[testdata$study == studyid,]
+    testing_set <- testdata[[studyid]]
 
     performances[1,studyid] <- findMSE(testing_set$y, predictions[[studyid]])
     performances[2,studyid] <- findMAE(testing_set$y, predictions[[studyid]])
@@ -320,4 +606,13 @@ findMSE <- function(y, pred){
   err_mse <- (pred-y)^2
   err_mse <- err_mse[!is.na(err_mse)]
   mean(err_mse)
+}
+
+
+relabel.vec <- function(x, order)
+{
+  old.x <- x
+  x <- rep(NA, length(old.x))
+  for (i in seq(length(order))) x[old.x == order[i]] <- i #relabel studies in numerical order starting with one
+  return(x)
 }
