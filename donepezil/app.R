@@ -16,7 +16,7 @@ CIBIC_IPDMA_matrix <- as.matrix(samples[,c("d",paste0("gamma[", 1:7,"]"))])
 
 ui <- shinyUI(fluidPage(
   # Application title
-  titlePanel(h1("IPD-MA and prediction analysis for donepezil", style="color:black; font-size: 400%; font-weight: bold")), 
+  titlePanel(h1("IPD-MA and prediction analysis of donepezil for Alzheimer's disease", style="color:black; font-size: 400%; font-weight: bold")), 
   
   
   # Sidebar with a slider input for number of bins 
