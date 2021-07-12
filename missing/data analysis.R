@@ -33,7 +33,6 @@ mydata2 <- mydata %>% group_by(study) %>% filter(length(unique(treat)) == 2)
 mydata <- mydata %>% filter(study %in% unique(mydata2$study))
 mydata$study <- relabel.vec(mydata$study, unique(mydata$study))
 
-
 # Delete study that have age missing, relstat missing
 #mydata <- mydata %>% filter(!study %in% c("Gilbody, 2015"))
 #mydata <- mydata %>% filter(!study %in% c("Gilbody, 2015", "Rosso, 2016"))
@@ -56,21 +55,21 @@ mydata[,covariates] <- apply(mydata[,covariates], 2, scale)
 ##############Cross validation
 
 # naive approach
-naivepred <- findPrediction2(mydata, method = "naive")
+naivepred <- findPrediction3(mydata, method = "naive")
 save(naivepred, file = "realdata_naivepred.RData")
 load("realdata_naivepred.RData")
 naiveperf <- findPerformance(naivepred$testing_set_store, naivepred$predictions)
 apply(naiveperf, 1, mean, na.rm = TRUE)
 
 # imputation approach
-imputationpred <- findPrediction2(mydata, method = "imputation")
+imputationpred <- findPrediction3(mydata, method = "imputation")
 save(imputationpred, file = "realdata_imputation.RData")
 load("realdata_imputation.RData")
 imputationperf <- findPerformance(imputationpred$testing_set_store, imputationpred$predictions)
 apply(imputationperf, 1, mean, na.rm = TRUE)
 
 # average prediction approach
-averagepred <- findPrediction2(mydata, method = "average_prediction")
+averagepred <- findPrediction3(mydata, method = "average_prediction")
 save(averagepred, file = "realdata_average_prediction.RData")
 load("realdata_average_prediction.RData")
 averageperf <- findPerformance(averagepred$testing_set_store, averagepred$predictions)

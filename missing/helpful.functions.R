@@ -1,73 +1,350 @@
 
+generate_simulation_data <- function(Ncov = 5, sys_missing_prob = 0.3, signal = "small", nonlinear = "none", effect_modifiers = "none"){
+  
+  Nstudies <- 10
+  Npatients <- sample(150:500, Nstudies, replace = TRUE)
+  Npatients.tot <- sum(Npatients)
+  study <- rep(1:Nstudies, times = Npatients)
+  
+  a <- runif(Nstudies, 0.5, 1.5)
+  a <- rep(a, times = Npatients)
+  
+  ## generate covariates
+  rho <- 0.2
+  Omega <- diag(1, Ncov)
+  for(i in 1:Ncov){
+    for(j in 1:Ncov){
+      Omega[i,j] <- rho^abs(i - j) 
+    }
+  }
+  sigma2 <- 1
+  
+  X <- NULL
+  for(i in 1:Nstudies){
+    mu <- runif(Ncov, -0.5, 0.5)
+    X <- rbind(X, rmvnorm(Npatients[i], mu, Omega * sigma2))
+  }
+  
+  #categorize predictors
+  X[,2] <- ifelse(X[,2] > 0, 1, 0)
+  X[,3] <- ifelse(X[,3] > 1, 1, 0)
+  
+  #nonlinearity
+  if(nonlinear != "none"){
+    X <- cbind(X, X[,1]^2, X[,1]^3, X[,4]^2, X[,4]^3, X[,5]^2, X[,5]^3)  
+  }
+  
+  b <- rep(0.1, Ncov)
+  if(nonlinear == "small"){
+    b <- c(b, rep(0.05, 6))
+  } else if(nonlinear == "large"){
+    b <- c(b, rep(0.2, 6))
+  }
+  
+  if(signal == "small"){
+    e_vec <- rnorm(Npatients.tot, 0, 1) # R squared around 0.1
+  } else if(signal == "large"){
+    e_vec <- rnorm(Npatients.tot, 0, 0.1) #R squared around 0.6
+  }
+  
+  if(effect_modifiers == "yes"){
+    treat <- rbinom(Npatients.tot, 1, 0.4)
+    Xinteraction <- X[,1:Ncov] * treat
+    cvec <- rep(0.05, Ncov)
+    
+    d <- rnorm(Nstudies, 1, 0.5)
+    d <- rep(d, times = Npatients)
+  }
+  
+  if(effect_modifiers == "none"){
+    y <- a + X %*% b + e_vec    
+  } else if(effect_modifiers == "yes"){
+    y <- a + X %*% b + e_vec + d *treat + Xinteraction %*% cvec
+  }
+  
+  summary(lm(y ~ X + treat + Xinteraction))
+  
+  # introduce systematically missing; first two predictors are always observed
+  for(i in 3:Ncov){
+    systematic_missing_study_dummy <- rbinom(Nstudies, 1, sys_missing_prob)
+    #systematic_missing_study <- (1:Nstudies)[systematic_missing_study_dummy == 1]  
+    study_missing <- as.logical(rep(systematic_missing_study_dummy, times = Npatients))  
+    X[,i][study_missing] <- NA
+  }    
+    
+  
+  #X[,1:Ncov] 
+  #dataset <- as_tibble(cbind(y, X, study))
+
+  return(list(y = y , X = X, study = study, systematic_missing_study = systematic_missing_study, dataset = dataset))
+}
+
+findPrediction1 <- function(crossdata, method){
+  
+  nstudy <- length(unique(crossdata$study))
+  studyname <- unique(crossdata$study)
+  predictions <- list()
+
+  sys_studies <- crossdata$systematic_missing_study
+  
+  dataset <- crossdata$dataset
+  
+  for(studyid in 1:nstudy){
+    training_set <- dataset[dataset$study != studyid,]
+    testing_set <- dataset[dataset$study == studyid,]
+    
+    if(method == "naive"){
+      
+      training_set <- training_set %>% select(-x2)
+      testing_set <- testing_set %>% select(-x2)
+      
+      trained_model <- lmer(y ~ 1 + x1 + x3 + (1| study), data = training_set)
+      bb <- model.matrix(y ~ x1 + x3, data = testing_set)
+      predictions[[studyid]] <- bb %*% fixef(trained_model)
+      
+    } else if(method == "imputation"){
+      
+      meth <- make.method(training_set)
+      meth[c("x2")] <- "2l.2stage.norm"
+      
+      pred <- make.predictorMatrix(training_set)
+      pred[,] <- 0
+      pred[, "study"] <- -2
+      
+      codes <- c(1, 1, 1)
+      pred["x2", c("y", "x1", "x3")] <- codes
+
+      imp <- mice(training_set, pred = pred, meth = meth)
+      impc <- complete(imp, "long", include = "TRUE")
+      
+      imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
+      prediction.dummy <- matrix(NA, nrow = dim(testing_set)[1], ncol = length(imp.list))
+      
+      if(studyid %in% sys_studies){
+        
+        for(ii in 1:length(imp.list)){
+          imp.dummy <- imp.list[[ii]]
+          imp.model <- lmer(y ~ 1 + x1 + x3 + (1| study), data = imp.dummy)
+          bb <- model.matrix(y ~ x1 + x3, data = testing_set)
+          prediction.dummy[,ii] <- bb %*% fixef(imp.model)  
+        }
+        
+      } else{
+        
+        for(ii in 1:length(imp.list)){
+          imp.dummy <- imp.list[[ii]]
+          imp.model <- lmer(y ~ 1 + x1 + x2 + x3 + (1| study), data = imp.dummy)
+          bb <- model.matrix(y ~ x1 + x2 + x3, data = testing_set)
+          prediction.dummy[,ii] <- bb %*% fixef(imp.model)
+        }
+      }
+      predictions[[studyid]] <- apply(prediction.dummy, 1, mean)
+
+    } else if(method == "separate"){
+      
+      studyname2 <- unique(training_set$study)
+      nstudy2 <- length(studyname2)
+      
+      prediction_store <- matrix(NA, dim(testing_set)[1], nstudy2)
+      
+      for(i in 1:nstudy2){
+        if(studyname2[i] %in% sys_studies || studyid %in% sys_studies){
+          
+          training_set_dummy <- training_set %>% select(-x2) 
+          training_set_dummy <- training_set_dummy %>% filter(study == studyname2[i])
+          
+          trained_model <- lm(y ~ 1 + x1 + x3, data = training_set_dummy)
+          bb <- model.matrix(y ~ x1 + x3, data = testing_set)
+          prediction_store[,i] <- bb %*% coef(trained_model)
+     
+          print(paste0("1st one; ", studyname2[i]))
+          
+        } else{
+          
+          training_set_dummy <- training_set %>% filter(study == studyname2[i])
+
+          trained_model <- lm(y ~ 1 + x1 + x2 + x3, data = training_set_dummy)
+          bb <- model.matrix(y ~ x1 + x2 + x3, data = testing_set)
+          prediction_store[,i] <- bb %*% coef(trained_model)
+          
+          print(paste0("2nd one; ", studyname2[i]))
+        }
+      }
+      predictions[[studyid]] <- apply(prediction_store, 1, mean)
+    } 
+    
+    print(paste0("finished: ", studyid))
+  }
+  return(predictions)
+}
+
+
+####################################### Functions for SIMULATION 2
+
 # generate simulation data
-generate_data <- function(){
+generate_data2 <- function(){
   
   set.seed(1)
-  Nstudies <- 50
-  Npatients <- 1500
-  Npatients.tot <- Nstudies*Npatients
-  study <- rep(1:Nstudies, each = Npatients)
-  treat <- rbinom(Npatients.tot, 1, 0.5)
+  Nstudies <- 20
+  Npatients <- sample(300:1500, Nstudies, replace = TRUE)
+  Npatients.tot <- sum(Npatients)
+  study <- rep(1:Nstudies, times = Npatients)
+  treat <- rbinom(Npatients.tot, 1, 0.4)
   
   a <- 1
-  b <- c(0.7, 1, 0.7, 0.5)
-  c <- c(0.1, 0.5, 0.2, 0.2)
+  b <- c(1, 0.5, 0.5, 1)
+  c <- c(0.5, 0.5, 0.2, 0.2)
   d <- 0.5
-  Sigma <- matrix(c(0.2^2, -0.1*0.2*0.2, -0.1*0.2*0.2, 0.2^2), nrow = 2)
+  Sigma <-  matrix(c(0.1^2, -0.1*0.1*0.1, -0.1*0.1*0.1, 0.1^2), nrow = 2)
   
-  u <- rmvnorm(Nstudies, rep(0, 2), matrix(c(0.2^2, 0.2 * 0.2 * -0.1, 0.2 * 0.2 * -0.1, 0.2^2), nrow = 2) )
+  e_vec <- rnorm(Npatients.tot, 0, 0.1)
+  u <- rmvnorm(Nstudies, rep(0, 2), Sigma)
   
   #generate x1
-  gamma1 <- rnorm(Nstudies, 0, 0.5)
-  e1 <- rnorm(Npatients.tot, 0, 0.2)
-  x1 <- rep(gamma1, each = Npatients)+ e1
+  gamma1 <- rnorm(Nstudies, 0, 0.1)
+  epsilon1 <- rnorm(Npatients.tot, 0, 0.1)
+  x1 <- rep(gamma1, times = Npatients)+ epsilon1
   
   #generate x2
-  gamma2 <- rmvnorm(Nstudies, c(0, 0), matrix(c(0.5^2, 0.2 * 0.5 * 0.5, 0.2 * 0.5 * 0.5, 0.5^2), nrow = 2))
-  e2 <- rnorm(Npatients.tot, 0, 0.1)
-  x2 <- 0.3 * x1 + gamma2[,1] + gamma2[,2]*x1 + e2
-#  gamma2 <- rnorm(Nstudies, 0, 0.5)
-#  x2 <- rep(gamma2, each = Npatients) + e2
+  gamma2 <- rnorm(Nstudies, 0, 0.1)
+  epsilon2 <- rnorm(Npatients.tot, 0, 0.1)
+  x2 <- rep(gamma2, times = Npatients)+ epsilon2
   
   #generate x3
   p3 <- runif(Nstudies, 0.05, 0.15)
-  x3 <- rbinom(Npatients.tot, 1, rep(p3, each = Npatients))
+  x3 <- rbinom(Npatients.tot, 1, rep(p3, times = Npatients))
   
   #generate x4
   p4 <- runif(Nstudies, 0.15, 0.25)
-  x4 <- rbinom(Npatients.tot, 1, rep(p4, each = Npatients))
+  x4 <- rbinom(Npatients.tot, 1, rep(p4, times = Npatients))
   
   #generate y
   y <- rep(a, Npatients.tot) + b[1] * x1 + b[2] * x2 + b[3] * x3 + b[4] * x4 + 
     c[1] * x1 * treat + c[2] * x2 * treat + c[3] * x3 * treat + c[4] * x4 * treat +
-    d * treat + u[,1] + u[,2] * treat
+    d * treat + rep(u[,1],  times = Npatients) + rep(u[,2],  times = Npatients) *treat + e_vec
   
   #generate systematically missing framework in x2
-  pi_sys <- 0.2
-  study_missing <- as.logical(rep(rbinom(Nstudies, 1, 0.2), each = Npatients))
+  pi_sys <- 0.4
+  systematic_missing_study_dummy <- rbinom(Nstudies, 1, pi_sys)
+  systematic_missing_study <- (1:Nstudies)[systematic_missing_study_dummy == 1]
+  
+  study_missing <- as.logical(rep(systematic_missing_study_dummy, times = Npatients))
   x2[study_missing] <- NA
   
-  #generate sporadically missing framework for all variables
   X <- cbind(x1, x2, x3, x4)
-  X[as.logical(rbinom(Npatients.tot * 4, 1, 0.05))] <- NA
-
-  return(as_tibble(cbind(y, X, study, treat)))
+  
+  dataset <- as_tibble(cbind(y, X, study, treat))
+  
+  return(list(y = y , X = X, study = study, systematic_missing_study = systematic_missing_study, dataset = dataset))
 }
   
 
-# function to find complete dataset for each study
-findTestData <- function(testdata, na.count = 1500){
+
+findPrediction2 <- function(crossdata, method){
   
-  sys_studies <- testdata %>% group_by(study) %>% summarise(na_count = sum(is.na(x2)), .groups = "drop" ) %>% filter(na_count == na.count) %>% pull(study)
+  nstudy <- length(unique(crossdata$study))
+  studyname <- unique(crossdata$study)
+  predictions <- list()
   
-  testdata[testdata$study %in% sys_studies,] <- testdata %>% filter(study %in% sys_studies) %>% replace_na(list(x2 = 9999))
-  testdata <- testdata %>% filter(complete.cases(.))
+  sys_studies <- crossdata$systematic_missing_study
   
-  return(testdata)
+  dataset <- crossdata$dataset
+  
+  for(studyid in 1:nstudy){
+    training_set <- dataset[dataset$study != studyid,]
+    testing_set <- dataset[dataset$study == studyid,]
+    
+    if(method == "naive"){
+      
+      training_set <- training_set %>% select(-x2)
+      testing_set <- testing_set %>% select(-x2)
+      
+      trained_model <- lmer(y ~ 1 + (x1 + x3 + x4)*treat + (1| study) + (0+treat|study), data = training_set)
+      bb <- model.matrix(y ~ (x1 + x3 + x4) * treat, data = testing_set)
+      predictions[[studyid]] <- bb %*% fixef(trained_model)
+      
+    } else if(method == "imputation"){
+      
+      training_set <- training_set %>% mutate(x1.treat = NA, x2.treat = NA, x3.treat = NA, x4.treat = NA)
+      
+      meth <- make.method(training_set)
+      meth[c("x2")] <- "2l.2stage.norm"
+      
+      pred <- make.predictorMatrix(training_set)
+      pred[,] <- 0
+      pred[, "study"] <- -2
+      
+      codes <- c(1, 1, 1, 1, 2, rep(1, 3))
+      pred["x2", c("y", "x1", "x3", "x4", "treat", "x1.treat", "x3.treat", "x4.treat")] <- codes
+      
+      # derive interactions
+      meth["x2.treat"] <- "~ I(x2 * treat)"
+
+      imp <- mice(training_set, pred = pred, meth = meth)
+      impc <- complete(imp, "long", include = "TRUE")
+      
+      imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
+      prediction.dummy <- matrix(NA, nrow = dim(testing_set)[1], ncol = length(imp.list))
+      
+      if(studyid %in% sys_studies){
+        
+        for(ii in 1:length(imp.list)){
+          imp.dummy <- imp.list[[ii]]
+          imp.model <- lmer(y ~ 1 + x1 + x3 + x4 + treat + x1*treat + x3*treat + x4*treat + (1| study) + (0 + treat|study), data = imp.dummy)
+          bb <- model.matrix(y ~ (x1 + x3 + x4) * treat, data = testing_set)
+          prediction.dummy[,ii] <- bb %*% fixef(imp.model)  
+        }
+      } else{
+        
+        for(ii in 1:length(imp.list)){
+          imp.dummy <- imp.list[[ii]]
+          imp.model <- lmer(y ~ 1 + x1 + x2 + x3 + x4 + treat + x1*treat + x2*treat + x3*treat + x4*treat + (1| study) + (0 + treat|study), data = imp.dummy)
+          bb <- model.matrix(y ~ (x1 + x2 + x3 + x4) * treat, data = testing_set)
+          prediction.dummy[,ii] <- bb %*% fixef(imp.model)
+        }
+      }
+      predictions[[studyid]] <- apply(prediction.dummy, 1, mean)
+
+    } else if(method == "separate"){
+      
+      studyname2 <- unique(training_set$study)
+      nstudy2 <- length(studyname2)
+      
+      prediction_store <- matrix(NA, dim(testing_set)[1], nstudy2)
+      
+      for(i in 1:nstudy2){
+        if(studyname2[i] %in% sys_studies || studyid %in% sys_studies){
+          
+          training_set_dummy <- training_set %>% select(-x2) 
+          training_set_dummy <- training_set_dummy %>% filter(study == studyname2[i])
+          
+          trained_model <- lm(y ~ 1 + (x1 + x3 + x4) * treat, data = training_set_dummy)
+          bb <- model.matrix(y ~ (x1 + x3 + x4)*treat, data = testing_set)
+          prediction_store[,i] <- bb %*% coef(trained_model)
+          
+          print(paste0("1st one; ", studyname2[i]))
+          
+        } else{
+          
+          training_set_dummy <- training_set %>% filter(study == studyname2[i])
+          
+          trained_model <- lm(y ~ 1 + (x1 + x2 + x3 + x4)*treat, data = training_set_dummy)
+          bb <- model.matrix(y ~ (x1 + x2 + x3 + x4)*treat, data = testing_set)
+          prediction_store[,i] <- bb %*% coef(trained_model)
+          
+          print(paste0("2nd one; ", studyname2[i]))
+        }
+      }
+      predictions[[studyid]] <- apply(prediction_store, 1, mean)
+    } 
+    print(paste0("finished: ", studyid))
+  }
+  return(predictions)
 }
 
-###############################################################
-####### cross validation for simulated data ###################
+
+
+
 
 findPrediction <- function(crossdata, method){
   
@@ -279,11 +556,13 @@ findPrediction <- function(crossdata, method){
 }
 
 
+
+
 ###############################################################
 ####### cross validation for real dataset ###################
 
 
-findPrediction2 <- function(crossdata, method){
+findPrediction_realdata <- function(crossdata, method){
     
   nstudy <- length(unique(crossdata$study))
   studyname <- unique(crossdata$study)
@@ -615,4 +894,13 @@ relabel.vec <- function(x, order)
   x <- rep(NA, length(old.x))
   for (i in seq(length(order))) x[old.x == order[i]] <- i #relabel studies in numerical order starting with one
   return(x)
+}
+
+findTestData <- function(simulated){
+  
+  testdata <- list()
+  for(i in 1:length(unique(simulated$study))){
+    testdata[[i]] <- simulated$dataset[simulated$study == i,]
+  }
+  return(testdata)
 }
