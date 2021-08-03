@@ -8,6 +8,7 @@ library(mitools)
 
 setwd("C:/Users/ms19g661/Documents/GitHub/phd/missing")
 source("helpful.functions.R")
+source("realdata.related.functions.R")
 
 setwd("C:/Users/ms19g661/Desktop")
 #setwd("C:/Users/mike/Desktop")
@@ -33,10 +34,6 @@ mydata2 <- mydata %>% group_by(study) %>% filter(length(unique(treat)) == 2)
 mydata <- mydata %>% filter(study %in% unique(mydata2$study))
 mydata$study <- relabel.vec(mydata$study, unique(mydata$study))
 
-# Delete study that have age missing, relstat missing
-#mydata <- mydata %>% filter(!study %in% c("Gilbody, 2015"))
-#mydata <- mydata %>% filter(!study %in% c("Gilbody, 2015", "Rosso, 2016"))
-
 # visualizing variables
 # library(summarytools)
 # view(dfSummary(mydata), method = "browser")
@@ -45,86 +42,92 @@ mydata$study <- relabel.vec(mydata$study, unique(mydata$study))
 covariates <- c("baseline", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol")
 mydata <- mydata %>% select(study, y, treat, all_of(covariates))
 
-mean_val <- apply(mydata[,covariates], 2, mean, na.rm = TRUE)
-sd_val <- apply(mydata[,covariates], 2, sd, na.rm = TRUE)
-mydata[,covariates] <- apply(mydata[,covariates], 2, scale)
+mydata <- mydata %>% mutate(gender = as.factor(gender),
+                            relstat = as.factor(relstat),
+                            ComorbidAnxiety = as.factor(ComorbidAnxiety),
+                            Medication = as.factor(Medication),
+                            alcohol = as.factor(alcohol))
+
+
+# mean_val <- apply(mydata[,covariates], 2, mean, na.rm = TRUE)
+# sd_val <- apply(mydata[,covariates], 2, sd, na.rm = TRUE)
+# mydata[,covariates] <- apply(mydata[,covariates], 2, scale)
 
 
 
 ##################################
 ##############Cross validation
+####################################
+# type of variable
+type_of_var <- c("continuous", "binary", "continuous", "binary", "binary", "count", "binary", "binary")
+names(type_of_var) <- covariates
+
+testing_subset <- findTestData(mydata)
 
 # naive approach
-naivepred <- findPrediction3(mydata, method = "naive")
-save(naivepred, file = "realdata_naivepred.RData")
-load("realdata_naivepred.RData")
-naiveperf <- findPerformance(naivepred$testing_set_store, naivepred$predictions)
-apply(naiveperf, 1, mean, na.rm = TRUE)
+naivepred <- crossvalidation_realdata(mydata, method = "naive")
+naiveperf <- findPerformance(testing_subset, naivepred)
+naiveperf
 
 # imputation approach
-imputationpred <- findPrediction3(mydata, method = "imputation")
-save(imputationpred, file = "realdata_imputation.RData")
-load("realdata_imputation.RData")
-imputationperf <- findPerformance(imputationpred$testing_set_store, imputationpred$predictions)
-apply(imputationperf, 1, mean, na.rm = TRUE)
+imputationpred <- crossvalidation_realdata(mydata, method = "imputation")
+imputationperf <- findPerformance(testing_subset, imputationpred)
+imputationperf
 
-# average prediction approach
-averagepred <- findPrediction3(mydata, method = "average_prediction")
-save(averagepred, file = "realdata_average_prediction.RData")
-load("realdata_average_prediction.RData")
-averageperf <- findPerformance(averagepred$testing_set_store, averagepred$predictions)
-apply(averageperf, 1, mean, na.rm = TRUE)
-
+# separate prediction approach
+separatepred <- crossvalidation_realdata(mydata, method = "separate")
+separateperf <- findPerformance(testing_subset, separatepred)  
+separateperf
+  
 
 
 ##########################################
-####Analysis using full data
+######Analysis using full data
 
-#Naive approach - dropping systematically missing variables
-newdata <- mydata %>% select(study, y, treat, baseline, gender, age, relstat)
-newdata <- newdata %>% mutate(baselinetreat = NA, gendertreat = NA, agetreat = NA, relstattreat = NA)
+#Naive approach
+newdata <- mydata %>% select(study, y, treat, baseline, gender)
+newdata <- newdata %>% mutate(baselinetreat = NA, gendertreat = NA)
 
 meth <- make.method(newdata)
-meth[c("y", "gender", "age", "relstat")] <- "2l.pmm"
+meth[c("y", "gender")] <- "2l.pmm"
 meth["baselinetreat"] <- "~ I(baseline * treat)"
-meth["gendertreat"] <- "~ I(gender * treat)"
-meth["agetreat"] <- "~ I(age * treat)"
-meth["relstattreat"] <- "~ I(relstat * treat)"
+meth["gendertreat"] <- "~ I(as.numeric(as.character(gender)) * treat)"
 
 pred <- make.predictorMatrix(newdata)
 pred[,] <- 0
 
-codes <- c(rep(1, 4), 2, rep(1, 4))
-codes2 <- c(rep(1, 4), 2, rep(1, 3))
+codes <- c(rep(1, 2), 2, rep(1, 2))
+codes2 <- c(rep(1, 2), 2, rep(1, 1))
 
-pred["y", c("baseline", "gender", "age", "relstat", "treat", "baselinetreat", "gendertreat", "agetreat", "relstattreat")] <- codes
-pred["gender", c("y", "baseline", "age", "relstat", "treat", "baselinetreat", "agetreat", "relstattreat")] <- codes2
-pred["age", c("y", "baseline", "gender", "relstat", "treat", "baselinetreat", "gendertreat", "relstattreat")] <- codes2
-pred["relstat", c("y", "baseline", "gender", "age", "treat", "baselinetreat", "gendertreat", "agetreat")] <- codes2
+pred["y", c("baseline", "gender", "treat", "baselinetreat", "gendertreat")] <- codes
+pred["gender", c("y", "baseline", "treat", "baselinetreat")] <- codes2
 
-pred[c("y", "gender", "age", "relstat"), "study"] <- -2
+pred[c("y", "gender"), "study"] <- -2
 imp <- mice(newdata, pred = pred, meth = meth)
 
-fit <- with(imp, lmer(y ~ (baseline + gender + age + relstat) * treat + (1|study)))
+fit <- with(imp, lmer(y ~ (baseline + gender) * treat + (1|study) + (0+treat|study)))
 t(sapply(fit$analyses, fixef))
 coef_fit <- summary(pool(fit))
-
+coef_fit
 
 #Imputation approach
 newdata <- mydata
 newdata <- newdata %>% mutate(baselinetreat = NA, gendertreat = NA, agetreat = NA, relstattreat = NA, ComorbidAnxietytreat = NA, preveptreat = NA, Medicationtreat = NA,  alcoholtreat = NA)
 meth <- make.method(newdata)
 
-meth[c("y", "gender", "age", "relstat")] <- "2l.pmm"
-meth[c("ComorbidAnxiety", "prevep", "Medication", "alcohol")] <- "2l.2stage.norm"
+meth[c("y", "gender")] <- "2l.pmm"
+meth[c("age")] <- "2l.2stage.norm"
+meth[c("prevep")] <- "2l.2stage.pois"
+meth[c("gender", "relstat", "ComorbidAnxiety", "Medication", "alcohol")] <- "2l.2stage.bin"
+
 meth["baselinetreat"] <- "~ I(baseline * treat)"
-meth["gendertreat"] <- "~ I(gender * treat)"
-meth["agetreat"] <- "~ I(age * treat)"
-meth["relstattreat"] <- "~ I(relstat * treat)"
-meth["ComorbidAnxietytreat"] <- "~ I(ComorbidAnxiety * treat)"
+meth["gendertreat"] <- "~ I(as.numeric(as.character(gender)) * treat)"
+meth["agetreat"] <- "~ I(as.numeric(as.character(age)) * treat)"
+meth["relstattreat"] <- "~ I(as.numeric(as.character(relstat)) * treat)"
+meth["ComorbidAnxietytreat"] <- "~ I(as.numeric(as.character(ComorbidAnxiety)) * treat)"
 meth["preveptreat"] <- "~ I(prevep * treat)"
-meth["Medicationtreat"] <- "~ I(Medication * treat)"
-meth["alcoholtreat"] <- "~ I(alcohol * treat)"
+meth["Medicationtreat"] <- "~ I(as.numeric(as.character(Medication)) * treat)"
+meth["alcoholtreat"] <- "~ I(as.numeric(as.character(alcohol)) * treat)"
 
 pred <- make.predictorMatrix(newdata)
 pred[,] <- 0
@@ -147,9 +150,10 @@ imp <- mice(newdata, pred = pred, meth = meth)
 fit <- with(imp, lmer(y ~ (baseline + gender + age + relstat + ComorbidAnxiety + prevep + Medication + alcohol) * treat + (1|study)))
 t(sapply(fit$analyses, fixef))
 coef_fit <- summary(pool(fit))
-
+coef_fit
 
 # average predictions
+coef_fit_store <- list()
 
 for(i in 1:length(unique(mydata$study))){
   
@@ -162,6 +166,8 @@ for(i in 1:length(unique(mydata$study))){
   
   meth <- getCorrectMeth(newdata, missingPattern)
   pred <- getCorrectPred(newdata, missingPattern)
+  print(meth)
+  print(pred)
   
   imp <- mice(newdata, pred = pred, meth = meth)
   impc <- complete(imp, "long", include = "TRUE")
@@ -175,10 +181,9 @@ for(i in 1:length(unique(mydata$study))){
     fit[[ii]] <- imp.model
     #summary(imp.model)
   }
-  coef_fit <- summary(pool(fit))
-  print(coef_fit)
+  coef_fit_store[[i]] <- summary(pool(fit))
 }
-
+coef_fit_store
 
 
 #newdata %>% group_by(study) %>% summarize_all(~sum(is.na(.)))
