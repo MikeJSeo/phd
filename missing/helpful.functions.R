@@ -1,6 +1,6 @@
+# General functions shared for both simulations and real data example
 
-
-###############################################################333
+##################################################################
 #### imputation related tools
 
 getCorrectPred <- function(dummydata, missingPattern, method){
