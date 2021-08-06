@@ -1,5 +1,5 @@
 
-wrapper_function <- function(Ncov = NULL, sys_missing_prob = NULL, nonlinear = NULL, signal = NULL, interaction = NULL, heterogeneity = NULL, Nsim = 100){
+wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NULL, nonlinear = NULL, signal = NULL, interaction = NULL, heterogeneity = NULL, Nsim = 100){
 
   naive_store <- matrix(NA, nrow = Nsim, ncol = 3)
   imputation_store <- matrix(NA, nrow = Nsim, ncol = 3)
@@ -8,39 +8,54 @@ wrapper_function <- function(Ncov = NULL, sys_missing_prob = NULL, nonlinear = N
   for(i in 1:Nsim){
     
     set.seed(i)
-    simulated_data <- generate_simulation_data(Ncov = Ncov, sys_missing_prob = sys_missing_prob, nonlinear = nonlinear, signal = signal, interaction = interaction, heterogeneity = heterogeneity) 
+    simulated_data <- generate_simulation_data(Nstudies = Nstudies, Ncov = Ncov, sys_missing_prob = sys_missing_prob, nonlinear = nonlinear, signal = signal, interaction = interaction, heterogeneity = heterogeneity) 
     simulated_dataset <- simulated_data$dataset
     
-    validation_data <- generate_simulation_data(Ncov = Ncov, sys_missing_prob = sys_missing_prob, nonlinear = nonlinear, signal = signal, interaction = interaction, heterogeneity = heterogeneity)
+    validation_data <- generate_simulation_data(Nstudies = 10, Ncov = Ncov, sys_missing_prob = sys_missing_prob, nonlinear = nonlinear, signal = signal, interaction = interaction, heterogeneity = heterogeneity)
     validation_dataset <- validation_data$dataset
 
     # naive method
     naivepred <- naive_prediction(simulated_dataset, validation_dataset)
     naiveperf <- findPerformance(validation_dataset$y, naivepred)
     naive_store[i,] <- naiveperf
-    
+      
     # imputation
-    imputationpred <- imputation_prediction(simulated_dataset, validation_dataset, type_of_var = type_of_var)
-    imputationperf <- findPerformance(validation_dataset$y, imputationpred)
+    imputationpred <- try(imputation_prediction(simulated_dataset, validation_dataset, type_of_var = type_of_var))
+    imputationperf <- try(findPerformance(validation_dataset$y, imputationpred))
     imputation_store[i,] <- imputationperf
-    
+
     # separate predictions
     separatepred <- separate_prediction(simulated_dataset, validation_dataset)
     separateperf <- findPerformance(validation_dataset$y, separatepred)
-    separate_store[i,] <- separateperf  
+    separate_store[i,] <- separateperf 
+
   }
   
-  print(apply(naive_store, 2, mean))
-  print(apply(imputation_store, 2, mean))
-  print(apply(separate_store, 2, mean))
+  imputation_store <- apply(imputation_store, 2, as.numeric)
+  failed_trials <- which(rowSums(is.na(imputation_store)) > 0)
+  print(paste("failed # of trials: ", length(failed_trials)))
   
-  return(list(naive_store = naive_store, imputation_store = imputation_store, separate_store = separate_store))
+  if(length(failed_trials) != 0){
+    imputation_store <- imputation_store[-failed_trials,]
+    naive_store <- naive_store[-failed_trials,]
+    separate_store <- separate_store[-failed_trials,]
+  }
+
+  print(round(apply(naive_store, 2, mean), digits = 3))
+  print(round(apply(imputation_store, 2, mean), digits = 3))
+  print(round(apply(separate_store, 2, mean), digits = 3))
+  
+  return_matrix <- matrix(NA, 3, 3)
+  return_matrix[1,] <- round(apply(naive_store, 2, mean), digits = 3)
+  return_matrix[2,] <- round(apply(imputation_store, 2, mean), digits = 3)
+  return_matrix[3,] <- round(apply(separate_store, 2, mean), digits = 3)
+  return(return_matrix)
+  #return(list(naive_store = naive_store, imputation_store = imputation_store, separate_store = separate_store))
 }
 
 
-generate_simulation_data <- function(Ncov = NULL, sys_missing_prob = NULL, nonlinear = NULL, signal = NULL, interaction = NULL, heterogeneity = NULL){
+generate_simulation_data <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NULL, nonlinear = NULL, signal = NULL, interaction = NULL, heterogeneity = NULL){
   
-  Nstudies <- 15
   Npatients <- sample(150:500, Nstudies, replace = TRUE)
   Npatients.tot <- sum(Npatients)
   study <- rep(1:Nstudies, times = Npatients)
@@ -94,10 +109,8 @@ generate_simulation_data <- function(Ncov = NULL, sys_missing_prob = NULL, nonli
   
   if(nonlinear == "yes"){
     X <- cbind(X, X[,1]^2, X[,1]^3)
-    #X <- cbind(X, X[,1]^2, X[,1]^3, X[,4]^2, X[,4]^3, X[,5]^2, X[,5]^3)
   }
   
-
   b <- matrix(NA, Npatients.tot, Ncov)
 
   for(i in 1:Ncov){
@@ -166,7 +179,6 @@ generate_simulation_data <- function(Ncov = NULL, sys_missing_prob = NULL, nonli
   colnames(dataset) <- c("y", paste0("x", 1:Ncov), "study")
   dataset <- as_tibble(dataset)
   
-  
   if(Ncov == 5){
     dataset <- dataset %>% mutate(x2 = as.factor(x2),
                                   x3 = as.factor(x3))
@@ -179,8 +191,6 @@ generate_simulation_data <- function(Ncov = NULL, sys_missing_prob = NULL, nonli
     )
   }  
   
-
-
   if(interaction == "yes"){
     dataset <- cbind(dataset, treat = treat)
     dataset <- as_tibble(dataset)

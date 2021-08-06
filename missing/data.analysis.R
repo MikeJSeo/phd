@@ -152,7 +152,7 @@ t(sapply(fit$analyses, fixef))
 coef_fit <- summary(pool(fit))
 coef_fit
 
-# average predictions
+# Separate predictions approach
 coef_fit_store <- list()
 
 for(i in 1:length(unique(mydata$study))){
@@ -179,7 +179,6 @@ for(i in 1:length(unique(mydata$study))){
     imp.dummy <- imp.dummy %>% select(-".imp", -".id", -"study")
     imp.model <- lm(y ~ ., data = imp.dummy)
     fit[[ii]] <- imp.model
-    #summary(imp.model)
   }
   coef_fit_store[[i]] <- summary(pool(fit))
 }
