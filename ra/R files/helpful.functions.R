@@ -94,8 +94,9 @@ firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", 
   }
   }  
   return(samples)
+ 
+  
 }
-
 
 # summarize each first stage analysis
 

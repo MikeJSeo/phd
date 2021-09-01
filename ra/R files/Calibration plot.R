@@ -7,6 +7,7 @@ load("Approach3a25.result.RData")
 load("Approach3a50.result.RData")
 load("Approach3b25.result.RData")
 load("Approach3b50.result.RData")
+load("Approach4.result.RData")
 
 library(ggplot2)
 
@@ -27,27 +28,33 @@ pred <- c(Approach1.result$prediction_BSRBR_internal$pred1, Approach2a.result$pr
           Approach2b.result$prediction_BSRBR_internal$pred1, Approach2c.result$prediction_BSRBR_internal$pred1,
           Approach3a25.result$prediction_BSRBR_internal$pred1, Approach3a50.result$prediction_BSRBR_internal$pred1, 
           Approach3b25.result$prediction_BSRBR_internal$pred1, Approach3b50.result$prediction_BSRBR_internal$pred1,
+          Approach4.result$prediction_BSRBR_internal$pred1,
           Approach1.result$prediction_BSRBR_internal$pred2, Approach2a.result$prediction_BSRBR_internal$pred2,
           Approach2b.result$prediction_BSRBR_internal$pred2, Approach2c.result$prediction_BSRBR_internal$pred2,
           Approach3a25.result$prediction_BSRBR_internal$pred2, Approach3a50.result$prediction_BSRBR_internal$pred2, 
           Approach3b25.result$prediction_BSRBR_internal$pred2, Approach3b50.result$prediction_BSRBR_internal$pred2,
+          Approach4.result$prediction_BSRBR_internal$pred2,
           Approach1.result$prediction_BSRBR_internal$pred3, Approach2a.result$prediction_BSRBR_internal$pred3,
           Approach2b.result$prediction_BSRBR_internal$pred3, Approach2c.result$prediction_BSRBR_internal$pred3,
           Approach3a25.result$prediction_BSRBR_internal$pred3, Approach3a50.result$prediction_BSRBR_internal$pred3, 
-          Approach3b25.result$prediction_BSRBR_internal$pred3, Approach3b50.result$prediction_BSRBR_internal$pred3
+          Approach3b25.result$prediction_BSRBR_internal$pred3, Approach3b50.result$prediction_BSRBR_internal$pred3,
+          Approach4.result$prediction_BSRBR_internal$pred3
           )
 obs <- c(Approach1.result$prediction_BSRBR_internal$y1, Approach2a.result$prediction_BSRBR_internal$y1,
          Approach2b.result$prediction_BSRBR_internal$y1, Approach2c.result$prediction_BSRBR_internal$y1,
          Approach3a25.result$prediction_BSRBR_internal$y1, Approach3a50.result$prediction_BSRBR_internal$y1, 
          Approach3b25.result$prediction_BSRBR_internal$y1, Approach3b50.result$prediction_BSRBR_internal$y1,
+         Approach4.result$prediction_BSRBR_internal$y1,
          Approach1.result$prediction_BSRBR_internal$y2, Approach2a.result$prediction_BSRBR_internal$y2,
          Approach2b.result$prediction_BSRBR_internal$y2, Approach2c.result$prediction_BSRBR_internal$y2,
          Approach3a25.result$prediction_BSRBR_internal$y2, Approach3a50.result$prediction_BSRBR_internal$y2, 
          Approach3b25.result$prediction_BSRBR_internal$y2, Approach3b50.result$prediction_BSRBR_internal$y2,
+         Approach4.result$prediction_BSRBR_internal$y2,
          Approach1.result$prediction_BSRBR_internal$y3, Approach2a.result$prediction_BSRBR_internal$y3,
          Approach2b.result$prediction_BSRBR_internal$y3, Approach2c.result$prediction_BSRBR_internal$y3,
          Approach3a25.result$prediction_BSRBR_internal$y3, Approach3a50.result$prediction_BSRBR_internal$y3, 
-         Approach3b25.result$prediction_BSRBR_internal$y3, Approach3b50.result$prediction_BSRBR_internal$y3
+         Approach3b25.result$prediction_BSRBR_internal$y3, Approach3b50.result$prediction_BSRBR_internal$y3,
+         Approach4.result$prediction_BSRBR_internal$y3
          )
 
 intercept <- c(rep(c(Approach1.result$calibration_BSRBR_internal$slope1$coefficients[1],
@@ -57,7 +64,9 @@ intercept <- c(rep(c(Approach1.result$calibration_BSRBR_internal$slope1$coeffici
                Approach3a25.result$calibration_BSRBR_internal$slope1$coefficients[1],
                Approach3a50.result$calibration_BSRBR_internal$slope1$coefficients[1],
                Approach3b25.result$calibration_BSRBR_internal$slope1$coefficients[1],
-               Approach3b50.result$calibration_BSRBR_internal$slope1$coefficients[1]), each = BSRBR.t1.length),
+               Approach3b50.result$calibration_BSRBR_internal$slope1$coefficients[1],
+               Approach4.result$calibration_BSRBR_internal$slope1$coefficients[1]
+               ), each = BSRBR.t1.length),
                rep(c(Approach1.result$calibration_BSRBR_internal$slope1$coefficients[1],
                Approach2a.result$calibration_BSRBR_internal$slope1$coefficients[1],
                Approach2b.result$calibration_BSRBR_internal$slope1$coefficients[1],
@@ -65,7 +74,9 @@ intercept <- c(rep(c(Approach1.result$calibration_BSRBR_internal$slope1$coeffici
                Approach3a25.result$calibration_BSRBR_internal$slope1$coefficients[1],
                Approach3a50.result$calibration_BSRBR_internal$slope1$coefficients[1],
                Approach3b25.result$calibration_BSRBR_internal$slope1$coefficients[1],
-               Approach3b50.result$calibration_BSRBR_internal$slope1$coefficients[1]), each = BSRBR.t2.length),
+               Approach3b50.result$calibration_BSRBR_internal$slope1$coefficients[1],
+               Approach4.result$calibration_BSRBR_internal$slope1$coefficients[1]
+               ), each = BSRBR.t2.length),
                rep(c(Approach1.result$calibration_BSRBR_internal$slope1$coefficients[1],
                Approach2a.result$calibration_BSRBR_internal$slope1$coefficients[1],
                Approach2b.result$calibration_BSRBR_internal$slope1$coefficients[1],
@@ -73,7 +84,9 @@ intercept <- c(rep(c(Approach1.result$calibration_BSRBR_internal$slope1$coeffici
                Approach3a25.result$calibration_BSRBR_internal$slope1$coefficients[1],
                Approach3a50.result$calibration_BSRBR_internal$slope1$coefficients[1],
                Approach3b25.result$calibration_BSRBR_internal$slope1$coefficients[1],
-               Approach3b50.result$calibration_BSRBR_internal$slope1$coefficients[1]), each = BSRBR.t3.length)
+               Approach3b50.result$calibration_BSRBR_internal$slope1$coefficients[1],
+               Approach4.result$calibration_BSRBR_internal$slope1$coefficients[1]
+               ), each = BSRBR.t3.length)
                )
   
 slope <- c(rep(c(Approach1.result$calibration_BSRBR_internal$slope1$coefficients[2],
@@ -83,7 +96,9 @@ slope <- c(rep(c(Approach1.result$calibration_BSRBR_internal$slope1$coefficients
            Approach3a25.result$calibration_BSRBR_internal$slope1$coefficients[2],
            Approach3a50.result$calibration_BSRBR_internal$slope1$coefficients[2],
            Approach3b25.result$calibration_BSRBR_internal$slope1$coefficients[2],
-           Approach3b50.result$calibration_BSRBR_internal$slope1$coefficients[2]), each = BSRBR.t1.length),
+           Approach3b50.result$calibration_BSRBR_internal$slope1$coefficients[2],
+           Approach4.result$calibration_BSRBR_internal$slope1$coefficients[2]
+           ), each = BSRBR.t1.length),
            rep(c(Approach1.result$calibration_BSRBR_internal$slope1$coefficients[3],
            Approach2a.result$calibration_BSRBR_internal$slope1$coefficients[3],
            Approach2b.result$calibration_BSRBR_internal$slope1$coefficients[3],
@@ -91,7 +106,9 @@ slope <- c(rep(c(Approach1.result$calibration_BSRBR_internal$slope1$coefficients
            Approach3a25.result$calibration_BSRBR_internal$slope1$coefficients[3],
            Approach3a50.result$calibration_BSRBR_internal$slope1$coefficients[3],
            Approach3b25.result$calibration_BSRBR_internal$slope1$coefficients[3],
-           Approach3b50.result$calibration_BSRBR_internal$slope1$coefficients[3]), each = BSRBR.t2.length),
+           Approach3b50.result$calibration_BSRBR_internal$slope1$coefficients[3],
+           Approach4.result$calibration_BSRBR_internal$slope1$coefficients[3]
+           ), each = BSRBR.t2.length),
            rep(c(Approach1.result$calibration_BSRBR_internal$slope1$coefficients[4],
            Approach2a.result$calibration_BSRBR_internal$slope1$coefficients[4],
            Approach2b.result$calibration_BSRBR_internal$slope1$coefficients[4],
@@ -99,20 +116,22 @@ slope <- c(rep(c(Approach1.result$calibration_BSRBR_internal$slope1$coefficients
            Approach3a25.result$calibration_BSRBR_internal$slope1$coefficients[4],
            Approach3a50.result$calibration_BSRBR_internal$slope1$coefficients[4],
            Approach3b25.result$calibration_BSRBR_internal$slope1$coefficients[4],
-           Approach3b50.result$calibration_BSRBR_internal$slope1$coefficients[4]), each = BSRBR.t3.length)
+           Approach3b50.result$calibration_BSRBR_internal$slope1$coefficients[4],
+           Approach4.result$calibration_BSRBR_internal$slope1$coefficients[4]
+           ), each = BSRBR.t3.length)
            )
 
 approach_id1 <- rep(c("Approach I", "Approach IIa", "Approach IIb", "Approach IIc", "Approach IIIa w = 0.25",
-                     "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5"), each = BSRBR.t1.length)
+                     "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5", "Approach IV"), each = BSRBR.t1.length)
 approach_id2 <- rep(c("Approach I", "Approach IIa", "Approach IIb", "Approach IIc", "Approach IIIa w = 0.25",
-                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5"), each = BSRBR.t2.length)
+                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5", "Approach IV"), each = BSRBR.t2.length)
 approach_id3 <- rep(c("Approach I", "Approach IIa", "Approach IIb", "Approach IIc", "Approach IIIa w = 0.25",
-                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5"), each = BSRBR.t3.length)
+                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5", "Approach IV"), each = BSRBR.t3.length)
 approach_id <- c(approach_id1, approach_id2, approach_id3)
 
-treatment <- c(rep("DMARDs", each = BSRBR.t1.length*8),
-                  rep("RTX + DMARDs", each = BSRBR.t2.length*8),
-                  rep("TCZ + DMARDs", each = BSRBR.t3.length*8))
+treatment <- c(rep("DMARDs", each = BSRBR.t1.length*9),
+                  rep("RTX + DMARDs", each = BSRBR.t2.length*9),
+                  rep("TCZ + DMARDs", each = BSRBR.t3.length*9))
 
 data <- cbind(pred, obs, intercept, slope)
 data <- as.data.frame(data)
@@ -123,7 +142,7 @@ data <- data[complete.cases(data),]
 ggplot(data, aes(x = pred, y = obs)) + 
   geom_jitter(position = position_jitter(width = 0.3), aes(color = treatment, shape = treatment), size = 1, alpha = 1) + 
   geom_abline(aes(intercept = intercept, slope = slope, group = "approach_id", color = treatment, lty = treatment), size = 1) +
-  facet_wrap(~approach_id, ncol = 2) +
+  facet_wrap(~approach_id, ncol = 3) +
   geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed", size = 1) + 
   labs(x = "predicted outcome",
        y = "observed outcome") +
@@ -137,27 +156,33 @@ pred <- c(Approach1.result$prediction_BSRBR_external$pred1, Approach2a.result$pr
           Approach2b.result$prediction_BSRBR_external$pred1, Approach2c.result$prediction_BSRBR_external$pred1,
           Approach3a25.result$prediction_BSRBR_external$pred1, Approach3a50.result$prediction_BSRBR_external$pred1, 
           Approach3b25.result$prediction_BSRBR_external$pred1, Approach3b50.result$prediction_BSRBR_external$pred1,
+          Approach4.result$prediction_BSRBR_external$pred1,
           Approach1.result$prediction_BSRBR_external$pred2, Approach2a.result$prediction_BSRBR_external$pred2,
           Approach2b.result$prediction_BSRBR_external$pred2, Approach2c.result$prediction_BSRBR_external$pred2,
           Approach3a25.result$prediction_BSRBR_external$pred2, Approach3a50.result$prediction_BSRBR_external$pred2, 
           Approach3b25.result$prediction_BSRBR_external$pred2, Approach3b50.result$prediction_BSRBR_external$pred2,
+          Approach4.result$prediction_BSRBR_external$pred2,
           Approach1.result$prediction_BSRBR_external$pred3, Approach2a.result$prediction_BSRBR_external$pred3,
           Approach2b.result$prediction_BSRBR_external$pred3, Approach2c.result$prediction_BSRBR_external$pred3,
           Approach3a25.result$prediction_BSRBR_external$pred3, Approach3a50.result$prediction_BSRBR_external$pred3, 
-          Approach3b25.result$prediction_BSRBR_external$pred3, Approach3b50.result$prediction_BSRBR_external$pred3
+          Approach3b25.result$prediction_BSRBR_external$pred3, Approach3b50.result$prediction_BSRBR_external$pred3,
+          Approach4.result$prediction_BSRBR_external$pred3
 )
 obs <- c(Approach1.result$prediction_BSRBR_external$y1, Approach2a.result$prediction_BSRBR_external$y1,
          Approach2b.result$prediction_BSRBR_external$y1, Approach2c.result$prediction_BSRBR_external$y1,
          Approach3a25.result$prediction_BSRBR_external$y1, Approach3a50.result$prediction_BSRBR_external$y1, 
          Approach3b25.result$prediction_BSRBR_external$y1, Approach3b50.result$prediction_BSRBR_external$y1,
+         Approach4.result$prediction_BSRBR_external$y1,
          Approach1.result$prediction_BSRBR_external$y2, Approach2a.result$prediction_BSRBR_external$y2,
          Approach2b.result$prediction_BSRBR_external$y2, Approach2c.result$prediction_BSRBR_external$y2,
          Approach3a25.result$prediction_BSRBR_external$y2, Approach3a50.result$prediction_BSRBR_external$y2, 
          Approach3b25.result$prediction_BSRBR_external$y2, Approach3b50.result$prediction_BSRBR_external$y2,
+         Approach4.result$prediction_BSRBR_external$y2,
          Approach1.result$prediction_BSRBR_external$y3, Approach2a.result$prediction_BSRBR_external$y3,
          Approach2b.result$prediction_BSRBR_external$y3, Approach2c.result$prediction_BSRBR_external$y3,
          Approach3a25.result$prediction_BSRBR_external$y3, Approach3a50.result$prediction_BSRBR_external$y3, 
-         Approach3b25.result$prediction_BSRBR_external$y3, Approach3b50.result$prediction_BSRBR_external$y3
+         Approach3b25.result$prediction_BSRBR_external$y3, Approach3b50.result$prediction_BSRBR_external$y3,
+         Approach4.result$prediction_BSRBR_external$y3
 )
 
 intercept <- c(rep(c(Approach1.result$calibration_BSRBR_external$slope1$coefficients[1],
@@ -167,7 +192,9 @@ intercept <- c(rep(c(Approach1.result$calibration_BSRBR_external$slope1$coeffici
                      Approach3a25.result$calibration_BSRBR_external$slope1$coefficients[1],
                      Approach3a50.result$calibration_BSRBR_external$slope1$coefficients[1],
                      Approach3b25.result$calibration_BSRBR_external$slope1$coefficients[1],
-                     Approach3b50.result$calibration_BSRBR_external$slope1$coefficients[1]), each = BSRBR.t1.length),
+                     Approach3b50.result$calibration_BSRBR_external$slope1$coefficients[1],
+                     Approach4.result$calibration_BSRBR_external$slope1$coefficients[1]
+                     ), each = BSRBR.t1.length),
                rep(c(Approach1.result$calibration_BSRBR_external$slope1$coefficients[1],
                      Approach2a.result$calibration_BSRBR_external$slope1$coefficients[1],
                      Approach2b.result$calibration_BSRBR_external$slope1$coefficients[1],
@@ -175,7 +202,9 @@ intercept <- c(rep(c(Approach1.result$calibration_BSRBR_external$slope1$coeffici
                      Approach3a25.result$calibration_BSRBR_external$slope1$coefficients[1],
                      Approach3a50.result$calibration_BSRBR_external$slope1$coefficients[1],
                      Approach3b25.result$calibration_BSRBR_external$slope1$coefficients[1],
-                     Approach3b50.result$calibration_BSRBR_external$slope1$coefficients[1]), each = BSRBR.t2.length),
+                     Approach3b50.result$calibration_BSRBR_external$slope1$coefficients[1],
+                     Approach4.result$calibration_BSRBR_external$slope1$coefficients[1]
+                     ), each = BSRBR.t2.length),
                rep(c(Approach1.result$calibration_BSRBR_external$slope1$coefficients[1],
                      Approach2a.result$calibration_BSRBR_external$slope1$coefficients[1],
                      Approach2b.result$calibration_BSRBR_external$slope1$coefficients[1],
@@ -183,7 +212,9 @@ intercept <- c(rep(c(Approach1.result$calibration_BSRBR_external$slope1$coeffici
                      Approach3a25.result$calibration_BSRBR_external$slope1$coefficients[1],
                      Approach3a50.result$calibration_BSRBR_external$slope1$coefficients[1],
                      Approach3b25.result$calibration_BSRBR_external$slope1$coefficients[1],
-                     Approach3b50.result$calibration_BSRBR_external$slope1$coefficients[1]), each = BSRBR.t3.length)
+                     Approach3b50.result$calibration_BSRBR_external$slope1$coefficients[1],
+                     Approach4.result$calibration_BSRBR_external$slope1$coefficients[1]
+                     ), each = BSRBR.t3.length)
 )
 
 slope <- c(rep(c(Approach1.result$calibration_BSRBR_external$slope1$coefficients[2],
@@ -193,7 +224,9 @@ slope <- c(rep(c(Approach1.result$calibration_BSRBR_external$slope1$coefficients
                  Approach3a25.result$calibration_BSRBR_external$slope1$coefficients[2],
                  Approach3a50.result$calibration_BSRBR_external$slope1$coefficients[2],
                  Approach3b25.result$calibration_BSRBR_external$slope1$coefficients[2],
-                 Approach3b50.result$calibration_BSRBR_external$slope1$coefficients[2]), each = BSRBR.t1.length),
+                 Approach3b50.result$calibration_BSRBR_external$slope1$coefficients[2],
+                 Approach4.result$calibration_BSRBR_external$slope1$coefficients[2]
+                 ), each = BSRBR.t1.length),
            rep(c(Approach1.result$calibration_BSRBR_external$slope1$coefficients[3],
                  Approach2a.result$calibration_BSRBR_external$slope1$coefficients[3],
                  Approach2b.result$calibration_BSRBR_external$slope1$coefficients[3],
@@ -201,7 +234,9 @@ slope <- c(rep(c(Approach1.result$calibration_BSRBR_external$slope1$coefficients
                  Approach3a25.result$calibration_BSRBR_external$slope1$coefficients[3],
                  Approach3a50.result$calibration_BSRBR_external$slope1$coefficients[3],
                  Approach3b25.result$calibration_BSRBR_external$slope1$coefficients[3],
-                 Approach3b50.result$calibration_BSRBR_external$slope1$coefficients[3]), each = BSRBR.t2.length),
+                 Approach3b50.result$calibration_BSRBR_external$slope1$coefficients[3],
+                 Approach4.result$calibration_BSRBR_external$slope1$coefficients[3]
+                 ), each = BSRBR.t2.length),
            rep(c(Approach1.result$calibration_BSRBR_external$slope1$coefficients[4],
                  Approach2a.result$calibration_BSRBR_external$slope1$coefficients[4],
                  Approach2b.result$calibration_BSRBR_external$slope1$coefficients[4],
@@ -209,20 +244,22 @@ slope <- c(rep(c(Approach1.result$calibration_BSRBR_external$slope1$coefficients
                  Approach3a25.result$calibration_BSRBR_external$slope1$coefficients[4],
                  Approach3a50.result$calibration_BSRBR_external$slope1$coefficients[4],
                  Approach3b25.result$calibration_BSRBR_external$slope1$coefficients[4],
-                 Approach3b50.result$calibration_BSRBR_external$slope1$coefficients[4]), each = BSRBR.t3.length)
+                 Approach3b50.result$calibration_BSRBR_external$slope1$coefficients[4],
+                 Approach4.result$calibration_BSRBR_external$slope1$coefficients[4]
+                 ), each = BSRBR.t3.length)
 )
 
 approach_id1 <- rep(c("Approach I", "Approach IIa", "Approach IIb", "Approach IIc", "Approach IIIa w = 0.25",
-                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5"), each = BSRBR.t1.length)
+                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5", "Approach IV"), each = BSRBR.t1.length)
 approach_id2 <- rep(c("Approach I", "Approach IIa", "Approach IIb", "Approach IIc", "Approach IIIa w = 0.25",
-                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5"), each = BSRBR.t2.length)
+                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5", "Approach IV"), each = BSRBR.t2.length)
 approach_id3 <- rep(c("Approach I", "Approach IIa", "Approach IIb", "Approach IIc", "Approach IIIa w = 0.25",
-                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5"), each = BSRBR.t3.length)
+                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5", "Approach IV"), each = BSRBR.t3.length)
 approach_id <- c(approach_id1, approach_id2, approach_id3)
 
-treatment <- c(rep("DMARDs", each = BSRBR.t1.length*8),
-               rep("RTX + DMARDs", each = BSRBR.t2.length*8),
-               rep("TCZ + DMARDs", each = BSRBR.t3.length*8)
+treatment <- c(rep("DMARDs", each = BSRBR.t1.length*9),
+               rep("RTX + DMARDs", each = BSRBR.t2.length*9),
+               rep("TCZ + DMARDs", each = BSRBR.t3.length*9)
 )
 
 data <- cbind(pred, obs, intercept, slope)
@@ -234,7 +271,7 @@ data <- data[complete.cases(data),]
 ggplot(data, aes(x = pred, y = obs)) + 
   geom_jitter(position = position_jitter(width = 0.3), aes(color = treatment, shape = treatment), size = 1, alpha = 1) + 
   geom_abline(aes(intercept = intercept, slope = slope, group = "approach_id", color = treatment, lty = treatment), size = 1) +
-  facet_wrap(~approach_id, ncol = 2) +
+  facet_wrap(~approach_id, ncol = 3) +
   geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed", size = 1) + 
   labs(x = "predicted outcome",
        y = "observed outcome") +
@@ -250,28 +287,35 @@ pred <- c(Approach1.result$prediction_SCQM_internal$pred1, Approach2a.result$pre
           Approach2b.result$prediction_SCQM_internal$pred1, Approach2c.result$prediction_SCQM_internal$pred1,
           Approach3a25.result$prediction_SCQM_internal$pred1, Approach3a50.result$prediction_SCQM_internal$pred1, 
           Approach3b25.result$prediction_SCQM_internal$pred1, Approach3b50.result$prediction_SCQM_internal$pred1,
+          Approach4.result$prediction_SCQM_internal$pred1,
           Approach1.result$prediction_SCQM_internal$pred2, Approach2a.result$prediction_SCQM_internal$pred2,
           Approach2b.result$prediction_SCQM_internal$pred2, Approach2c.result$prediction_SCQM_internal$pred2,
           Approach3a25.result$prediction_SCQM_internal$pred2, Approach3a50.result$prediction_SCQM_internal$pred2, 
           Approach3b25.result$prediction_SCQM_internal$pred2, Approach3b50.result$prediction_SCQM_internal$pred2,
+          Approach4.result$prediction_SCQM_internal$pred2,
           Approach1.result$prediction_SCQM_internal$pred3, Approach2a.result$prediction_SCQM_internal$pred3,
           Approach2b.result$prediction_SCQM_internal$pred3, Approach2c.result$prediction_SCQM_internal$pred3,
           Approach3a25.result$prediction_SCQM_internal$pred3, Approach3a50.result$prediction_SCQM_internal$pred3, 
-          Approach3b25.result$prediction_SCQM_internal$pred3, Approach3b50.result$prediction_SCQM_internal$pred3
-)
+          Approach3b25.result$prediction_SCQM_internal$pred3, Approach3b50.result$prediction_SCQM_internal$pred3,
+          Approach4.result$prediction_SCQM_internal$pred3
+          )
+
 obs <- c(Approach1.result$prediction_SCQM_internal$y1, Approach2a.result$prediction_SCQM_internal$y1,
          Approach2b.result$prediction_SCQM_internal$y1, Approach2c.result$prediction_SCQM_internal$y1,
          Approach3a25.result$prediction_SCQM_internal$y1, Approach3a50.result$prediction_SCQM_internal$y1, 
          Approach3b25.result$prediction_SCQM_internal$y1, Approach3b50.result$prediction_SCQM_internal$y1,
+         Approach4.result$prediction_SCQM_internal$y1,
          Approach1.result$prediction_SCQM_internal$y2, Approach2a.result$prediction_SCQM_internal$y2,
          Approach2b.result$prediction_SCQM_internal$y2, Approach2c.result$prediction_SCQM_internal$y2,
          Approach3a25.result$prediction_SCQM_internal$y2, Approach3a50.result$prediction_SCQM_internal$y2, 
          Approach3b25.result$prediction_SCQM_internal$y2, Approach3b50.result$prediction_SCQM_internal$y2,
+         Approach4.result$prediction_SCQM_internal$y2,
          Approach1.result$prediction_SCQM_internal$y3, Approach2a.result$prediction_SCQM_internal$y3,
          Approach2b.result$prediction_SCQM_internal$y3, Approach2c.result$prediction_SCQM_internal$y3,
          Approach3a25.result$prediction_SCQM_internal$y3, Approach3a50.result$prediction_SCQM_internal$y3, 
-         Approach3b25.result$prediction_SCQM_internal$y3, Approach3b50.result$prediction_SCQM_internal$y3
-)
+         Approach3b25.result$prediction_SCQM_internal$y3, Approach3b50.result$prediction_SCQM_internal$y3,
+         Approach4.result$prediction_SCQM_internal$y3
+         )
 
 intercept <- c(rep(c(Approach1.result$calibration_SCQM_internal$slope1$coefficients[1],
                      Approach2a.result$calibration_SCQM_internal$slope1$coefficients[1],
@@ -280,7 +324,9 @@ intercept <- c(rep(c(Approach1.result$calibration_SCQM_internal$slope1$coefficie
                      Approach3a25.result$calibration_SCQM_internal$slope1$coefficients[1],
                      Approach3a50.result$calibration_SCQM_internal$slope1$coefficients[1],
                      Approach3b25.result$calibration_SCQM_internal$slope1$coefficients[1],
-                     Approach3b50.result$calibration_SCQM_internal$slope1$coefficients[1]), each = SCQM.t1.length),
+                     Approach3b50.result$calibration_SCQM_internal$slope1$coefficients[1],
+                     Approach4.result$calibration_SCQM_internal$slope1$coefficients[1]
+                     ), each = SCQM.t1.length),
                rep(c(Approach1.result$calibration_SCQM_internal$slope1$coefficients[1],
                      Approach2a.result$calibration_SCQM_internal$slope1$coefficients[1],
                      Approach2b.result$calibration_SCQM_internal$slope1$coefficients[1],
@@ -288,7 +334,9 @@ intercept <- c(rep(c(Approach1.result$calibration_SCQM_internal$slope1$coefficie
                      Approach3a25.result$calibration_SCQM_internal$slope1$coefficients[1],
                      Approach3a50.result$calibration_SCQM_internal$slope1$coefficients[1],
                      Approach3b25.result$calibration_SCQM_internal$slope1$coefficients[1],
-                     Approach3b50.result$calibration_SCQM_internal$slope1$coefficients[1]), each = SCQM.t2.length),
+                     Approach3b50.result$calibration_SCQM_internal$slope1$coefficients[1],
+                     Approach4.result$calibration_SCQM_internal$slope1$coefficients[1]
+                     ), each = SCQM.t2.length),
                rep(c(Approach1.result$calibration_SCQM_internal$slope1$coefficients[1],
                      Approach2a.result$calibration_SCQM_internal$slope1$coefficients[1],
                      Approach2b.result$calibration_SCQM_internal$slope1$coefficients[1],
@@ -296,7 +344,9 @@ intercept <- c(rep(c(Approach1.result$calibration_SCQM_internal$slope1$coefficie
                      Approach3a25.result$calibration_SCQM_internal$slope1$coefficients[1],
                      Approach3a50.result$calibration_SCQM_internal$slope1$coefficients[1],
                      Approach3b25.result$calibration_SCQM_internal$slope1$coefficients[1],
-                     Approach3b50.result$calibration_SCQM_internal$slope1$coefficients[1]), each = SCQM.t3.length)
+                     Approach3b50.result$calibration_SCQM_internal$slope1$coefficients[1],
+                     Approach4.result$calibration_SCQM_internal$slope1$coefficients[1]
+                     ), each = SCQM.t3.length)
 )
 
 slope <- c(rep(c(Approach1.result$calibration_SCQM_internal$slope1$coefficients[2],
@@ -306,7 +356,9 @@ slope <- c(rep(c(Approach1.result$calibration_SCQM_internal$slope1$coefficients[
                  Approach3a25.result$calibration_SCQM_internal$slope1$coefficients[2],
                  Approach3a50.result$calibration_SCQM_internal$slope1$coefficients[2],
                  Approach3b25.result$calibration_SCQM_internal$slope1$coefficients[2],
-                 Approach3b50.result$calibration_SCQM_internal$slope1$coefficients[2]), each = SCQM.t1.length),
+                 Approach3b50.result$calibration_SCQM_internal$slope1$coefficients[2],
+                 Approach4.result$calibration_SCQM_internal$slope1$coefficients[2]
+                 ), each = SCQM.t1.length),
            rep(c(Approach1.result$calibration_SCQM_internal$slope1$coefficients[3],
                  Approach2a.result$calibration_SCQM_internal$slope1$coefficients[3],
                  Approach2b.result$calibration_SCQM_internal$slope1$coefficients[3],
@@ -314,7 +366,9 @@ slope <- c(rep(c(Approach1.result$calibration_SCQM_internal$slope1$coefficients[
                  Approach3a25.result$calibration_SCQM_internal$slope1$coefficients[3],
                  Approach3a50.result$calibration_SCQM_internal$slope1$coefficients[3],
                  Approach3b25.result$calibration_SCQM_internal$slope1$coefficients[3],
-                 Approach3b50.result$calibration_SCQM_internal$slope1$coefficients[3]), each = SCQM.t2.length),
+                 Approach3b50.result$calibration_SCQM_internal$slope1$coefficients[3],
+                 Approach4.result$calibration_SCQM_internal$slope1$coefficients[3]
+                 ), each = SCQM.t2.length),
            rep(c(Approach1.result$calibration_SCQM_internal$slope1$coefficients[4],
                  Approach2a.result$calibration_SCQM_internal$slope1$coefficients[4],
                  Approach2b.result$calibration_SCQM_internal$slope1$coefficients[4],
@@ -322,20 +376,22 @@ slope <- c(rep(c(Approach1.result$calibration_SCQM_internal$slope1$coefficients[
                  Approach3a25.result$calibration_SCQM_internal$slope1$coefficients[4],
                  Approach3a50.result$calibration_SCQM_internal$slope1$coefficients[4],
                  Approach3b25.result$calibration_SCQM_internal$slope1$coefficients[4],
-                 Approach3b50.result$calibration_SCQM_internal$slope1$coefficients[4]), each = SCQM.t3.length)
+                 Approach3b50.result$calibration_SCQM_internal$slope1$coefficients[4],
+                 Approach4.result$calibration_SCQM_internal$slope1$coefficients[4]
+                 ), each = SCQM.t3.length)
 )
 
 approach_id1 <- rep(c("Approach I", "Approach IIa", "Approach IIb", "Approach IIc", "Approach IIIa w = 0.25",
-                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5"), each = SCQM.t1.length)
+                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5", "Approach IV"), each = SCQM.t1.length)
 approach_id2 <- rep(c("Approach I", "Approach IIa", "Approach IIb", "Approach IIc", "Approach IIIa w = 0.25",
-                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5"), each = SCQM.t2.length)
+                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5", "Approach IV"), each = SCQM.t2.length)
 approach_id3 <- rep(c("Approach I", "Approach IIa", "Approach IIb", "Approach IIc", "Approach IIIa w = 0.25",
-                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5"), each = SCQM.t3.length)
+                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5", "Approach IV"), each = SCQM.t3.length)
 approach_id <- c(approach_id1, approach_id2, approach_id3)
 
-treatment <- c(rep("DMARDs", each = SCQM.t1.length*8),
-               rep("RTX + DMARDs", each = SCQM.t2.length*8),
-               rep("TCZ + DMARDs", each = SCQM.t3.length*8))
+treatment <- c(rep("DMARDs", each = SCQM.t1.length*9),
+               rep("RTX + DMARDs", each = SCQM.t2.length*9),
+               rep("TCZ + DMARDs", each = SCQM.t3.length*9))
 
 data <- cbind(pred, obs, intercept, slope)
 data <- as.data.frame(data)
@@ -346,7 +402,7 @@ data <- data[complete.cases(data),]
 ggplot(data, aes(x = pred, y = obs)) + 
   geom_jitter(position = position_jitter(width = 0.3), aes(color = treatment, shape = treatment), size = 1, alpha = 1) + 
   geom_abline(aes(intercept = intercept, slope = slope, group = "approach_id", color = treatment, lty = treatment), size = 1) +
-  facet_wrap(~approach_id, ncol = 2) +
+  facet_wrap(~approach_id, ncol = 3) +
   geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed", size = 1) + 
   labs(x = "predicted outcome",
        y = "observed outcome") +
@@ -360,27 +416,33 @@ pred <- c(Approach1.result$prediction_SCQM_external$pred1, Approach2a.result$pre
           Approach2b.result$prediction_SCQM_external$pred1, Approach2c.result$prediction_SCQM_external$pred1,
           Approach3a25.result$prediction_SCQM_external$pred1, Approach3a50.result$prediction_SCQM_external$pred1, 
           Approach3b25.result$prediction_SCQM_external$pred1, Approach3b50.result$prediction_SCQM_external$pred1,
+          Approach4.result$prediction_SCQM_external$pred1,
           Approach1.result$prediction_SCQM_external$pred2, Approach2a.result$prediction_SCQM_external$pred2,
           Approach2b.result$prediction_SCQM_external$pred2, Approach2c.result$prediction_SCQM_external$pred2,
           Approach3a25.result$prediction_SCQM_external$pred2, Approach3a50.result$prediction_SCQM_external$pred2, 
           Approach3b25.result$prediction_SCQM_external$pred2, Approach3b50.result$prediction_SCQM_external$pred2,
+          Approach4.result$prediction_SCQM_external$pred2,
           Approach1.result$prediction_SCQM_external$pred3, Approach2a.result$prediction_SCQM_external$pred3,
           Approach2b.result$prediction_SCQM_external$pred3, Approach2c.result$prediction_SCQM_external$pred3,
           Approach3a25.result$prediction_SCQM_external$pred3, Approach3a50.result$prediction_SCQM_external$pred3, 
-          Approach3b25.result$prediction_SCQM_external$pred3, Approach3b50.result$prediction_SCQM_external$pred3
+          Approach3b25.result$prediction_SCQM_external$pred3, Approach3b50.result$prediction_SCQM_external$pred3,
+          Approach4.result$prediction_SCQM_external$pred3
 )
 obs <- c(Approach1.result$prediction_SCQM_external$y1, Approach2a.result$prediction_SCQM_external$y1,
          Approach2b.result$prediction_SCQM_external$y1, Approach2c.result$prediction_SCQM_external$y1,
          Approach3a25.result$prediction_SCQM_external$y1, Approach3a50.result$prediction_SCQM_external$y1, 
          Approach3b25.result$prediction_SCQM_external$y1, Approach3b50.result$prediction_SCQM_external$y1,
+         Approach4.result$prediction_SCQM_external$y1,
          Approach1.result$prediction_SCQM_external$y2, Approach2a.result$prediction_SCQM_external$y2,
          Approach2b.result$prediction_SCQM_external$y2, Approach2c.result$prediction_SCQM_external$y2,
          Approach3a25.result$prediction_SCQM_external$y2, Approach3a50.result$prediction_SCQM_external$y2, 
          Approach3b25.result$prediction_SCQM_external$y2, Approach3b50.result$prediction_SCQM_external$y2,
+         Approach4.result$prediction_SCQM_external$y2,
          Approach1.result$prediction_SCQM_external$y3, Approach2a.result$prediction_SCQM_external$y3,
          Approach2b.result$prediction_SCQM_external$y3, Approach2c.result$prediction_SCQM_external$y3,
          Approach3a25.result$prediction_SCQM_external$y3, Approach3a50.result$prediction_SCQM_external$y3, 
-         Approach3b25.result$prediction_SCQM_external$y3, Approach3b50.result$prediction_SCQM_external$y3
+         Approach3b25.result$prediction_SCQM_external$y3, Approach3b50.result$prediction_SCQM_external$y3,
+         Approach4.result$prediction_SCQM_external$y3
 )
 
 intercept <- c(rep(c(Approach1.result$calibration_SCQM_external$slope1$coefficients[1],
@@ -390,7 +452,9 @@ intercept <- c(rep(c(Approach1.result$calibration_SCQM_external$slope1$coefficie
                      Approach3a25.result$calibration_SCQM_external$slope1$coefficients[1],
                      Approach3a50.result$calibration_SCQM_external$slope1$coefficients[1],
                      Approach3b25.result$calibration_SCQM_external$slope1$coefficients[1],
-                     Approach3b50.result$calibration_SCQM_external$slope1$coefficients[1]), each = SCQM.t1.length),
+                     Approach3b50.result$calibration_SCQM_external$slope1$coefficients[1],
+                     Approach4.result$calibration_SCQM_external$slope1$coefficients[1]
+                     ), each = SCQM.t1.length),
                rep(c(Approach1.result$calibration_SCQM_external$slope1$coefficients[1],
                      Approach2a.result$calibration_SCQM_external$slope1$coefficients[1],
                      Approach2b.result$calibration_SCQM_external$slope1$coefficients[1],
@@ -398,7 +462,9 @@ intercept <- c(rep(c(Approach1.result$calibration_SCQM_external$slope1$coefficie
                      Approach3a25.result$calibration_SCQM_external$slope1$coefficients[1],
                      Approach3a50.result$calibration_SCQM_external$slope1$coefficients[1],
                      Approach3b25.result$calibration_SCQM_external$slope1$coefficients[1],
-                     Approach3b50.result$calibration_SCQM_external$slope1$coefficients[1]), each = SCQM.t2.length),
+                     Approach3b50.result$calibration_SCQM_external$slope1$coefficients[1],
+                     Approach4.result$calibration_SCQM_external$slope1$coefficients[1]
+                     ), each = SCQM.t2.length),
                rep(c(Approach1.result$calibration_SCQM_external$slope1$coefficients[1],
                      Approach2a.result$calibration_SCQM_external$slope1$coefficients[1],
                      Approach2b.result$calibration_SCQM_external$slope1$coefficients[1],
@@ -406,7 +472,9 @@ intercept <- c(rep(c(Approach1.result$calibration_SCQM_external$slope1$coefficie
                      Approach3a25.result$calibration_SCQM_external$slope1$coefficients[1],
                      Approach3a50.result$calibration_SCQM_external$slope1$coefficients[1],
                      Approach3b25.result$calibration_SCQM_external$slope1$coefficients[1],
-                     Approach3b50.result$calibration_SCQM_external$slope1$coefficients[1]), each = SCQM.t3.length)
+                     Approach3b50.result$calibration_SCQM_external$slope1$coefficients[1],
+                     Approach4.result$calibration_SCQM_external$slope1$coefficients[1]
+                     ), each = SCQM.t3.length)
 )
 
 slope <- c(rep(c(Approach1.result$calibration_SCQM_external$slope1$coefficients[2],
@@ -416,7 +484,9 @@ slope <- c(rep(c(Approach1.result$calibration_SCQM_external$slope1$coefficients[
                  Approach3a25.result$calibration_SCQM_external$slope1$coefficients[2],
                  Approach3a50.result$calibration_SCQM_external$slope1$coefficients[2],
                  Approach3b25.result$calibration_SCQM_external$slope1$coefficients[2],
-                 Approach3b50.result$calibration_SCQM_external$slope1$coefficients[2]), each = SCQM.t1.length),
+                 Approach3b50.result$calibration_SCQM_external$slope1$coefficients[2],
+                 Approach4.result$calibration_SCQM_external$slope1$coefficients[2]
+                 ), each = SCQM.t1.length),
            rep(c(Approach1.result$calibration_SCQM_external$slope1$coefficients[3],
                  Approach2a.result$calibration_SCQM_external$slope1$coefficients[3],
                  Approach2b.result$calibration_SCQM_external$slope1$coefficients[3],
@@ -424,7 +494,9 @@ slope <- c(rep(c(Approach1.result$calibration_SCQM_external$slope1$coefficients[
                  Approach3a25.result$calibration_SCQM_external$slope1$coefficients[3],
                  Approach3a50.result$calibration_SCQM_external$slope1$coefficients[3],
                  Approach3b25.result$calibration_SCQM_external$slope1$coefficients[3],
-                 Approach3b50.result$calibration_SCQM_external$slope1$coefficients[3]), each = SCQM.t2.length),
+                 Approach3b50.result$calibration_SCQM_external$slope1$coefficients[3],
+                 Approach4.result$calibration_SCQM_external$slope1$coefficients[3]
+                 ), each = SCQM.t2.length),
            rep(c(Approach1.result$calibration_SCQM_external$slope1$coefficients[4],
                  Approach2a.result$calibration_SCQM_external$slope1$coefficients[4],
                  Approach2b.result$calibration_SCQM_external$slope1$coefficients[4],
@@ -432,20 +504,22 @@ slope <- c(rep(c(Approach1.result$calibration_SCQM_external$slope1$coefficients[
                  Approach3a25.result$calibration_SCQM_external$slope1$coefficients[4],
                  Approach3a50.result$calibration_SCQM_external$slope1$coefficients[4],
                  Approach3b25.result$calibration_SCQM_external$slope1$coefficients[4],
-                 Approach3b50.result$calibration_SCQM_external$slope1$coefficients[4]), each = SCQM.t3.length)
+                 Approach3b50.result$calibration_SCQM_external$slope1$coefficients[4],
+                 Approach4.result$calibration_SCQM_external$slope1$coefficients[4]
+                 ), each = SCQM.t3.length)
 )
 
 approach_id1 <- rep(c("Approach I", "Approach IIa", "Approach IIb", "Approach IIc", "Approach IIIa w = 0.25",
-                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5"), each = SCQM.t1.length)
+                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5", "Approach IV"), each = SCQM.t1.length)
 approach_id2 <- rep(c("Approach I", "Approach IIa", "Approach IIb", "Approach IIc", "Approach IIIa w = 0.25",
-                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5"), each = SCQM.t2.length)
+                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5", "Approach IV"), each = SCQM.t2.length)
 approach_id3 <- rep(c("Approach I", "Approach IIa", "Approach IIb", "Approach IIc", "Approach IIIa w = 0.25",
-                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5"), each = SCQM.t3.length)
+                      "Approach IIIa w = 0.5", "Approach IIIb w = 0.25", "Approach IIIb w = 0.5", "Approach IV"), each = SCQM.t3.length)
 approach_id <- c(approach_id1, approach_id2, approach_id3)
 
-treatment <- c(rep("DMARDs", each = SCQM.t1.length*8),
-               rep("RTX + DMARDs", each = SCQM.t2.length*8),
-               rep("TCZ + DMARDs", each = SCQM.t3.length*8)
+treatment <- c(rep("DMARDs", each = SCQM.t1.length*9),
+               rep("RTX + DMARDs", each = SCQM.t2.length*9),
+               rep("TCZ + DMARDs", each = SCQM.t3.length*9)
 )
 
 data <- cbind(pred, obs, intercept, slope)
@@ -457,7 +531,7 @@ data <- data[complete.cases(data),]
 ggplot(data, aes(x = pred, y = obs)) + 
   geom_jitter(position = position_jitter(width = 0.3), aes(color = treatment, shape = treatment), size = 1, alpha = 1) + 
   geom_abline(aes(intercept = intercept, slope = slope, group = "approach_id", color = treatment, lty = treatment), size = 1) +
-  facet_wrap(~approach_id, ncol = 2) +
+  facet_wrap(~approach_id, ncol = 3) +
   geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed", size = 1) + 
   labs(x = "predicted outcome",
        y = "observed outcome")+

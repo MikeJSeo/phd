@@ -320,8 +320,8 @@ separate_prediction <- function(traindata, testdata){
     
     testdata_dummy <- testdata %>% filter(study == studyid)
     missingPatternTest <- findMissingPattern(testdata_dummy, covariates)
-    prediction_store <- matrix(NA, dim(testdata_dummy)[1], nstudy)
-    precision_store <- matrix(NA, dim(testdata_dummy)[1], nstudy)
+    prediction_store <- matrix(NA, dim(testdata_dummy)[1], nstudy2)
+    precision_store <- matrix(NA, dim(testdata_dummy)[1], nstudy2)
     
     for(studyid2 in 1:nstudy2){
       

@@ -4,8 +4,6 @@ library(micemd)
 library(lme4)
 library(mitools)
 
-#library(tidyr)
-
 setwd("~/GitHub/phd/missing")
 source("helpful.functions.R")
 source("simulation.related.functions.R")
@@ -218,7 +216,7 @@ result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.6, non
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation51
-result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.6, noninear = "no", signal = "small", interaction = "yes", heterogeneity = "small")
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.6, nonlinear = "no", signal = "small", interaction = "yes", heterogeneity = "small")
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation52
