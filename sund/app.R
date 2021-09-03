@@ -1,0 +1,1571 @@
+library(shiny)
+library(kernlab)
+library(caret)
+
+### load the three prediction models - one model per treatment
+load("treat1.rda")
+load("treat2.rda")
+load("treat3.rda")
+
+### load the rescaling vectors
+xmeans=readRDS("xmeans")
+xsd=readRDS("xsd")
+
+
+
+##### global
+# The list of work condition
+work_choices <- list("Full time employment" = 1,
+               "Part-time employment" = 2,
+               "On-sick leave" = 3, 
+               "Housewife" = 4,
+               "Student" = 5,
+               "Retired" = 6,
+               "Not employed" = 7)
+
+marriage_choices <- list("Single (never married)" = 1,
+                         "Divorced or separated" = 2,
+                         "Widowed" = 3,
+                         "Married" = 4)
+
+
+# Define UI for application that draws a histogram
+ui <- shinyUI(fluidPage(
+  shinyjs::inlineCSS(list(body = "color:DarkBlue")),
+  # Application title
+  titlePanel(h1("Prediction model in a pragmatic megatrial* of acute treatment for major depression")),
+  
+  # Sidebar with a slider input for number of bins 
+  sidebarLayout(
+    
+    sidebarPanel(
+      
+      radioButtons("examples", "Examples", c("Patient with covariate values set to the average of the population" = "average", "Case of a patient belonging to Group 1" = "group1", "Case of a patient belonging to Group 2" = "group2", "Case of a patient belonging to Group 3" = "group3")),
+      h2("Input patient characteristics"),
+      
+      uiOutput("age"),
+      uiOutput("sex"),
+      uiOutput("educatenumber"),
+      uiOutput("work"),
+      uiOutput("marriage"),
+      uiOutput("depression_age"),
+      uiOutput("depression_episode_number"),
+      uiOutput("episode_months"),
+      uiOutput("physical_illness"),
+      uiOutput("primemd_q1"),
+      uiOutput("primemd_q2"),
+      uiOutput("primemd_q3"),
+      uiOutput("primemd_q4"),
+      uiOutput("primemd_q5"),
+      uiOutput("primemd_q6"),
+      uiOutput("primemd_q7"),
+      uiOutput("primemd_q8"),
+      uiOutput("primemd_q9"),
+      uiOutput("phq9_q1_1"),
+      uiOutput("phq9_q2_1"),
+      uiOutput("phq9_q3_1"),
+      uiOutput("phq9_q4_1"),
+      uiOutput("phq9_q5_1"),
+      uiOutput("phq9_q6_1"),
+      uiOutput("phq9_q7_1"),
+      uiOutput("phq9_q8_1"),
+      uiOutput("phq9_q9_1"),
+      
+      uiOutput("w1_fibser_q1"),
+      uiOutput("w1_fibser_q2"),
+      uiOutput("w1_fibser_q3"),
+      uiOutput("w1_fibser_q4"),
+      
+      uiOutput("bdi_q1_1"),
+      uiOutput("bdi_q2_1"),
+      uiOutput("bdi_q3_1"),
+      uiOutput("bdi_q4_1"),
+      uiOutput("bdi_q5_1"),
+      uiOutput("bdi_q6_1"),
+      uiOutput("bdi_q7_1"),
+      uiOutput("bdi_q8_1"),
+      uiOutput("bdi_q9_1"),
+      uiOutput("bdi_q10_1"),
+      uiOutput("bdi_q11_1"),
+      uiOutput("bdi_q12_1"),
+      uiOutput("bdi_q13_1"),
+      uiOutput("bdi_q14_1"),
+      uiOutput("bdi_q15_1"),
+      uiOutput("bdi_q16_1longer"),
+      uiOutput("bdi_q16_1shorter"),
+      uiOutput("bdi_q17_1"),
+      uiOutput("bdi_q18_1longer"),
+      uiOutput("bdi_q18_1shorter"),
+      uiOutput("bdi_q19_1"),
+      uiOutput("bdi_q20_1"),
+      uiOutput("bdi_q21_1"),
+      
+      uiOutput("phq9_q1_3"),
+      uiOutput("phq9_q2_3"),
+      uiOutput("phq9_q3_3"),
+      uiOutput("phq9_q4_3"),
+      uiOutput("phq9_q5_3"),
+      uiOutput("phq9_q6_3"),
+      uiOutput("phq9_q7_3"),
+      uiOutput("phq9_q8_3"),
+      uiOutput("phq9_q9_3"),
+      
+      uiOutput("w3_fibser_q1"),
+      uiOutput("w3_fibser_q2"),
+      uiOutput("w3_fibser_q3"),
+      uiOutput("w3_fibser_q4"),
+      
+      uiOutput("bdi_q1_3"),
+      uiOutput("bdi_q2_3"),
+      uiOutput("bdi_q3_3"),
+      uiOutput("bdi_q4_3"),
+      uiOutput("bdi_q5_3"),
+      uiOutput("bdi_q6_3"),
+      uiOutput("bdi_q7_3"),
+      uiOutput("bdi_q8_3"),
+      uiOutput("bdi_q9_3"),
+      uiOutput("bdi_q10_3"),
+      uiOutput("bdi_q11_3"),
+      uiOutput("bdi_q12_3"),
+      uiOutput("bdi_q13_3"),
+      uiOutput("bdi_q14_3"),
+      uiOutput("bdi_q15_3"),
+      uiOutput("bdi_q16_3longer"),
+      uiOutput("bdi_q16_3shorter"),
+      uiOutput("bdi_q17_3"),
+      uiOutput("bdi_q18_3longer"),
+      uiOutput("bdi_q18_3shorter"),
+      uiOutput("bdi_q19_3"),
+      uiOutput("bdi_q20_3"),
+      uiOutput("bdi_q21_3")
+      
+    ),
+    mainPanel(
+      
+      tabsetPanel(id = 'gene set',
+                  tabPanel("Result", textOutput("text1"), textOutput("text2"), textOutput("text3"), uiOutput("blank"), plotOutput("plot1"), textOutput("text5"), uiOutput("blank2"), textOutput("text4"), br(), br(), htmlOutput("text6"),
+                           tags$head(tags$style("#text4{color: blue;font-size: 25px;font-style:bold;} "))
+                           
+                           ),
+                  tabPanel("Input data", tableOutput("dataframe"))
+      )      
+      
+      
+    )
+  )))
+
+
+server <- shinyServer(function(input, output) {
+
+  output$age <- renderUI({
+    if(input$examples == "average"){
+      value = 42
+    } else if(input$examples == "group1"){
+      value = 51
+    } else if(input$examples == "group2"){
+      value = 50
+    } else if(input$examples == "group3"){
+      value = 40
+    }
+    sliderInput("age", "Age in years", min = 25, max = 75, value = value)
+  })
+  
+  output$sex <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    radioButtons("sex", "Sex", c("Male" = 1, "Female" = 2), selected = value)
+  })
+  
+  output$educatenumber <- renderUI({
+    if(input$examples == "average"){
+      value = 14
+    } else if(input$examples == "group1"){
+      value = 12
+    } else if(input$examples == "group2"){
+      value = 10
+    } else if(input$examples == "group3"){
+      value = 10
+    }
+    sliderInput("educatenumber", "Years of education", min = 8, max = 28, value = value)
+  })
+  
+  output$work <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 3
+    }
+    selectInput("work", "Employment", choices = work_choices, selected = value)
+  })
+  
+  output$marriage <- renderUI({
+    if(input$examples == "average"){
+      value = 4
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 4
+    } else if(input$examples == "group3"){
+      value = 3
+    }
+    selectInput("marriage", "Marital status", choices = marriage_choices, selected = value)
+  })
+  
+  output$depression_age <- renderUI({
+    if(input$examples == "average"){
+      value = 37
+    } else if(input$examples == "group1"){
+      value = 51
+    } else if(input$examples == "group2"){
+      value = 20
+    } else if(input$examples == "group3"){
+      value = 40
+    }
+    sliderInput("depression_age", "Age of onset of depression", min = 0, max = 75, value = value)
+  })
+  
+  output$depression_episode_number <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("depression_episode_number", "Number of depression episodes", min = 1, max = 50, value = value)
+  })
+  
+  output$episode_months <- renderUI({
+    if(input$examples == "average"){
+      value = 6
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 4
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("episode_months", "Length of current depressive episode in months", min = 1, max = 276, value = value)
+  })
+  
+  output$physical_illness <- renderUI({
+    if(input$examples == "average"){
+      value = 0
+    } else if(input$examples == "group1"){
+      value = 0
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    radioButtons("physical_illness", "Physical Illness", c("No" = 0, "Yes" = 1), selected = value)
+  })
+  
+  output$primemd_q1 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 3
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("primemd_q1", "PHQ-9 item 1 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$primemd_q2 <- renderUI({
+    if(input$examples == "average"){
+      value = 3
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 3
+    } else if(input$examples == "group3"){
+      value = 3
+    }
+    sliderInput("primemd_q2", "PHQ-9 item 2 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$primemd_q3 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("primemd_q3", "PHQ-9 item 3 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$primemd_q4 <- renderUI({
+    if(input$examples == "average"){
+      value = 3
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 3
+    } else if(input$examples == "group3"){
+      value = 3
+    }
+    sliderInput("primemd_q4", "PHQ-9 item 4 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$primemd_q5 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("primemd_q5", "PHQ-9 item 5 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$primemd_q6 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("primemd_q6", "PHQ-9 item 6 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$primemd_q7 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("primemd_q7", "PHQ-9 item 7 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$primemd_q8 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("primemd_q8", "PHQ-9 item 8 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$primemd_q9 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("primemd_q9", "PHQ-9 item 9 at baseline", min = 0, max = 3, value = value)
+  })
+  
+  output$phq9_q1_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("phq9_q1_1", "PHQ-9 item 1 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q1_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("phq9_q1_1", "PHQ-9 item 1 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q2_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("phq9_q2_1", "PHQ-9 item 2 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q3_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("phq9_q3_1", "PHQ-9 item 3 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q4_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 3
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("phq9_q4_1", "PHQ-9 item 4 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q5_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("phq9_q5_1", "PHQ-9 item 5 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q6_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("phq9_q6_1", "PHQ-9 item 6 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q7_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("phq9_q7_1", "PHQ-9 item 7 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q8_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("phq9_q8_1", "PHQ-9 item 8 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q9_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("phq9_q9_1", "PHQ-9 item 9 at week 1", min = 0, max = 3, value = value)
+  })
+  
+  output$w1_fibser_q1 <- renderUI({
+    if(input$examples == "average"){
+      value = 6
+    } else if(input$examples == "group1"){
+      value = 5
+    } else if(input$examples == "group2"){
+      value = 6
+    } else if(input$examples == "group3"){
+      value = 5
+    }
+    sliderInput("w1_fibser_q1", "Adherence at week 1", min = 0, max = 7, value = value)
+  })
+  
+  
+  output$w1_fibser_q2 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 4
+    } else if(input$examples == "group2"){
+      value = 3
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("w1_fibser_q2", "FIBSER item 1 at week 1", min = 0, max = 7, value = value)
+  })
+
+  output$w1_fibser_q3 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 4
+    } else if(input$examples == "group2"){
+      value = 3
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("w1_fibser_q3", "FIBSER item 2 at week 1", min = 0, max = 7, value = value)
+  })
+
+  output$w1_fibser_q4 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("w1_fibser_q4", "FIBSER item 3 at week 1", min = 0, max = 7, value = value)
+  })
+
+  output$phq9_q1_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("phq9_q1_3", "PHQ-9 item 1 at week 3", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q2_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("phq9_q2_3", "PHQ-9 item 2 at week 3", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q3_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("phq9_q3_3", "PHQ-9 item 3 at week 3", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q4_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("phq9_q4_3", "PHQ-9 item 4 at week 3", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q5_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("phq9_q5_3", "PHQ-9 item 5 at week 3", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q6_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("phq9_q6_3", "PHQ-9 item 6 at week 3", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q7_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("phq9_q7_3", "PHQ-9 item 7 at week 3", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q8_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("phq9_q8_3", "PHQ-9 item 8 at week 3", min = 0, max = 3, value = value)
+  })
+
+  output$phq9_q9_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 0
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 0
+    }
+    sliderInput("phq9_q9_3", "PHQ-9 item 9 at week 3", min = 0, max = 3, value = value)
+  })
+
+  
+  output$w3_fibser_q1 <- renderUI({
+    if(input$examples == "average"){
+      value = 7
+    } else if(input$examples == "group1"){
+      value = 5
+    } else if(input$examples == "group2"){
+      value = 7
+    } else if(input$examples == "group3"){
+      value = 6
+    }
+    sliderInput("w3_fibser_q1", "Adherence at week 3", min = 0, max = 7, value = value)
+  })
+  
+  
+  output$w3_fibser_q2 <- renderUI({
+    if(input$examples == "average"){
+      value = 3
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 3
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("w3_fibser_q2", "FIBSER item 1 at week 3", min = 0, max = 7, value = value)
+  })
+
+  output$w3_fibser_q3 <- renderUI({
+    if(input$examples == "average"){
+      value = 3
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 3
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("w3_fibser_q3", "FIBSER item 2 at week 3", min = 0, max = 7, value = value)
+  })
+
+  output$w3_fibser_q4 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("w3_fibser_q4", "FIBSER item 3 at week 3", min = 0, max = 7, value = value)
+  })
+
+  output$bdi_q1_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q1_1", "BDI-II item 1 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q2_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q2_1", "BDI-II item 2 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q3_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q3_1", "BDI-II item 3 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q4_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q4_1", "BDI-II item 4 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q5_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q5_1", "BDI-II item 5 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q6_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q6_1", "BDI-II item 6 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q7_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q7_1", "BDI-II item 7 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q8_1 <- renderUI({
+   if(input$examples == "average"){
+     value = 2
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q8_1", "BDI-II item 8 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q9_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q9_1", "BDI-II item 9 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q10_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q10_1", "BDI-II item 10 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q11_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q11_1", "BDI-II item 11 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q12_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q12_1", "BDI-II item 12 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q13_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q13_1", "BDI-II item 13 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q14_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q14_1", "BDI-II item 14 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q15_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("bdi_q15_1", "BDI-II item 15 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q16_1longer <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 0
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("bdi_q16_1longer", "Hypersomnia at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q16_1shorter <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("bdi_q16_1shorter", "Insomnia at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q17_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q17_1", "BDI-II item 17 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q18_1longer <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q18_1longer", "Decreased appetite at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q18_1shorter <- renderUI({
+    if(input$examples == "average"){
+      value = 0
+    } else if(input$examples == "group1"){
+      value = 0
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q18_1shorter", "Increased appetite at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q19_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q19_1", "BDI-II item 19 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q20_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q20_1", "BDI-II item 20 at week 1", min = 0, max = 3, value = value)
+  })
+
+  output$bdi_q21_1 <- renderUI({
+    if(input$examples == "average"){
+      value = 2
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q21_1", "BDI-II item 21 at week 1", min = 0, max = 3, value = value)
+  })
+  
+  
+  output$bdi_q1_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q1_3", "BDI-II item 1 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q2_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q2_3", "BDI-II item 2 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q3_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q3_3", "BDI-II item 3 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q4_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q4_3", "BDI-II item 4 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q5_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q5_3", "BDI-II item 5 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q6_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q6_3", "BDI-II item 6 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q7_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q7_3", "BDI-II item 7 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q8_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q8_3", "BDI-II item 8 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q9_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 1
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q9_3", "BDI-II item 9 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q10_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q10_3", "BDI-II item 10 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q11_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q11_3", "BDI-II item 11 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q12_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q12_3", "BDI-II item 12 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q13_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q13_3", "BDI-II item 13 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q14_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q14_3", "BDI-II item 14 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q15_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("bdi_q15_3", "BDI-II item 15 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q16_3longer <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 0
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("bdi_q16_3longer", "Hypersomnia at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q16_3shorter <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 2
+    }
+    sliderInput("bdi_q16_3shorter", "Insomnia at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q17_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q17_3", "BDI-II item 17 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q18_3longer <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 0
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q18_3longer", "Decreased appetite at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q18_3shorter <- renderUI({
+    if(input$examples == "average"){
+      value = 0
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 1
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q18_3shorter", "Increased appetite at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q19_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q19_3", "BDI-II item 19 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q20_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 2
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q20_3", "BDI-II item 20 at week 3", min = 0, max = 3, value = value)
+  })
+  
+  output$bdi_q21_3 <- renderUI({
+    if(input$examples == "average"){
+      value = 1
+    } else if(input$examples == "group1"){
+      value = 3
+    } else if(input$examples == "group2"){
+      value = 2
+    } else if(input$examples == "group3"){
+      value = 1
+    }
+    sliderInput("bdi_q21_3", "BDI-II item 21 at week 3", min = 0, max = 3, value = value)
+  })
+  
+
+  getData = reactive({
+    
+    w2=1*(input$work==2)
+    w3=1*(input$work==3)
+    w4=1*(input$work==4)
+    w5=1*(input$work==5)
+    w6=1*(input$work==6)
+    w7=1*(input$work==7)
+    ed2=1*(input$marriage==2)
+    ed3=1*(input$marriage==3)
+    ed4=1*(input$marriage==4)
+    
+    sex = as.numeric(input$sex)
+    physical_illness = as.numeric(input$physical_illness)
+    
+    age = input$age
+    educatenumber = input$educatenumber
+    depression_age = input$depression_age
+    depression_episode_number = input$depression_episode_number
+    episode_months = input$episode_months
+    primemd_q1 = input$primemd_q1
+    primemd_q2 = input$primemd_q2
+    primemd_q3 = input$primemd_q3
+    primemd_q4 = input$primemd_q4
+    primemd_q5 = input$primemd_q5
+    primemd_q6 = input$primemd_q6
+    primemd_q7 = input$primemd_q7
+    primemd_q8 = input$primemd_q8
+    primemd_q9 = input$primemd_q9
+    phq9_q1_1 = input$phq9_q1_1
+    phq9_q2_1 = input$phq9_q2_1
+    phq9_q3_1 = input$phq9_q3_1
+    phq9_q4_1 = input$phq9_q4_1
+    phq9_q5_1 = input$phq9_q5_1
+    phq9_q6_1 = input$phq9_q6_1
+    phq9_q7_1 = input$phq9_q7_1
+    phq9_q8_1 = input$phq9_q8_1
+    phq9_q9_1 = input$phq9_q9_1
+    w1_fibser_q1 = input$w1_fibser_q1
+    w1_fibser_q2 = input$w1_fibser_q2
+    w1_fibser_q3 = input$w1_fibser_q3
+    w1_fibser_q4 = input$w1_fibser_q4
+    bdi_q1_1 = input$bdi_q1_1
+    bdi_q2_1 = input$bdi_q2_1
+    bdi_q3_1 = input$bdi_q3_1
+    bdi_q4_1 = input$bdi_q4_1
+    bdi_q5_1 = input$bdi_q5_1
+    bdi_q6_1 = input$bdi_q6_1
+    bdi_q7_1 = input$bdi_q7_1
+    bdi_q8_1 = input$bdi_q8_1
+    bdi_q9_1 = input$bdi_q9_1
+    bdi_q10_1 = input$bdi_q10_1
+    bdi_q11_1 = input$bdi_q11_1
+    bdi_q12_1 = input$bdi_q12_1
+    bdi_q13_1 = input$bdi_q13_1
+    bdi_q14_1 = input$bdi_q14_1
+    bdi_q15_1 = input$bdi_q15_1
+    bdi_q16_1longer = input$bdi_q16_1longer
+    bdi_q16_1shorter = input$bdi_q16_1shorter
+    bdi_q17_1 = input$bdi_q17_1
+    bdi_q18_1longer = input$bdi_q18_1longer
+    bdi_q18_1shorter = input$bdi_q18_1shorter
+    bdi_q19_1 = input$bdi_q19_1
+    bdi_q20_1 = input$bdi_q20_1
+    bdi_q21_1 = input$bdi_q21_1
+    phq9_q1_3 = input$phq9_q1_3
+    phq9_q2_3 = input$phq9_q2_3
+    phq9_q3_3 = input$phq9_q3_3
+    phq9_q4_3 = input$phq9_q4_3
+    phq9_q5_3 = input$phq9_q5_3
+    phq9_q6_3 = input$phq9_q6_3
+    phq9_q7_3 = input$phq9_q7_3
+    phq9_q8_3 = input$phq9_q8_3
+    phq9_q9_3 = input$phq9_q9_3
+    w3_fibser_q1 = input$w3_fibser_q1
+    w3_fibser_q2 = input$w3_fibser_q2
+    w3_fibser_q3 = input$w3_fibser_q3
+    w3_fibser_q4 = input$w3_fibser_q4
+    bdi_q1_3 = input$bdi_q1_3
+    bdi_q2_3 = input$bdi_q2_3
+    bdi_q3_3 = input$bdi_q3_3
+    bdi_q4_3 = input$bdi_q4_3
+    bdi_q5_3 = input$bdi_q5_3
+    bdi_q6_3 = input$bdi_q6_3
+    bdi_q7_3 = input$bdi_q7_3
+    bdi_q8_3 = input$bdi_q8_3
+    bdi_q9_3 = input$bdi_q9_3
+    bdi_q10_3 = input$bdi_q10_3
+    bdi_q11_3 = input$bdi_q11_3
+    bdi_q12_3 = input$bdi_q12_3
+    bdi_q13_3 = input$bdi_q13_3
+    bdi_q14_3 = input$bdi_q14_3
+    bdi_q15_3 = input$bdi_q15_3
+    bdi_q16_3longer = input$bdi_q16_3longer
+    bdi_q16_3shorter = input$bdi_q16_3shorter
+    bdi_q17_3 = input$bdi_q17_3
+    bdi_q18_3longer = input$bdi_q18_3longer
+    bdi_q18_3shorter = input$bdi_q18_3shorter
+    bdi_q19_3 = input$bdi_q19_3
+    bdi_q20_3 = input$bdi_q20_3
+    bdi_q21_3 = input$bdi_q21_3
+    
+    ### create data frame
+    dat1=list(
+      age = age, sex = sex, educatenumber = educatenumber, w2 = w2, w3 = w3, 
+      w4 = w4, w5 = w5, w6 = w6, w7 = w7, ed2 = ed2, ed3 = ed3, ed4 = ed4, depression_age = depression_age, 
+      depression_episode_number = depression_episode_number, episode_months = episode_months, physical_illness = physical_illness, 
+      primemd_q1 = primemd_q1, primemd_q2 = primemd_q2, primemd_q3 = primemd_q3, primemd_q4 = primemd_q4, primemd_q5 = primemd_q5, 
+      primemd_q6 = primemd_q6, primemd_q7 = primemd_q7, primemd_q8 = primemd_q8, primemd_q9 = primemd_q9, phq9_q1_1 = phq9_q1_1, 
+      phq9_q2_1 = phq9_q2_1, phq9_q3_1 = phq9_q3_1, phq9_q4_1 = phq9_q4_1, phq9_q5_1 = phq9_q5_1, phq9_q6_1 = phq9_q6_1, 
+      phq9_q7_1 = phq9_q7_1, phq9_q8_1 = phq9_q8_1, phq9_q9_1 = phq9_q9_1, w1_fibser_q1 = w1_fibser_q1, w1_fibser_q2 = w1_fibser_q2, 
+      w1_fibser_q3 = w1_fibser_q3, w1_fibser_q4 = w1_fibser_q4, bdi_q1_1 = bdi_q1_1, bdi_q2_1 = bdi_q2_1, bdi_q3_1 = bdi_q3_1, 
+      bdi_q4_1 = bdi_q4_1, bdi_q5_1 = bdi_q5_1, bdi_q6_1 = bdi_q6_1, bdi_q7_1 = bdi_q7_1, bdi_q8_1 = bdi_q8_1, bdi_q9_1 = bdi_q9_1, 
+      bdi_q10_1 = bdi_q10_1, bdi_q11_1 = bdi_q11_1, bdi_q12_1 = bdi_q12_1, bdi_q13_1 = bdi_q13_1, bdi_q14_1 = bdi_q14_1, 
+      bdi_q15_1 = bdi_q15_1, bdi_q17_1 = bdi_q17_1, bdi_q19_1 = bdi_q19_1, bdi_q20_1 = bdi_q20_1, bdi_q21_1 = bdi_q21_1, 
+      phq9_q1_3 = phq9_q1_3, phq9_q2_3 = phq9_q2_3, phq9_q3_3 = phq9_q3_3, phq9_q4_3 = phq9_q4_3, phq9_q5_3 = phq9_q5_3, 
+      phq9_q6_3 = phq9_q6_3, phq9_q7_3 = phq9_q7_3, phq9_q8_3 = phq9_q8_3, phq9_q9_3 = phq9_q9_3, w3_fibser_q1 = w3_fibser_q1, 
+      w3_fibser_q2 = w3_fibser_q2, w3_fibser_q3 = w3_fibser_q3, w3_fibser_q4 = w3_fibser_q4, bdi_q1_3 = bdi_q1_3, bdi_q2_3 = bdi_q2_3, 
+      bdi_q3_3 = bdi_q3_3, bdi_q4_3 = bdi_q4_3, bdi_q5_3 = bdi_q5_3, bdi_q6_3 = bdi_q6_3, bdi_q7_3 = bdi_q7_3, bdi_q8_3 = bdi_q8_3, 
+      bdi_q9_3 = bdi_q9_3, bdi_q10_3 = bdi_q10_3, bdi_q11_3 = bdi_q11_3, bdi_q12_3 = bdi_q12_3, bdi_q13_3 = bdi_q13_3, 
+      bdi_q14_3 = bdi_q14_3, bdi_q15_3 = bdi_q15_3, bdi_q17_3 = bdi_q17_3, bdi_q19_3 = bdi_q19_3, bdi_q20_3 = bdi_q20_3, 
+      bdi_q21_3 = bdi_q21_3, bdi_q16_1longer = bdi_q16_1longer, bdi_q16_1shorter = bdi_q16_1shorter, bdi_q18_1longer = bdi_q18_1longer, 
+      bdi_q18_1shorter = bdi_q18_1shorter, bdi_q16_3longer = bdi_q16_3longer, bdi_q16_3shorter = bdi_q16_3shorter, bdi_q18_3longer = bdi_q18_3longer, 
+      bdi_q18_3shorter = bdi_q18_3shorter)
+    return(dat1)
+  })
+   
+  
+  getOutput <- reactive({
+
+    dat1 <- getData()
+
+    if(all(!sapply(dat1, is.null))){
+      dat1 <- as.data.frame(dat1)
+      
+      dat2 = scale(dat1, center = xmeans, scale = xsd)
+      
+      ### predict the outcome for the three different treatments
+      y1<- exp(predict(svm_Radial.t1, newdata = dat2))-1   #### continue sertraline
+      y2<- exp(predict(svm_Radial.t2, newdata = dat2))-1   #### combine with mirtazapine
+      y3<- exp(predict(svm_Radial.t3, newdata = dat2))-1   #### switch to mirtazapine
+      ind=1*(y1<y2&y1<y3)+2*(y2<y1&y2<y3)+3*(y3<y2&y3<y1)
+      best.strategy="The patient belongs to Group 1"
+      if(ind==2){best.strategy="The patient belongs to Group 2"}
+      if(ind==3){best.strategy="The patient belongs to Group 3"}
+      
+      text1 = paste("The predicted PHQ9 score after 6 weeks, if continuing on sertraline, is ", round(y1,digits=1),".",sep="")
+      text2 = paste("The predicted PHQ9 score after 6 weeks, if combining sertraline and mirtazapine, is ", round(y2,digits=1),".",sep="")
+      text3 = paste("The predicted PHQ9 score after 6 weeks, if switching to mirtazapine, is ", round(y3,digits=1),".",sep="")
+      #text4 = paste("The best predicted treatment strategy is to ", best.strategy,".",sep="")
+      text4 = best.strategy
+      text5 = "For an appreciation of the uncertainty in relative treatment effects please see the paper, Table 2."
+      
+      data = list(dat1 = dat1, best.strategy = best.strategy, text1 = text1, text2 = text2, text3 = text3, text4 = text4, text5 = text5, y1 = round(y1,digits=1), y2 = round(y2,digits=1), y3 = round(y3,digits=1))
+      data  
+    }
+  })
+    
+  output$dataframe = renderTable({
+    data = getOutput()
+    apply(data$dat1, 2, as.numeric)
+  }, rownames = TRUE)
+    
+  output$text1 = renderText({
+    data = getOutput()
+    data$text1
+  })
+
+  output$text2 = renderText({
+    data = getOutput()
+    data$text2
+  })
+
+  output$text3 = renderText({
+    data = getOutput()
+    data$text3
+  })
+
+  output$text4 = renderText({
+    data = getOutput()
+    data$text4
+  })
+  
+  output$text5 = renderText({
+    data = getOutput()
+    data$text5
+  })
+  
+  output$text6 <- renderUI({
+    
+    HTML(paste0("* Kato T, Furukawa TA, Mantani A, Kurata K, Kubouchi H, Hirota S, Sato H, Sugishita K, Chino B, Itoh K, Ikeda Y, Shinagawa Y, Kondo M, Okamoto Y, Fujita H, Suga M, Yasumoto S, Tsujino N, Inoue T, Fujise N, Akechi T, Yamada M, Shimodera S, Watanabe N, Inagaki M, Miki K, Ogawa Y, Takeshima N, Hayasaka Y, Tajika A, Shinohara K, Yonemoto N, Tanaka S, Zhou Q, Guyatt GH & for the SUN(^_^)D Investigators (2018) Optimising first- and second-line treatment strategies for untreated major depressive disorder - the SUND study: a pragmatic, multi-centre, assessor-blinded randomised controlled trial.", "<b>", " BMC Medicine","</b>", ", 16, 103."))
+  })
+  
+  output$plot1 = renderPlot({
+    
+    data = getOutput()
+    
+    if(!is.null(data$y1)){
+
+      groups <- factor(c("Continue", "Combine", "Switch"),
+                             levels = c("Continue", "Combine", "Switch"),ordered = TRUE)
+      
+      df = data.frame(y = c(data$y1, data$y2, data$y3), groups = groups)
+      ggplot(data=df, aes(x=groups, y=y, fill = groups)) +
+      geom_bar(stat="identity")+
+        theme_minimal()+
+        ylab("Predicted PHQ9 score after 6 weeks") +
+        xlab("") +
+        geom_text(aes(label=y), vjust=-0.3, size=3.5)+ 
+      scale_fill_manual("legend", values = c("Continue" = "pink", "Combine" = "#ADD8E6", "Switch" = "#90EE90"))
+    }
+  })
+  
+  output$blank <- renderUI({
+    HTML('<br>')
+  })
+  
+  output$blank2 <- renderUI({
+    HTML('<br>')
+  })
+  
+})
+
+shinyApp(ui = ui, server = server)
