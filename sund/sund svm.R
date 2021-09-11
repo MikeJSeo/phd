@@ -1,80 +1,193 @@
 library(caret)
 library(kernlab)
 library(gridExtra)
+library(dplyr)
+library(tidyr)
+library(lme4)
+library(recipes)
 
 setwd("C:/Users/ms19g661/Desktop")
 load("data for main analysis")
 
-### fit the SVMs
-#grid_radial <- expand.grid(sigma = c(0.0005, 0.001, 0.002), C = c(  0.4, 1, 1.6))
+categorical.variables <- c("sex", "work_condition", "marriage_condition", "physical_illness", paste0("primemd_q", 1:9), paste0("phq9_q", 1:9, "_1"),
+                           paste0("w1_fibser_q", 1:4), paste0("bdi_q", 1:21, "_1"), paste0("phq9_q", 1:9,"_3"), paste0("w3_fibser_q", 1:4), paste0("bdi_q", 1:21, "_3")                         )
+continuous.variables <- c("age", "educatenumber", "depression_age", "depression_episode_number", "episode_months")
+dat.final <- dat1[, c(categorical.variables, continuous.variables)]
+dat.final <- cbind( dat[, c("medicalid", "allocation_resultc")],  dat1[, c(categorical.variables, continuous.variables)])
+dat.final$y <- dat$w9_phq9
+dat.final[, c("medicalid","allocation_resultc", categorical.variables)] <- lapply(dat.final[, c("medicalid","allocation_resultc", categorical.variables)], as.factor)
+
+#dat.final %>% summarize_all(~sum(is.na(.)))
+dat.final <- dat.final %>% drop_na()
+
+dat.final2 <- dat.final %>% recipe(y ~.) %>%
+  step_dummy("allocation_resultc", all_of(categorical.variables)) %>%
+  prep() %>%
+  bake(dat.final)
+
+dat.final2 <- dat.final2 %>% rename(clinic = medicalid) %>% mutate(treatment = dat.final$allocation_resultc)
+
+
+###############################################
+
+
+crossvalidate <- function(crossdata, modelname){
+  
+  nclinic <- length(unique(crossdata$clinic))
+  performances <- matrix(NA, nrow = 3, ncol = nclinic)
+  medicalid_names <- unique(crossdata$clinic)
+  
+  for(ii in 1:nclinic){
+    
+    training_set <- crossdata %>% filter(clinic != medicalid_names[ii])
+    testing_set <- crossdata %>% filter(clinic == medicalid_names[ii])
+    
+    if(modelname == "lmer"){
+      
+      training_set <- training_set %>%  select(- c("treatment"))
+      testing_set <- testing_set %>%  select(- c("treatment"))
+      
+      lmerfit <- lmer(y ~ . - clinic + (1|clinic), data = training_set)
+      bb <- model.matrix(y ~ . - clinic, data = testing_set)
+      prediction <- bb %*% fixef(lmerfit)
+    } else if(modelname == "svm seperate"){
+      
+      treatment_dummy <- training_set$treatment
+      training_set <- training_set %>% select(-c("treatment", grep("allocation_resultc", colnames(training_set), value = TRUE )))
+      training_set.t1 <- training_set[treatment_dummy == 1,]
+      training_set.t2 <- training_set[treatment_dummy == 2,]
+      training_set.t3 <- training_set[treatment_dummy == 3,]
+      
+      treatment_test_dummy <- testing_set$treatment
+      testing_set <- testing_set %>% select(-c("treatment", grep("allocation_resultc", colnames(training_set), value = TRUE )))
+      testing_set.t1 <- testing_set[treatment_test_dummy == 1,]
+      testing_set.t2 <- testing_set[treatment_test_dummy == 2,]
+      testing_set.t3 <- testing_set[treatment_test_dummy == 3,]
+      
+      internalexternal <- list()
+      for(i in 1:length(unique(training_set.t1$clinic))){
+        ind <- 1:length(training_set.t1$clinic)
+        ind <- ind[training_set.t1$clinic != unique(training_set.t1$clinic)[i]]
+        internalexternal[[i]] <- ind
+      }
+      trctrl <- trainControl(index = internalexternal, method = "cv")
+      
+      training_set.t1 <- training_set.t1 %>%  select(- c("clinic"))
+      svm_Radial.t1 <- train(y ~., data = training_set.t1, method = "svmRadial", trControl=trctrl, scale = FALSE, tuneLength = 20)
+      
+      internalexternal <- list()
+      for(i in 1:length(unique(training_set.t2$clinic))){
+        ind <- 1:length(training_set.t2$clinic)
+        ind <- ind[training_set.t2$clinic != unique(training_set.t2$clinic)[i]]
+        internalexternal[[i]] <- ind
+      }
+      trctrl <- trainControl(index = internalexternal, method = "cv")
+      
+      training_set.t2 <- training_set.t2 %>%  select(- c("clinic"))
+      svm_Radial.t2<- train(y ~., data = training_set.t2, method = "svmRadial",trControl=trctrl, scale = FALSE, tuneLength = 20)
+
+      internalexternal <- list()
+      for(i in 1:length(unique(training_set.t3$clinic))){
+        ind <- 1:length(training_set.t3$clinic)
+        ind <- ind[training_set.t3$clinic != unique(training_set.t3$clinic)[i]]
+        internalexternal[[i]] <- ind
+      }
+      trctrl <- trainControl(index = internalexternal, method = "cv")
+      
+      training_set.t3 <- training_set.t3 %>%  select(- c("clinic"))
+      svm_Radial.t3<- train(y ~., data = training_set.t3, method = "svmRadial",trControl=trctrl, scale = FALSE, tuneLength = 20)
+
+      y.in.1<- predict(svm_Radial.t1, newdata = testing_set[treatment_test_dummy == 1,])
+      y.in.2<- predict(svm_Radial.t2, newdata = testing_set[treatment_test_dummy == 2,])
+      y.in.3<- predict(svm_Radial.t3, newdata = testing_set[treatment_test_dummy == 3,])
+      
+      prediction <- rep(NA, dim(testing_set)[1])
+      prediction[treatment_test_dummy == 1] <- y.in.1
+      prediction[treatment_test_dummy == 2] <- y.in.2
+      prediction[treatment_test_dummy == 3] <- y.in.3
+    }
+    
+    performances[1,ii] <- findMSE(testing_set$y, prediction)
+    performances[2,ii] <- findMAE(testing_set$y, prediction)
+    performances[3,ii] <- findRsquared(testing_set$y, prediction)
+  }
+  
+  return(performances)
+}
+
+findRsquared <- function(y, pred){
+  
+  total <- (y - mean(y, na.rm = TRUE))^2
+  tss <- sum(total[!is.na(total)])
+  residual <- (y - pred)^2
+  rss<- sum(residual[!is.na(residual)])
+  rsquared <- 1 - rss/tss
+  rsquared
+}
+
+findMAE <- function(y, pred){
+  
+  err_MAE<- abs(pred - y)
+  err_MAE <- err_MAE[!is.na(err_MAE)]
+  mean(err_MAE)
+}
+
+findMSE <- function(y, pred){
+  
+  err_mse <- (pred - y)^2
+  err_mse <- err_mse[!is.na(err_mse)]
+  mean(err_mse)
+}
+
+######################################
+#cross-validation
+
+lmer_cross <- crossvalidate(dat.final2, "lmer")
+svm_seperate_cross <- crossvalidate(dat.final2, "svm seperate")
+
+apply(lmer_cross, 1, mean)
+apply(svm_seperate_cross, 1, mean)
+
+#############################################
+#internal-validation
+#lmer
+dat.final3 <- dat.final2 %>% select(- c("treatment"))
+
+lmerfit <- lmer(y ~ . - clinic + (1|clinic), data = dat.final3)
+bb <- model.matrix(y ~ . - clinic, data = dat.final3)
+prediction <- bb %*% fixef(lmerfit)
+
+findMSE(dat.final3$y, prediction)
+findMAE(dat.final3$y, prediction)
+findRsquared(dat.final3$y, prediction)
+
+#fit the SVMs
 trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
-svm_Radial.t1 <- train(y ~., data = dat.t1, method = "svmRadial", trControl=trctrl, tuneLength = 20, selectionFunction ="min")
 
-svm_Radial.t2<- train(y ~., data = dat.t2, method = "svmRadial",trControl=trctrl,tuneLength = 20,selectionFunction ="min")
+treatment_dummy <- dat.final2$treatment
+dat.final3.t1 <- dat.final3[treatment_dummy == 1,]
+dat.final3.t2 <- dat.final3[treatment_dummy == 2,]
+dat.final3.t3 <- dat.final3[treatment_dummy == 3,]
 
-svm_Radial.t3<- train(y ~., data = dat.t3, method = "svmRadial",trControl=trctrl,tuneLength = 20, selectionFunction ="min")
+svm_Radial.t1 <- train(y ~. , data = dat.final3.t1, method = "svmRadial", trControl=trctrl, tuneLength = 20, selectionFunction ="min", scale = FALSE)
+svm_Radial.t2 <- train(y ~. , data = dat.final3.t2, method = "svmRadial", trControl=trctrl, tuneLength = 20, selectionFunction ="min", scale = FALSE)
+svm_Radial.t3 <- train(y ~. , data = dat.final3.t3, method = "svmRadial", trControl=trctrl, tuneLength = 20, selectionFunction ="min", scale = FALSE)
 
+y.in.1<- predict(svm_Radial.t1, newdata = dat.final3.t1)
+y.in.2<- predict(svm_Radial.t2, newdata = dat.final3.t2)
+y.in.3<- predict(svm_Radial.t3, newdata = dat.final3.t3)
 
-#### in-sample predictions
-y.in.1<- predict(svm_Radial.t1, newdata = dat.t1)
-median(abs(exp(dat.t1$y)-exp(y.in.1))) 
+prediction <- rep(NA, dim(dat.final3)[1])
+prediction[treatment_dummy == 1] <- y.in.1
+prediction[treatment_dummy == 2] <- y.in.2
+prediction[treatment_dummy == 3] <- y.in.3
 
-y.in.2<- predict(svm_Radial.t2, newdata = dat.t2)
-median(abs(exp(dat.t2$y)-exp(y.in.2))) 
+findMSE(dat.final3$y, prediction)
+findMAE(dat.final3$y, prediction)
+findRsquared(dat.final3$y, prediction)
 
-y.in.3<- predict(svm_Radial.t3, newdata = dat.t3)
-median(abs(exp(dat.t3$y)-exp(y.in.3))) 
+y1 <- predict(svm_Radial.t1, newdata = dat.final3)
+y2 <- predict(svm_Radial.t2, newdata = dat.final3)
+y3 <- predict(svm_Radial.t3, newdata = dat.final3)
 
-abs.error=data.frame(a1=c(abs(exp(dat.t1$y)-exp(y.in.1)), abs(exp(dat.t2$y)-exp(y.in.2)), abs(exp(dat.t3$y)-exp(y.in.3)))
-                     ,t=c(rep("A", length(y.in.1)),rep("B", length(y.in.2)), rep("C", length(y.in.3)) ))
-median(abs.error$a1)
-
-ggplot(abs.error, aes(x=a1)) +
-  geom_histogram(color="black", fill="white", binwidth = 1)
-
-##### using the model
-dat3.1=dat3
-dat3.1$t3=0
-dat3.1$t2=0
-y1<- exp(predict(svm_Radial.t1, newdata = dat3.1))-1
-median(abs(y1[dat3$t2==0&dat3$t3==0]-exp(dat3.1[dat3$t2==0&dat3$t3==0,]$y)+1), na.rm=T)
-
-dat3.2=dat3
-dat3.2$t3=0
-dat3.2$t2=1
-y2<- exp(predict(svm_Radial.t2, newdata = dat3.2))-1
-median(abs(y2[dat3$t2==1&dat3$t3==0]-exp(dat3.2[dat3$t2==1&dat3$t3==0,]$y)+1), na.rm=T)
-
-dat3.3=dat3
-dat3.3$t3=1
-dat3.3$t2=0
-y3<- exp(predict(svm_Radial.t3, newdata = dat3.3))-1
-median(abs(y3[dat3$t3==1&dat3$t2==0]-exp(dat3.3[dat3$t3==1&dat3$t2==0,]$y)+1), na.rm=T)
-
-pred.compare=data.frame(exp(dat3$y)-1,y1,y2,y3)
-colnames(pred.compare)=c("y","y1","y2","y3")
-pred.compare$best=1*(pred.compare$y1<pred.compare$y2&pred.compare$y1<pred.compare$y3)+
-  2*(pred.compare$y2<pred.compare$y1&pred.compare$y2<pred.compare$y3)+
-  3*(pred.compare$y3<pred.compare$y1&pred.compare$y3<pred.compare$y2)
-
-pred.compare$treat=1*(dat3$t2==0&dat3$t3==0)+
-  2*(dat3$t2==1&dat3$t3==0)+
-  3*(dat3$t2==0&dat3$t3==1)
-
-histogram(pred.compare$best)
-table((pred.compare$best))
-
-#### histograms of PAI treatment 2 vs 3
-pai23<-ggplot(pred.compare, aes(x=y2-y3)) + 
-  geom_histogram(color="black", fill="white", binwidth = 1)
-pai23
-
-pai12<-ggplot(pred.compare, aes(x=y1-y2)) + 
-  geom_histogram(color="black", fill="white", binwidth = 1)
-pai12
-
-pai13<-ggplot(pred.compare, aes(x=y1-y3)) + 
-  geom_histogram(color="black", fill="white", binwidth = 1)
-pai13
-
-grid.arrange(pai12, pai13, pai23,nrow = 1)
+best=1*(y1< y2& y1<y3)+ 2*(y2 < y1 & y2 < y3)+ 3*(y3 < y1 & y3< y2)

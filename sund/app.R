@@ -391,18 +391,18 @@ server <- shinyServer(function(input, output) {
     sliderInput("primemd_q9", "PHQ-9 item 9 at baseline", min = 0, max = 3, value = value)
   })
   
-  output$phq9_q1_1 <- renderUI({
-    if(input$examples == "average"){
-      value = 1
-    } else if(input$examples == "group1"){
-      value = 3
-    } else if(input$examples == "group2"){
-      value = 1
-    } else if(input$examples == "group3"){
-      value = 1
-    }
-    sliderInput("phq9_q1_1", "PHQ-9 item 1 at week 1", min = 0, max = 3, value = value)
-  })
+  # output$phq9_q1_1 <- renderUI({
+  #   if(input$examples == "average"){
+  #     value = 1
+  #   } else if(input$examples == "group1"){
+  #     value = 3
+  #   } else if(input$examples == "group2"){
+  #     value = 1
+  #   } else if(input$examples == "group3"){
+  #     value = 1
+  #   }
+  #   sliderInput("phq9_q1_1", "PHQ-9 item 1 at week 1", min = 0, max = 3, value = value)
+  # })
 
   output$phq9_q1_1 <- renderUI({
     if(input$examples == "average"){
