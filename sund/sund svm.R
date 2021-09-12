@@ -7,7 +7,7 @@ library(lme4)
 library(recipes)
 
 setwd("C:/Users/ms19g661/Desktop")
-load("data for main analysis")
+load("sund data")
 
 categorical.variables <- c("sex", "work_condition", "marriage_condition", "physical_illness", paste0("primemd_q", 1:9), paste0("phq9_q", 1:9, "_1"),
                            paste0("w1_fibser_q", 1:4), paste0("bdi_q", 1:21, "_1"), paste0("phq9_q", 1:9,"_3"), paste0("w3_fibser_q", 1:4), paste0("bdi_q", 1:21, "_3")                         )
@@ -105,6 +105,24 @@ crossvalidate <- function(crossdata, modelname){
       prediction[treatment_test_dummy == 1] <- y.in.1
       prediction[treatment_test_dummy == 2] <- y.in.2
       prediction[treatment_test_dummy == 3] <- y.in.3
+    } else if(modelname == "svm together"){
+      
+      training_set <- training_set %>% select(-c("treatment"))
+      testing_set <- testing_set %>% select(-c("treatment"))
+      
+      internalexternal <- list()
+      for(i in 1:length(unique(training_set$clinic))){
+        ind <- 1:length(training_set$clinic)
+        ind <- ind[training_set$clinic != unique(training_set$clinic)[i]]
+        internalexternal[[i]] <- ind
+      }
+      trctrl <- trainControl(index = internalexternal, method = "cv")
+      
+      training_set <- training_set %>%  select(- c("clinic"))
+      svm_Radial <- train(y ~., data = training_set, method = "svmRadial", trControl=trctrl, scale = FALSE, tuneLength = 20)
+      
+      prediction <- predict(svm_Radial, newdata = testing_set)
+
     }
     
     performances[1,ii] <- findMSE(testing_set$y, prediction)
@@ -142,11 +160,13 @@ findMSE <- function(y, pred){
 ######################################
 #cross-validation
 
+svm_together <- crossvalidate(dat.final2, "svm together")
 lmer_cross <- crossvalidate(dat.final2, "lmer")
 svm_seperate_cross <- crossvalidate(dat.final2, "svm seperate")
 
 apply(lmer_cross, 1, mean)
 apply(svm_seperate_cross, 1, mean)
+apply(svm_together, 1, mean)
 
 #############################################
 #internal-validation
@@ -191,3 +211,28 @@ y2 <- predict(svm_Radial.t2, newdata = dat.final3)
 y3 <- predict(svm_Radial.t3, newdata = dat.final3)
 
 best=1*(y1< y2& y1<y3)+ 2*(y2 < y1 & y2 < y3)+ 3*(y3 < y1 & y3< y2)
+
+
+# fit the SVM together
+svm_Radial <- train(y ~., data = dat.final3, method = "svmRadial", trControl=trctrl, scale = FALSE, tuneLength = 20)
+prediction <- predict(svm_Radial, newdata = dat.final3)
+
+dat.final3.t1 <- dat.final3
+dat.final3.t1$allocation_resultc_X2 <- rep(0, length(dat.final3.t1$allocation_resultc_X2))
+dat.final3.t1$allocation_resultc_X3 <- rep(0, length(dat.final3.t1$allocation_resultc_X3))
+
+dat.final3.t2 <- dat.final3
+dat.final3.t2$allocation_resultc_X2 <- rep(1, length(dat.final3.t2$allocation_resultc_X2))
+dat.final3.t2$allocation_resultc_X3 <- rep(0, length(dat.final3.t2$allocation_resultc_X3))
+
+dat.final3.t3 <- dat.final3
+dat.final3.t3$allocation_resultc_X2 <- rep(0, length(dat.final3.t3$allocation_resultc_X2))
+dat.final3.t3$allocation_resultc_X3 <- rep(1, length(dat.final3.t3$allocation_resultc_X3))
+
+y1 <- predict(svm_Radial, newdata = dat.final3.t1)
+y2 <- predict(svm_Radial, newdata = dat.final3.t2)
+y3 <- predict(svm_Radial, newdata = dat.final3.t3)
+
+best=1*(y1< y2& y1<y3)+ 2*(y2 < y1 & y2 < y3)+ 3*(y3 < y1 & y3< y2)
+
+
