@@ -170,16 +170,7 @@ apply(svm_together, 1, mean)
 
 #############################################
 #internal-validation
-#lmer
 dat.final3 <- dat.final2 %>% select(- c("treatment"))
-
-lmerfit <- lmer(y ~ . - clinic + (1|clinic), data = dat.final3)
-bb <- model.matrix(y ~ . - clinic, data = dat.final3)
-prediction <- bb %*% fixef(lmerfit)
-
-findMSE(dat.final3$y, prediction)
-findMAE(dat.final3$y, prediction)
-findRsquared(dat.final3$y, prediction)
 
 #fit the SVMs
 trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
@@ -214,6 +205,7 @@ best=1*(y1< y2& y1<y3)+ 2*(y2 < y1 & y2 < y3)+ 3*(y3 < y1 & y3< y2)
 
 
 # fit the SVM together
+
 svm_Radial <- train(y ~., data = dat.final3, method = "svmRadial", trControl=trctrl, scale = FALSE, tuneLength = 20)
 prediction <- predict(svm_Radial, newdata = dat.final3)
 
@@ -235,4 +227,23 @@ y3 <- predict(svm_Radial, newdata = dat.final3.t3)
 
 best=1*(y1< y2& y1<y3)+ 2*(y2 < y1 & y2 < y3)+ 3*(y3 < y1 & y3< y2)
 
+#lmer
+lmerfit <- lmer(y ~ . - clinic + (1|clinic), data = dat.final3)
+bb <- model.matrix(y ~ . - clinic, data = dat.final3)
+prediction <- bb %*% fixef(lmerfit)
 
+findMSE(dat.final3$y, prediction)
+findMAE(dat.final3$y, prediction)
+findRsquared(dat.final3$y, prediction)
+
+bb <- model.matrix(y ~ . - clinic, data = dat.final3.t1)
+y1 <- bb %*% fixef(lmerfit)
+
+bb <- model.matrix(y ~ . - clinic, data = dat.final3.t2)
+y2 <- bb %*% fixef(lmerfit)
+
+bb <- model.matrix(y ~ . - clinic, data = dat.final3.t3)
+y3 <- bb %*% fixef(lmerfit)
+
+best=1*(y1< y2& y1<y3)+ 2*(y2 < y1 & y2 < y3)+ 3*(y3 < y1 & y3< y2)
+table(best)

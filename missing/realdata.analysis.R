@@ -183,6 +183,3 @@ for(i in 1:length(unique(mydata$study))){
   coef_fit_store[[i]] <- summary(pool(fit))
 }
 coef_fit_store
-
-
-#newdata %>% group_by(study) %>% summarize_all(~sum(is.na(.)))
