@@ -6,6 +6,9 @@ library(lme4)
 library(broom.mixed)
 library(mitools)
 
+#devtools::install_github("MikeJSeo/bipd") #some functions included for convenience
+library(bipd)
+
 setwd("C:/Users/ms19g661/Documents/GitHub/phd/missing")
 source("helpful.functions.R")
 source("realdata.related.functions.R")
@@ -48,7 +51,6 @@ mydata <- mydata %>% mutate(gender = as.factor(gender),
                             Medication = as.factor(Medication),
                             alcohol = as.factor(alcohol))
 
-
 # mean_val <- apply(mydata[,covariates], 2, mean, na.rm = TRUE)
 # sd_val <- apply(mydata[,covariates], 2, sd, na.rm = TRUE)
 # mydata[,covariates] <- apply(mydata[,covariates], 2, scale)
@@ -59,8 +61,8 @@ mydata <- mydata %>% mutate(gender = as.factor(gender),
 ##############Cross validation
 ####################################
 # type of variable
-type_of_var <- c("continuous", "binary", "continuous", "binary", "binary", "count", "binary", "binary")
-names(type_of_var) <- covariates
+typeofvar <- c("continuous", "binary", "continuous", "binary", "binary", "binary", "binary", "binary")
+names(typeofvar) <- covariates
 
 testing_subset <- findTestData(mydata)
 
@@ -88,31 +90,30 @@ separateperf
 newdata <- mydata %>% select(study, y, treat, baseline, gender)
 newdata <- newdata %>% mutate(baselinetreat = NA, gendertreat = NA)
 
-meth <- make.method(newdata)
-meth[c("y", "gender")] <- "2l.pmm"
-meth["baselinetreat"] <- "~ I(baseline * treat)"
-meth["gendertreat"] <- "~ I(as.numeric(as.character(gender)) * treat)"
+missingPattern <- findMissingPattern(newdata, covariates = c("baseline", "gender"))
+meth <- getCorrectMeth(newdata, missingPattern, interaction = TRUE)
+pred <- getCorrectPred(newdata, missingPattern, interaction = TRUE)
 
-pred <- make.predictorMatrix(newdata)
-pred[,] <- 0
-
-codes <- c(rep(1, 2), 2, rep(1, 2))
-codes2 <- c(rep(1, 2), 2, rep(1, 1))
-
-pred["y", c("baseline", "gender", "treat", "baselinetreat", "gendertreat")] <- codes
-pred["gender", c("y", "baseline", "treat", "baselinetreat")] <- codes2
-
-pred[c("y", "gender"), "study"] <- -2
-imp <- mice(newdata, pred = pred, meth = meth)
+set.seed(1)
+imp <- mice(newdata, pred = pred, meth = meth, m = 20)
 
 fit <- with(imp, lmer(y ~ (baseline + gender) * treat + (1|study) + (0+treat|study)))
 t(sapply(fit$analyses, fixef))
 coef_fit <- summary(pool(fit))
 coef_fit
 
+
 #Imputation approach
 newdata <- mydata
 newdata <- newdata %>% mutate(baselinetreat = NA, gendertreat = NA, agetreat = NA, relstattreat = NA, ComorbidAnxietytreat = NA, preveptreat = NA, Medicationtreat = NA,  alcoholtreat = NA)
+
+missingPattern <- findMissingPattern(newdata, covariates = c("baseline", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol"))
+
+typeofvar <- c("continuous", "binary", "binary", "count", "binary", "binary")
+names(typeofvar) <- missingPattern$sys_covariates
+  
+meth <- getCorrectMeth(newdata, missingPattern, interaction = TRUE, typeofvar = typeofvar)
+
 meth <- make.method(newdata)
 
 meth[c("y", "gender")] <- "2l.pmm"

@@ -70,7 +70,7 @@ crossvalidation_realdata <- function(crossdata, method){
       
       missingPattern <- findMissingPattern(training_set, covariates_all)  
       
-      meth <- getCorrectMeth(training_set, missingPattern, method, type_of_var = type_of_var)
+      meth <- getCorrectMeth(training_set, missingPattern, method, typeofvar = typeofvar)
       pred <- getCorrectPred(training_set, missingPattern, method)
 
       imp <- mice(training_set, pred = pred, meth = meth)
