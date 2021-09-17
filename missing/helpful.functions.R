@@ -1,8 +1,7 @@
 # General functions shared for both simulations and real data example
 
 ##################################################################
-#### imputation related tools
-
+#### some helpful functions
 createinteractions <- function(df, cov) {
   for(i in 1:length(cov)){
     varname <- paste0(cov[i], "treat")
@@ -11,12 +10,26 @@ createinteractions <- function(df, cov) {
   df
 }
 
+findVarianceUsingRubinsRule <- function(prediction.dummy, variance.dummy){
+  
+  avg.prediction <- apply(prediction.dummy, 1, mean)
+  summ <- 0
+  for(iii in 1:5){
+    summ <- summ + (prediction.dummy[,iii] - avg.prediction)^2
+  }
+  return(apply(variance.dummy, 1, mean) + (5 + 1)/ (5^2 - 5) * summ)
+}
 
+relabel.vec <- function(x, order)
+{
+  old.x <- x
+  x <- rep(NA, length(old.x))
+  for (i in seq(length(order))) x[old.x == order[i]] <- i #relabel studies in numerical order starting with one
+  return(x)
+}
 
-
-
-################################functions to calculate performance #############
 ################################################################################
+################################functions to calculate performance #############
 
 findPerformance <- function(testdata_y, predictions){
   
@@ -29,7 +42,6 @@ findPerformance <- function(testdata_y, predictions){
   names(performances) <- c("MSE", "MAE","Rsquared")
   return(performances)
 }
-
 
 findRsquared <- function(y, pred){
   total <- (y - mean(y, na.rm = TRUE))^2
@@ -50,15 +62,4 @@ findMSE <- function(y, pred){
   err_mse <- (pred-y)^2
   err_mse <- err_mse[!is.na(err_mse)]
   mean(err_mse)
-}
-
-##########################################################################
-###################### additional functions ##############################
-
-relabel.vec <- function(x, order)
-{
-  old.x <- x
-  x <- rep(NA, length(old.x))
-  for (i in seq(length(order))) x[old.x == order[i]] <- i #relabel studies in numerical order starting with one
-  return(x)
 }

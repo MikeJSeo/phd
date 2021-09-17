@@ -48,6 +48,7 @@ mydata <- mydata %>% select(study, y, treat, all_of(covariates))
 mydata <- mydata %>% mutate(gender = as.factor(gender),
                             relstat = as.factor(relstat),
                             ComorbidAnxiety = as.factor(ComorbidAnxiety),
+                            prevep = as.factor(prevep),
                             Medication = as.factor(Medication),
                             alcohol = as.factor(alcohol))
 
@@ -83,16 +84,16 @@ separateperf
   
 
 
-##########################################
+###########################################################################
 ######Analysis using full data
 
 #Naive approach
 newdata <- mydata %>% select(study, y, treat, baseline, gender)
 newdata <- newdata %>% mutate(baselinetreat = NA, gendertreat = NA)
 
-missingPattern <- findMissingPattern(newdata, covariates = c("baseline", "gender"))
-meth <- getCorrectMeth(newdata, missingPattern, interaction = TRUE)
-pred <- getCorrectPred(newdata, missingPattern, interaction = TRUE)
+missingPattern <- findMissingPattern(newdata, c("baseline", "gender"))
+meth <- getCorrectMeth(newdata, missingPattern)
+pred <- getCorrectPred(newdata, missingPattern)
 
 set.seed(1)
 imp <- mice(newdata, pred = pred, meth = meth, m = 20)
@@ -102,53 +103,18 @@ t(sapply(fit$analyses, fixef))
 coef_fit <- summary(pool(fit))
 coef_fit
 
-
 #Imputation approach
 newdata <- mydata
 newdata <- newdata %>% mutate(baselinetreat = NA, gendertreat = NA, agetreat = NA, relstattreat = NA, ComorbidAnxietytreat = NA, preveptreat = NA, Medicationtreat = NA,  alcoholtreat = NA)
 
-missingPattern <- findMissingPattern(newdata, covariates = c("baseline", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol"))
+missingPattern <- findMissingPattern(newdata, covariates)
+meth <- getCorrectMeth(newdata, missingPattern, typeofvar = typeofvar)
+pred <- getCorrectPred(newdata, missingPattern)
 
-typeofvar <- c("continuous", "binary", "binary", "count", "binary", "binary")
-names(typeofvar) <- missingPattern$sys_covariates
-  
-meth <- getCorrectMeth(newdata, missingPattern, interaction = TRUE, typeofvar = typeofvar)
+set.seed(1)
+imp <- mice(newdata, pred = pred, meth = meth, m = 20)
 
-meth <- make.method(newdata)
-
-meth[c("y", "gender")] <- "2l.pmm"
-meth[c("age")] <- "2l.2stage.norm"
-meth[c("prevep")] <- "2l.2stage.pois"
-meth[c("gender", "relstat", "ComorbidAnxiety", "Medication", "alcohol")] <- "2l.2stage.bin"
-
-meth["baselinetreat"] <- "~ I(baseline * treat)"
-meth["gendertreat"] <- "~ I(as.numeric(as.character(gender)) * treat)"
-meth["agetreat"] <- "~ I(as.numeric(as.character(age)) * treat)"
-meth["relstattreat"] <- "~ I(as.numeric(as.character(relstat)) * treat)"
-meth["ComorbidAnxietytreat"] <- "~ I(as.numeric(as.character(ComorbidAnxiety)) * treat)"
-meth["preveptreat"] <- "~ I(prevep * treat)"
-meth["Medicationtreat"] <- "~ I(as.numeric(as.character(Medication)) * treat)"
-meth["alcoholtreat"] <- "~ I(as.numeric(as.character(alcohol)) * treat)"
-
-pred <- make.predictorMatrix(newdata)
-pred[,] <- 0
-
-codes <- c(rep(1, 8), 2, rep(1, 8))
-codes2 <- c(rep(1, 8), 2, rep(1, 7))
-
-pred["y", c("baseline", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol", "treat", "baselinetreat", "gendertreat", "agetreat", "relstattreat", "ComorbidAnxietytreat", "preveptreat", "Medicationtreat", "alcoholtreat")] <- codes
-pred["gender", c("y", "baseline", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol", "treat", "baselinetreat", "agetreat", "relstattreat", "ComorbidAnxietytreat", "preveptreat", "Medicationtreat", "alcoholtreat")] <- codes2
-pred["age", c("y", "baseline", "gender", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol", "treat", "baselinetreat", "gendertreat", "relstattreat", "ComorbidAnxietytreat", "preveptreat", "Medicationtreat", "alcoholtreat")] <- codes2
-pred["relstat", c("y", "baseline", "gender", "age", "ComorbidAnxiety", "prevep", "Medication", "alcohol", "treat", "baselinetreat", "gendertreat", "agetreat", "ComorbidAnxietytreat", "preveptreat", "Medicationtreat", "alcoholtreat")] <- codes2
-pred["ComorbidAnxiety",  c("y", "baseline", "gender", "age", "relstat", "prevep", "Medication", "alcohol", "treat", "baselinetreat", "gendertreat", "agetreat", "relstattreat", "preveptreat", "Medicationtreat", "alcoholtreat")] <- codes2
-pred["prevep", c("y", "baseline", "gender", "age", "relstat", "ComorbidAnxiety", "Medication", "alcohol", "treat", "baselinetreat", "gendertreat", "agetreat", "relstattreat", "ComorbidAnxietytreat", "Medicationtreat", "alcoholtreat")] <- codes2
-pred["Medication", c("y", "baseline", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "alcohol", "treat", "baselinetreat", "gendertreat", "agetreat", "relstattreat", "ComorbidAnxietytreat", "preveptreat", "alcoholtreat")] <- codes2
-pred["alcohol", c("y", "baseline", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "treat", "baselinetreat", "gendertreat", "agetreat", "relstattreat", "ComorbidAnxietytreat", "preveptreat", "Medicationtreat")] <- codes2
-
-pred[c("y", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol"), "study"] <- -2
-imp <- mice(newdata, pred = pred, meth = meth)
-
-fit <- with(imp, lmer(y ~ (baseline + gender + age + relstat + ComorbidAnxiety + prevep + Medication + alcohol) * treat + (1|study)))
+fit <- with(imp, lmer(y ~ (baseline + gender + age + relstat + ComorbidAnxiety + prevep + Medication + alcohol) * treat + (1|study) + (0 + treat|study)))
 t(sapply(fit$analyses, fixef))
 coef_fit <- summary(pool(fit))
 coef_fit
@@ -170,7 +136,8 @@ for(i in 1:length(unique(mydata$study))){
   print(meth)
   print(pred)
   
-  imp <- mice(newdata, pred = pred, meth = meth)
+  set.seed(1)
+  imp <- mice(newdata, pred = pred, meth = meth, m = 20)
   impc <- complete(imp, "long", include = "TRUE")
   imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
   fit <- list()

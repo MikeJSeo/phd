@@ -14,7 +14,8 @@ missingPattern <- findMissingPattern(data, covariates, studyname = "STUDYID")
 
 # There are studies with too few observations: 29060/073 has 9
 table(data$STUDYID)
-
+ 
+# merge studies
 
 # Shows missing percentage for each variable in each study
 View(missingP$missingpercent)

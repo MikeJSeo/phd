@@ -1,3 +1,4 @@
+
 findTestData <- function(crossdata){
   
   nstudy <- length(unique(crossdata$study))
@@ -17,14 +18,12 @@ findTestData <- function(crossdata){
   return(unlist(testingdata))
 }
 
-  
-
 crossvalidation_realdata <- function(crossdata, method){
   
   nstudy <- length(unique(crossdata$study))
   studyname <- unique(crossdata$study)
   predictions <- list()
-
+  
   covariates_naive <- c("baseline", "gender")
   covariates_all <- c("baseline", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol")
   
@@ -41,11 +40,12 @@ crossvalidation_realdata <- function(crossdata, method){
       testing_set <- testing_set %>% select(study, y, treat, all_of(missingPatternTest$without_sys_covariates)) %>% filter(complete.cases(.))
       
       missingPattern <- findMissingPattern(training_set, covariates_naive)  
-
-      meth <- getCorrectMeth(training_set, missingPattern, method)
-      pred <- getCorrectPred(training_set, missingPattern, method)
-
-      imp <- mice(training_set, pred = pred, meth = meth)
+      
+      meth <- getCorrectMeth(training_set, missingPattern)
+      pred <- getCorrectPred(training_set, missingPattern)
+      
+      set.seed(1)
+      imp <- mice(training_set, pred = pred, meth = meth, m = 20)
       impc <- complete(imp, "long", include = "TRUE")
       
       imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
@@ -59,21 +59,22 @@ crossvalidation_realdata <- function(crossdata, method){
         prediction.dummy[,ii] <- bb %*% fixef(imp.model)
       }
       predictions[[studyid]] <- apply(prediction.dummy, 1, mean)
-
+      
     } else if(method == "imputation"){
       
       training_set <- training_set %>% select(study, y, treat, all_of(covariates_all))
       training_set <- createinteractions(training_set, covariates_all)
-    
+      
       missingPatternTest <- findMissingPattern(testing_set, covariates_all)  
       testing_set <- testing_set %>% select(study, y, treat, all_of(missingPatternTest$without_sys_covariates)) %>% filter(complete.cases(.))
       
       missingPattern <- findMissingPattern(training_set, covariates_all)  
       
-      meth <- getCorrectMeth(training_set, missingPattern, method, typeofvar = typeofvar)
-      pred <- getCorrectPred(training_set, missingPattern, method)
-
-      imp <- mice(training_set, pred = pred, meth = meth)
+      meth <- getCorrectMeth(training_set, missingPattern, typeofvar = typeofvar)
+      pred <- getCorrectPred(training_set, missingPattern)
+      
+      set.seed(1)
+      imp <- mice(training_set, pred = pred, meth = meth, m = 20)
       impc <- complete(imp, "long", include = "TRUE")
       
       imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
@@ -89,7 +90,7 @@ crossvalidation_realdata <- function(crossdata, method){
         prediction.dummy[,ii] <- bb %*% fixef(imp.model)
       }
       predictions[[studyid]] <- apply(prediction.dummy, 1, mean)
-
+      
     } else if(method == "separate"){
       
       studyname2 <- unique(training_set$study)
@@ -109,10 +110,11 @@ crossvalidation_realdata <- function(crossdata, method){
         training_set_dummy <- training_set_dummy %>% select(study, y, treat, all_of(missingPattern$without_sys_covariates))
         training_set_dummy <- createinteractions(training_set_dummy, missingPattern$without_sys_covariates)
         
-        meth <- getCorrectMeth(training_set_dummy, missingPattern, "average_prediction")
-        pred <- getCorrectPred(training_set_dummy, missingPattern, "average_prediction")
+        meth <- getCorrectMeth(training_set_dummy, missingPattern)
+        pred <- getCorrectPred(training_set_dummy, missingPattern)
         
-        imp <- mice(training_set_dummy, pred = pred, meth = meth)
+        set.seed(1)
+        imp <- mice(training_set_dummy, pred = pred, meth = meth, m = 20)
         impc <- complete(imp, "long", include = "TRUE")
         imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
         
@@ -150,14 +152,4 @@ crossvalidation_realdata <- function(crossdata, method){
   
 }
 
-
-findVarianceUsingRubinsRule <- function(prediction.dummy, variance.dummy){
-  
-  avg.prediction <- apply(prediction.dummy, 1, mean)
-  summ <- 0
-  for(iii in 1:5){
-    summ <- summ + (prediction.dummy[,iii] - avg.prediction)^2
-  }
-  return(apply(variance.dummy, 1, mean) + (5 + 1)/ (5^2 - 5) * summ)
-}
 
