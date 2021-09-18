@@ -35,10 +35,3 @@ library(mitools)
 imp.list <- imputationList(split(imp, imp$Imputation)[-1])
 
 
-# Define variable type
-typeofvar <- c("continuous", "binary", rep("continuous", 7), "continuous",
-               rep("binary", 6), rep("continuous", 10), rep("binary", 13))
-names(typeofvar) <- covariates               
-
-
-
