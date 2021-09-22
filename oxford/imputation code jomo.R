@@ -25,18 +25,20 @@ newdata[, covariates] <- lapply(newdata[, covariates], as.numeric)
 newdata$cons <- 1
 
 y_imputation <- newdata[, c(paste0("HAMD_WEEK_", 1:10), "HAMD_3", "HAMD_4", "HAMD_6", "HAMD_10", "HAMD_11", "HAMD_13", "HAMD_17")]
-X_imputation <- newdata[, c("cons", "AGE", "SEX", "HAMD_BASELINE", "AE_CATEGORY_ABDOMINAL.PAIN.DISCOMFORT", "AE_CATEGORY_FATIGUE", "AE_CATEGORY_HEADACHE", "AE_CATEGORY_NAUSEA", "AE_CATEGORY_SEDATION.SOMNOLENCE", "AE_CATEGORY_SEXUAL.DYSFUNCTION")]
+X_imputation <- newdata[, c("cons", "AGE", "SEX", "HAMD_BASELINE", "AE_CATEGORY_ABDOMINAL.PAIN.DISCOMFORT", "AE_CATEGORY_FATIGUE", "AE_CATEGORY_HEADACHE", "AE_CATEGORY_NAUSEA", "AE_CATEGORY_SEDATION.SOMNOLENCE", "AE_CATEGORY_SEXUAL.DYSFUNCTION",
+                            grep("TREATMENT_GROUP", colnames(data), value = TRUE)
+                            )]
 clus <- newdata$STUDYID
 
 imp <- jomo(Y = y_imputation, X = X_imputation, clus = clus, meth = "common", nburn = 1000, nbetween = 1000, nimp = 5)
-save(imp, file = "oxford-imputations.RData")
+#save(imp, file = "oxford-imputations.RData")
 
 load("oxford-imputations.RData")
 library(mitools)
 #imp.list <- imputationList(split(imp, imp$Imputation)[-1])
 imp.list <- imputationList(split(imp, imp$Imputation))
 View(imp.list$imputations$`0`) #original data
-View(imp.list$imputations$`1`) #imputaed dataset 1
+View(imp.list$imputations$`1`) #imputed dataset 1
 
 
 

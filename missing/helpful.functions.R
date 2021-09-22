@@ -87,7 +87,7 @@ getCorrectMeth <- function(dataset, missingPattern, studyname = "study", treatme
     }
     
     if(interaction == TRUE){
-      meth[paste0(missingPattern$covariates, "treat")] <- paste0("~ I(as.numeric(as.character(", missingPattern$covariates, ")) *", treatmentname,  ")")
+      meth[paste0(missingPattern$covariates, treatmentname)] <- paste0("~ I(as.numeric(as.character(", missingPattern$covariates, ")) *", treatmentname,  ")")
     }
   }
   return(meth)
