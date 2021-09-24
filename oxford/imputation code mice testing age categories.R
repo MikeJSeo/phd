@@ -36,6 +36,24 @@ treatment_names <- c("TREATMENT_GROUP_bupropion", "TREATMENT_GROUP_citalopram", 
                      "TREATMENT_GROUP_imipramine", "TREATMENT_GROUP_paroxetine", "TREATMENT_GROUP_placebo",                     
                      "TREATMENT_GROUP_sertraline", "TREATMENT_GROUP_trazodone", "TREATMENT_GROUP_venlafaxine")
 
+# Categorize age
+newdata$AGE_CATEGORIZED <- NA
+newdata$AGE_CATEGORIZED[newdata$AGE <25] <- "25_less"
+newdata$AGE_CATEGORIZED[newdata$AGE >= 25 & newdata$AGE < 45] <- "25_over_45_less"
+newdata$AGE_CATEGORIZED[newdata$AGE >= 45 & newdata$AGE < 65] <- "45_over_65_less"
+newdata$AGE_CATEGORIZED[newdata$AGE >= 65 & newdata$AGE < 75] <- "65_over_75_less"
+newdata$AGE_CATEGORIZED[newdata$AGE >= 75] <- "75_over"
+newdata$AGE_CATEGORIZED <- as.factor(newdata$AGE_CATEGORIZED)
+
+library(fastDummies) #to create dummy columns for treatment
+newdata <- dummy_cols(newdata, select_columns = "AGE_CATEGORIZED", remove_selected_columns = TRUE, remove_first_dummy = TRUE) #removes first dummy 25_less
+
+# remove half of age
+set.seed(1)
+removeIndex <- sample(1:length(newdata$AGE), size = length(newdata$AGE)/2)
+newdata$AGE[removeIndex] <- NA
+
+
 meth <- make.method(newdata)
 
 for(i in interaction_covariate_names){
@@ -48,7 +66,7 @@ pred <- make.predictorMatrix(newdata)
 pred[,] <- 0
 
 # Specifing missing covariates that needs to be imputed
-missing_covariates <- c("HAMD_3", "HAMD_4", "HAMD_6", "HAMD_10", "HAMD_11", "HAMD_13", "HAMD_17", paste0("HAMD_WEEK_", 1:10))
+missing_covariates <- c("AGE", "HAMD_3", "HAMD_4", "HAMD_6", "HAMD_10", "HAMD_11", "HAMD_13", "HAMD_17", paste0("HAMD_WEEK_", 1:10))
 pred[missing_covariates, ] <- 1
 pred[missing_covariates, c("STUDYID", "PID")] <- 0
 
@@ -62,16 +80,21 @@ diag(pred) <- 0
 imp <- mice(newdata, pred = pred, meth = meth)
 impc <- complete(imp, "long", include = "TRUE")
 
-impc.store <- impc[, c(".imp", "STUDYID", "PID", covariates[-27], treatment_names)]
+impc.store <- impc[, c(".imp", "STUDYID", "PID", covariates[-27], treatment_names, grep("AGE_CATEGORIZED", colnames(newdata), value = TRUE  ))]
 #save(impc.store, file = "oxford-imputations.RData")
 
 
-load("oxford-imputations.RData")
+#load("oxford-imputations.RData")
 library(mitools)
+
 imp.list <- imputationList(split(impc.store, impc.store[,1]))$imputations
 View(imp.list$`0`) #original data
 View(imp.list$`1`) #imputed dataset 1
 
 
+impc.store2 <- impc.store[,c(".imp", "PID","AGE", grep("AGE_CATEGORIZED", colnames(impc.store), value = TRUE))]
+imp.list2 <- imputationList(split(impc.store2, impc.store2[,1]))$imputations
+View(imp.list2$`0`) #original data
+View(imp.list2$`1`) #imputed dataset 1
 
 
