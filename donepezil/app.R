@@ -27,7 +27,7 @@ ui <- shinyUI(fluidPage(
       }"))
   ),
   
-  titlePanel("Cognitive and global outcomes on donepezil over placebo for Alzheimer's disease"),            
+  titlePanel("Cognitive and global outcomes on donepezil vs placebo for Alzheimer's disease"),            
              
   # Sidebar with a slider input for number of bins 
   sidebarPanel(
