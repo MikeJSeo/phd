@@ -8,6 +8,7 @@ data <- read.csv("data_20210927.csv")
 covariates <- c("AGE", "SEX", "HAMD_3", "HAMD_4", "HAMD_6", "HAMD_10", "HAMD_11", "HAMD_13", "HAMD_17", "HAMD_BASELINE",
                 "AE_CATEGORY_ABDOMINAL.PAIN.DISCOMFORT", "AE_CATEGORY_FATIGUE", "AE_CATEGORY_HEADACHE", "AE_CATEGORY_NAUSEA",
                 "AE_CATEGORY_SEDATION.SOMNOLENCE", "AE_CATEGORY_SEXUAL.DYSFUNCTION",
+                paste0("MADRS_", 1:10),
                 paste0("HAMD_WEEK_", 1:10), "TREATMENT_GROUP")
 
 data2 <- data[, c("STUDYID", "PID", covariates)]
@@ -64,10 +65,14 @@ pred <- make.predictorMatrix(newdata)
 pred[,] <- 0
 
 # Specifing missing covariates that needs to be imputed
-missing_covariates <- c("AGE", "HAMD_3", "HAMD_4", "HAMD_6", "HAMD_10", "HAMD_11", "HAMD_13", "HAMD_17", paste0("HAMD_WEEK_", 1:10))
+missing_covariates <- c("AGE", "HAMD_3", "HAMD_4", "HAMD_6", "HAMD_10", "HAMD_11", "HAMD_13", "HAMD_17", paste0("HAMD_WEEK_", 1:10),  paste0("MADRS_", 1:10))
 pred[missing_covariates, ] <- 1
 pred[missing_covariates, c("STUDYID", "PID")] <- 0
 
+# modify based on MADRS requirements
+pred[paste0("HAMD_WEEK_", 1:10), paste0("MADRS_", 1:10)] <- 0
+
+# age prediction using only categories
 pred["AGE",] <- rep(0, length(pred["AGE",]))
 pred["AGE",c("AGE_CATEGORIZED_X25_over_45_less", "AGE_CATEGORIZED_X45_over_65_less", "AGE_CATEGORIZED_X65_over_75_less", "AGE_CATEGORIZED_X75_over")] <- 1
 
@@ -91,15 +96,15 @@ View(imp.list$`1`) #imputed dataset 1
 View(imp.list$`2`) #imputed dataset 2 and so on
 
 #checking age is correctly imputed
-trial_dataset <- imp.list$`1`[data$STUDYID %in% grep("SERVIER", data$STUDYID, value = TRUE),]
-vec2 <- ifelse(trial_dataset$AGE >= 25 & trial_dataset$AGE < 45, 1, 0)
-table(trial_dataset$AGE_CATEGORIZED_X25_over_45_less == vec2)
-
-vec3 <- ifelse(trial_dataset$AGE >= 45 & trial_dataset$AGE < 65, 1, 0)
-table(trial_dataset$AGE_CATEGORIZED_X45_over_65_less == vec3)
-
-vec4 <- ifelse(trial_dataset$AGE >= 65 & trial_dataset$AGE < 75, 1, 0)
-table(trial_dataset$AGE_CATEGORIZED_X65_over_75_less == vec4)
-
-vec5 <- ifelse(trial_dataset$AGE >=75, 1, 0)
-table(trial_dataset$AGE_CATEGORIZED_X75_over == vec5)
+# trial_dataset <- imp.list$`1`[data$STUDYID %in% grep("SERVIER", data$STUDYID, value = TRUE),]
+# vec2 <- ifelse(trial_dataset$AGE >= 25 & trial_dataset$AGE < 45, 1, 0)
+# table(trial_dataset$AGE_CATEGORIZED_X25_over_45_less == vec2)
+# 
+# vec3 <- ifelse(trial_dataset$AGE >= 45 & trial_dataset$AGE < 65, 1, 0)
+# table(trial_dataset$AGE_CATEGORIZED_X45_over_65_less == vec3)
+# 
+# vec4 <- ifelse(trial_dataset$AGE >= 65 & trial_dataset$AGE < 75, 1, 0)
+# table(trial_dataset$AGE_CATEGORIZED_X65_over_75_less == vec4)
+# 
+# vec5 <- ifelse(trial_dataset$AGE >=75, 1, 0)
+# table(trial_dataset$AGE_CATEGORIZED_X75_over == vec5)
