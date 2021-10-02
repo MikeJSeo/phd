@@ -8,7 +8,7 @@ library(miceadds)#2l.pmm
 library(micemd) #2l.2stage.norm
 
 library(lme4) #running lmer
-# library(broom.mixed)
+#library(broom.mixed)
 # library(mitools)
 
 setwd("C:/Users/mike/Desktop")
@@ -57,7 +57,6 @@ mydata[,covariates] <- mydata[,covariates] %>% mutate_if(typeofvar == "binary", 
 # Naive method
 imputations_naivemethod <- ipdma.impute(mydata, covariates = c("baseline", "gender"), typeofvar = c("continuous", "binary"), interaction = TRUE,
                              studyname = "study", treatmentname = "treat", outcomename = "y")
-str(imputations_naivemethod$imp.list)
 
 # If above doesn't work we can try by first find correct method and prediction matrix and
 # then using ipdma.impute using these obtained objects. Through this process, we can check if there is any errors
