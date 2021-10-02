@@ -2,8 +2,21 @@
 library(bipd)
 library(dplyr)
 
+#load imputation methods
+library(mice) #pmm
+library(miceadds)#2l.pmm
+library(micemd) #2l.2stage.norm
+
+library(lme4) #running lmer
+# library(broom.mixed)
+# library(mitools)
+
 setwd("C:/Users/mike/Desktop")
 data <- read.csv("data_ICBT.csv")
+
+#setwd("C:/Users/mike/Desktop/Github/phd/missing")
+#source("helpful.functions.R")
+#source("realdata.related.functions.R")
 
 ################################################### Data cleaning
 
@@ -35,74 +48,29 @@ mydata$study <- as.numeric(as.factor(mydata$study))
 covariates <- c("baseline", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol")
 typeofvar <- c("continuous", "binary", "continuous", "binary", "binary", "binary", "binary", "binary")
 mydata <- mydata %>% select(study, y, treat, all_of(covariates))
-
-# mydata <- mydata %>% mutate(gender = as.factor(gender),
-#                             relstat = as.factor(relstat),
-#                             ComorbidAnxiety = as.factor(ComorbidAnxiety),
-#                             prevep = as.factor(prevep),
-#                             Medication = as.factor(Medication),
-#                             alcohol = as.factor(alcohol))
-
-mydata <- mydata %>% select(all_of(covariates)) %>% mutate_if(typeofvar == "binary", as.factor)
-
-# Centering the covariates
-# mean_val <- apply(mydata[,covariates], 2, mean, na.rm = TRUE)
-# sd_val <- apply(mydata[,covariates], 2, sd, na.rm = TRUE)
-# mydata[,covariates] <- apply(mydata[,covariates], 2, scale)
+mydata[,covariates] <- mydata[,covariates] %>% mutate_if(typeofvar == "binary", as.factor)
 
 
+####################################################
+# Finding Imputations
 
-###################################################################
-# Need to load mice packages
-library(mice) #for method = "pmm"
-library(miceadds) #for method = "2l.pmm"
-library(micemd) #for method = "2l.2stage.norm", "2l.2stage.bin", and "2l.2stage.pois"
+# Naive method
+imputations_naivemethod <- ipdma.impute(mydata, covariates = c("baseline", "gender"), typeofvar = c("continuous", "binary"), interaction = TRUE,
+                             studyname = "study", treatmentname = "treat", outcomename = "y")
+str(imputations_naivemethod$imp.list)
 
-
-#Naive approach
-# There are two ways to impute using functions in ipdma
-# (1) Try if ipdma.impute works
-imputations_naive <- ipdma.impute(mydata, covariates = c("baseline", "gender"), typeofvar = c("continuous", "binary"), interaction = TRUE,
-                            studyname = "study", treatmentname = "treat", outcomename = "y")
-
-# (2) If above doesn't work we can try by first find correct method and prediction matrix and then using ipdma.impute using these obtained objects.
+# If above doesn't work we can try by first find correct method and prediction matrix and
+# then using ipdma.impute using these obtained objects. Through this process, we can check if there is any errors
+# in setting up these objects.
 missP <- findMissingPattern(mydata, covariates = c("baseline", "gender"), typeofvar = c("continuous", "binary"), 
                             studyname = "study",  treatmentname = "treat", outcomename = "y")
 correctMeth <- getCorrectMeth(mydata, missP)
 correctPred <- getCorrectPred(mydata, missP)
-imputations_naive <- ipdma.impute(mydata, covariates = covariates, typeofvar = c("continuous", "binary"),
-                            interaction = TRUE, meth = correctMeth, pred = correctPred,
-                            studyname = "study", treatmentname = "treat", outcomename = "y")
+imputations_test <- ipdma.impute(mydata, covariates = c("baseline", "gender"), typeofvar = c("continuous", "binary"),
+                             interaction = TRUE, meth = correctMeth, pred = correctPred,
+                             studyname = "study", treatmentname = "treat", outcomename = "y")
 
-
-#Imputation approach
-imputations_naive <- ipdma.impute(mydata, covariates = c("baseline", "gender"), typeofvar = c("continuous", "binary"), interaction = TRUE,
-                                  studyname = "study", treatmentname = "treat", outcomename = "y")
-
-
-
-
-#imputated datasets are stored
-str(imputations$imp.list)
-
-
-
-
-
-
-
-
-
-
-
-missingPattern <- findMissingPattern(newdata, c("baseline", "gender"))
-meth <- getCorrectMeth(newdata, missingPattern)
-pred <- getCorrectPred(newdata, missingPattern)
-
-set.seed(1)
-imp <- mice(newdata, pred = pred, meth = meth, m = 20)
-
-fit <- with(imp, lmer(y ~ (baseline + gender) * treat + (1|study) + (0+treat|study)))
+fit <- with(imputations_naivemethod$imp, lmer(y ~ (baseline + gender) * treat + (1|study) + (0+treat|study)))
 t(sapply(fit$analyses, fixef))
 coef_fit <- summary(pool(fit))
 coef_fit
@@ -111,6 +79,9 @@ coef_fit
 
 
 
+# Imputation method
+imputations_impmethod <- ipdma.impute(mydata, covariates = covariates, typeofvar = typeofvar, interaction = TRUE,
+                                      studyname = "study", treatmentname = "treat", outcomename = "y")
 
 
 
@@ -118,19 +89,10 @@ coef_fit
 
 
 
-# library(dplyr)
-# library(miceadds)#2l.pmm
-# library(micemd) #2l.2stage.norm
-# library(mice)
-# library(lme4)
-# library(broom.mixed)
-# library(mitools)
+imputations2 <- ipdma.impute(mydata, covariates = covariates, typeofvar = typeofvar, interaction = TRUE,
+                             studyname = "study", treatmentname = "treat", outcomename = "y")
 
 
-
-setwd("C:/Users/ms19g661/Documents/GitHub/phd/missing")
-source("helpful.functions.R")
-source("realdata.related.functions.R")
 
 
 
@@ -163,7 +125,21 @@ separateperf
 ###########################################################################
 ######Analysis using full data
 
+#Naive approach
+newdata <- mydata %>% select(study, y, treat, all_of(c("baseline", "gender")))
+newdata <- newdata %>% mutate(baselinetreat = NA, gendertreat = NA)
 
+missingPattern <- findMissingPattern(newdata, c("baseline", "gender"))
+meth <- getCorrectMeth(newdata, missingPattern)
+pred <- getCorrectPred(newdata, missingPattern)
+
+set.seed(1)
+imp <- mice(newdata, pred = pred, meth = meth, m = 20)
+
+fit <- with(imp, lmer(y ~ (baseline + gender) * treat + (1|study) + (0+treat|study)))
+t(sapply(fit$analyses, fixef))
+coef_fit <- summary(pool(fit))
+coef_fit
 
 #Imputation approach
 newdata <- mydata
