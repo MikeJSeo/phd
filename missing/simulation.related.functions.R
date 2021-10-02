@@ -1,4 +1,99 @@
 
+
+generate_simulation_data_with_no_EM <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NULL, signal = NULL, sign = NULL){
+  
+  Npatients <- sample(150:500, Nstudies, replace = TRUE)
+  Npatients.tot <- sum(Npatients)
+  study <- rep(1:Nstudies, times = Npatients)
+  
+  a <- runif(Nstudies, 0.5, 1.5)
+  a <- rep(a, times = Npatients)
+  
+  ## generate covariates
+  rho <- 0.2
+  Omega <- diag(1, Ncov)
+  for(i in 1:Ncov){
+    for(j in 1:Ncov){
+      Omega[i,j] <- rho^abs(i - j) 
+    }
+  }
+  sigma2 <- 1
+  
+  X <- NULL
+  for(i in 1:Nstudies){
+    mu <- runif(Ncov, -0.5, 0.5)
+    X <- rbind(X, rmvnorm(Npatients[i], mu, Omega * sigma2))
+  }
+  
+  #categorize predictors
+  if(Ncov == 5){
+    X[,2] <- ifelse(X[,2] > 0, 1, 0)
+    X[,3] <- ifelse(X[,3] > 1, 1, 0)
+  } else if(Ncov == 10){
+    X[,2] <- ifelse(X[,2] > 0, 1, 0)
+    X[,3] <- ifelse(X[,3] > 0, 1, 0)
+    X[,8] <- ifelse(X[,8] > 0, 1, 0)
+    X[,9] <- ifelse(X[,9] > 0.5, 1, 0)
+    X[,10] <- ifelse(X[,10] > 1, 1, 0)
+  }
+  
+  if(signal == "small"){
+    e_vec <- rnorm(Npatients.tot, 0, 1.0) # R squared around 0.1
+  } else if(signal == "large"){
+    e_vec <- rnorm(Npatients.tot, 0, 0.2) # R squared around 0.6
+  }
+  
+  b <- matrix(NA, Npatients.tot, Ncov)
+  
+  for(i in 1:Ncov){
+    if(sign == "different"){
+      b_dummy <- abs(rnorm(Nstudies, 0.5, 0.1))
+      b_dummy[c(1,3,5,7,9)] <- -b_dummy[c(1,3,5,7,9)]
+    } else if (sign == "same"){
+      b_dummy <- abs(rnorm(Nstudies, 0.5, 0.1))
+    }
+    
+    b_dummy <- rep(b_dummy, times = Npatients)
+    b[,i] <- b_dummy
+  }
+  
+  y <- a + apply(X * b, 1, sum) + e_vec    
+
+  # introduce systematically missing; first two predictors are always observed
+  for(i in 3:Ncov){
+    systematic_missing_study <- sample(Nstudies, size = sys_missing_prob*Nstudies)
+    systematic_missing_study_dummy <- rep(0, Nstudies)
+    systematic_missing_study_dummy[systematic_missing_study] <- 1
+    
+    study_missing <- as.logical(rep(systematic_missing_study_dummy, times = Npatients))  
+    X[,i][study_missing] <- NA
+  }    
+  
+  dataset <- data.frame(y = y, X = X[,1:Ncov], study = study)
+  colnames(dataset) <- c("y", paste0("x", 1:Ncov), "study")
+  dataset <- as_tibble(dataset)
+  
+  if(Ncov == 5){
+    dataset <- dataset %>% mutate(x2 = as.factor(x2),
+                                  x3 = as.factor(x3))
+  } else if(Ncov == 10){
+    dataset <- dataset %>% mutate(x2 = as.factor(x2),
+                                  x3 = as.factor(x3),
+                                  x8 = as.factor(x8),
+                                  x9 = as.factor(x9),
+                                  x10 = as.factor(x10)
+    )
+  }  
+  
+  dataset <- as_tibble(dataset)
+  return(list(y = y , X = X, study = study, dataset = dataset))
+  
+}
+
+  
+  
+
+
 wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NULL, nonlinear = NULL, signal = NULL, interaction = NULL, heterogeneity = NULL, Nsim = 100){
 
   naive_store <- matrix(NA, nrow = Nsim, ncol = 3)
@@ -260,8 +355,8 @@ imputation_prediction <- function(traindata, testdata, type_of_var){
     traindata <- createinteractions(traindata, covariates)
   }
   
-  meth <- getCorrectMeth(traindata, missingPattern, method = "imputation", type_of_var)
-  pred <- getCorrectPred(traindata, missingPattern, method = "imputation")
+  meth <- getCorrectMeth(traindata, missingPattern, type_of_var)
+  pred <- getCorrectPred(traindata, missingPattern)
 
   imp <- mice(traindata, pred = pred, meth = meth)
   impc <- complete(imp, "long", include = "TRUE")

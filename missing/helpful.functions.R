@@ -195,13 +195,6 @@ findVarianceUsingRubinsRule <- function(prediction.dummy, variance.dummy){
   return(apply(variance.dummy, 1, mean) + (5 + 1)/ (5^2 - 5) * summ)
 }
 
-relabel.vec <- function(x, order)
-{
-  old.x <- x
-  x <- rep(NA, length(old.x))
-  for (i in seq(length(order))) x[old.x == order[i]] <- i #relabel studies in numerical order starting with one
-  return(x)
-}
 
 ################################################################################
 ################################functions to calculate performance #############

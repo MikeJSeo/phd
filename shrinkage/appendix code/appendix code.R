@@ -106,7 +106,7 @@ coef(cvfit, s = "lambda.min")
 # Stored variable names are as follows:
 #"beta" - coefficients for main effects of the covariates
 #"gamma" - coefficients for effect modifiers
-#"delta" - average treaetment effect
+#"delta" - average treatment effect
 #"lambda" -  shrinkage parameter
 
 # continuous outcome
@@ -129,8 +129,10 @@ samples <- ipd.run(ipd, pars.save = c("lambda", "beta", "gamma", "delta"))
 summary(samples)
 
 # can also run methods in parallel using dclone package
-samples2 <- ipd.run.parallel(ipd, pars.save = c("lambda", "beta", "gamma", "delta"))
-summary(samples2)
+#library(dclone)
+#library(R2WinBUGS)
+#samples2 <- ipd.run.parallel(ipd, pars.save = c("lambda", "beta", "gamma", "delta"))
+#summary(samples2)
 
 ########################## SSVS
 # Stored variable names are as follows:
@@ -156,14 +158,14 @@ treatment.effect(ipd, samples, newpatient = c(1,0.5)) # binary outcome reports o
 
 
 
-
-
 ###########################Aside: not in the paper#######################################
 ########################## Using "deft" approach without penalization
-ipd <- with(ds, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = cbind(z1, z2), response = "normal", approach = "deft"))
-samples <- ipd.run(ipd, pars.save = c("beta", "gamma", "gamA", "delta"))
+ipd <- with(ds, ipdma.model.deft.onestage(y = y, study = studyid, treat = treat, X = cbind(z1, z2), response = "normal"))
+cat(ipd$code)
+samples <- ipd.run(ipd, pars.save = c("beta", "gamma.within", "gamma.across", "delta"))
 treatment.effect(ipd, samples, newpatient= c(1,0.5), reference = c(0, 0))
 
-ipd <- with(ds2, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = cbind(w1, w2), response = "binomial", approach = "deft"))
-samples <- ipd.run(ipd, pars.save = c("beta", "gamma", "gamA", "delta"))
+ipd <- with(ds2, ipdma.model.deft.onestage(y = y, study = studyid, treat = treat, X = cbind(w1, w2), response = "binomial"))
+cat(ipd$code)
+samples <- ipd.run(ipd, pars.save = c("beta", "gamma.within", "gamma.across", "delta"))
 treatment.effect(ipd, samples, newpatient= c(1,0.5), reference = c(0, 0))

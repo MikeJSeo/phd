@@ -1,3 +1,25 @@
+
+###Test trial
+
+
+simulated_data <- generate_simulation_data_with_no_EM(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, signal = "small", sign = "different")
+simulated_dataset <- simulated_data$dataset
+
+validation_data <- generate_simulation_data_with_no_EM(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, signal = "small", sign = "different")
+validation_dataset <- validation_data$dataset
+
+
+imputationpred <- imputation_prediction(simulated_dataset, validation_dataset, type_of_var = type_of_var)
+imputationperf <- try(findPerformance(validation_dataset$y, imputationpred))
+
+
+
+
+
+
+#####################################
+
+
 library(dplyr)
 library(mvtnorm)
 library(micemd)
