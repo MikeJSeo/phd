@@ -10,12 +10,15 @@ findTestData <- function(crossdata){
     testing_set <- crossdata[crossdata$study == studyid,]
     
     covariates_all <- c("baseline", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol")
-    missingPatternTest <- findMissingPattern(testing_set, covariates_all)  
+    typeofvar_all <- c("continuous", "binary", "continuous", "binary", "binary", "binary", "binary", "binary")
+    
+    missingPatternTest <- findMissingPattern(testing_set, covariates_all, typeofvar_all, 
+                                             studyname = "study", treatmentname = "treat", outcomename = "y")  
     
     testing_set <- testing_set %>% select(study, y, treat, all_of(missingPatternTest$without_sys_covariates)) %>% filter(complete.cases(.))
     testingdata[[studyid]] <- testing_set$y
   }
-  return(unlist(testingdata))
+  return(testingdata)
 }
 
 crossvalidation_realdata <- function(crossdata, method){
@@ -23,9 +26,13 @@ crossvalidation_realdata <- function(crossdata, method){
   nstudy <- length(unique(crossdata$study))
   studyname <- unique(crossdata$study)
   predictions <- list()
+  testingoutcome <- list()
   
   covariates_naive <- c("baseline", "gender")
+  typeofvar_naive <- c("continuous", "binary")
+  
   covariates_all <- c("baseline", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol")
+  typeofvar_all <- c("continuous", "binary", "continuous", "binary", "binary", "binary", "binary", "binary")
   
   for(studyid in 1:nstudy){
     training_set <- crossdata[crossdata$study != studyid,]
@@ -33,51 +40,32 @@ crossvalidation_realdata <- function(crossdata, method){
     
     if(method == "naive"){
       
-      training_set <- training_set %>% select(study, y, treat, all_of(covariates_naive))
-      training_set <- createinteractions(training_set, covariates_naive)
-      
-      missingPatternTest <- findMissingPattern(testing_set, covariates_all) 
-      testing_set <- testing_set %>% select(study, y, treat, all_of(missingPatternTest$without_sys_covariates)) %>% filter(complete.cases(.))
-      
-      missingPattern <- findMissingPattern(training_set, covariates_naive)  
-      
-      meth <- getCorrectMeth(training_set, missingPattern)
-      pred <- getCorrectPred(training_set, missingPattern)
-      
-      set.seed(1)
-      imp <- mice(training_set, pred = pred, meth = meth, m = 20)
-      impc <- complete(imp, "long", include = "TRUE")
-      
-      imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
+      naiveapproach <- ipdma.impute(training_set, covariates = covariates_naive, typeofvar = typeofvar_naive, interaction = TRUE,
+                                    studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
+      imp.list <- naiveapproach$imp.list
+
+      testing_set <- testing_set %>% select(study, y, treat, all_of(covariates_naive)) %>% filter(complete.cases(.))
       prediction.dummy <- matrix(NA, nrow = dim(testing_set)[1], ncol = length(imp.list))
       
       for(ii in 1:length(imp.list)){
         imp.dummy <- imp.list[[ii]]
         imp.model <- lmer(y ~ (baseline + gender) * treat + (1| study) + (0 + treat|study), data = imp.dummy)
         bb <- model.matrix(y ~ (baseline + gender) * treat, data = testing_set)
-        
         prediction.dummy[,ii] <- bb %*% fixef(imp.model)
       }
+      
+      testingoutcome[[studyid]] <- testing_set$y
       predictions[[studyid]] <- apply(prediction.dummy, 1, mean)
       
     } else if(method == "imputation"){
       
-      training_set <- training_set %>% select(study, y, treat, all_of(covariates_all))
-      training_set <- createinteractions(training_set, covariates_all)
+      imputationapproach <- ipdma.impute(mydata, covariates = covariates_all, typeofvar = typeofvar_all, interaction = TRUE,
+                                         studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
+      imp.list <- imputationapproach$imp.list
       
-      missingPatternTest <- findMissingPattern(testing_set, covariates_all)  
+      missingPatternTest <- findMissingPattern(testing_set, covariates_all, typeofvar_all, 
+                                               studyname = "study", treatmentname = "treat", outcomename = "y")
       testing_set <- testing_set %>% select(study, y, treat, all_of(missingPatternTest$without_sys_covariates)) %>% filter(complete.cases(.))
-      
-      missingPattern <- findMissingPattern(training_set, covariates_all)  
-      
-      meth <- getCorrectMeth(training_set, missingPattern, typeofvar = typeofvar)
-      pred <- getCorrectPred(training_set, missingPattern)
-      
-      set.seed(1)
-      imp <- mice(training_set, pred = pred, meth = meth, m = 20)
-      impc <- complete(imp, "long", include = "TRUE")
-      
-      imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
       prediction.dummy <- matrix(NA, nrow = dim(testing_set)[1], ncol = length(imp.list))
       
       for(ii in 1:length(imp.list)){
@@ -89,6 +77,8 @@ crossvalidation_realdata <- function(crossdata, method){
         bb <- model.matrix(form2, data = testing_set)
         prediction.dummy[,ii] <- bb %*% fixef(imp.model)
       }
+      
+      testingoutcome[[studyid]] <- testing_set$y
       predictions[[studyid]] <- apply(prediction.dummy, 1, mean)
       
     } else if(method == "separate"){
@@ -96,7 +86,8 @@ crossvalidation_realdata <- function(crossdata, method){
       studyname2 <- unique(training_set$study)
       nstudy2 <- length(studyname2)
       
-      missingPatternTest <- findMissingPattern(testing_set, covariates_all)  
+      missingPatternTest <- findMissingPattern(testing_set, covariates_all, typeofvar_all, 
+                                               studyname = "study", treatmentname = "treat", outcomename = "y")
       testing_set <- testing_set %>% select(study, y, treat, all_of(missingPatternTest$without_sys_covariates)) %>% filter(complete.cases(.))
       
       prediction_store <- matrix(NA, dim(testing_set)[1], nstudy2)
@@ -105,18 +96,14 @@ crossvalidation_realdata <- function(crossdata, method){
       for(i in 1:nstudy2){
         
         training_set_dummy <- training_set %>% filter(study == studyname2[i])
-        missingPattern <- findMissingPattern(training_set_dummy, covariates_all)  
         
-        training_set_dummy <- training_set_dummy %>% select(study, y, treat, all_of(missingPattern$without_sys_covariates))
-        training_set_dummy <- createinteractions(training_set_dummy, missingPattern$without_sys_covariates)
-        
-        meth <- getCorrectMeth(training_set_dummy, missingPattern)
-        pred <- getCorrectPred(training_set_dummy, missingPattern)
-        
-        set.seed(1)
-        imp <- mice(training_set_dummy, pred = pred, meth = meth, m = 20)
-        impc <- complete(imp, "long", include = "TRUE")
-        imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
+        # Need to remove systematically missing covariates for each study
+        missingPattern <- findMissingPattern(training_set_dummy, covariates_all, typeofvar_all, 
+                                                 studyname = "study", treatmentname = "treat", outcomename = "y")
+        training_set_dummy <- training_set_dummy %>% select(-all_of(missingPattern$sys_covariates))
+        imputationapproach <- ipdma.impute(training_set_dummy, covariates = missingPattern$without_sys_covariates, typeofvar = typeofvar[missingPattern$without_sys_covariates], interaction = TRUE,
+                                           studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
+        imp.list <- imputationapproach$imp.list
         
         prediction.dummy <- matrix(NA, nrow = dim(testing_set)[1], ncol = length(imp.list))
         variance.dummy <- matrix(NA, nrow = dim(testing_set)[1], ncol = length(imp.list))
@@ -126,6 +113,7 @@ crossvalidation_realdata <- function(crossdata, method){
         
         for(ii in 1:length(imp.list)){
           imp.dummy <- imp.list[[ii]]
+          imp.dummy <- imp.dummy %>% select(-".imp", -".id", -"study")
           form <- as.formula(paste0("y ~ ", "(", paste(without_sys_cov, collapse= "+"), ") * treat" ))
           imp.model <- lm(form, data = imp.dummy)
           
@@ -136,7 +124,6 @@ crossvalidation_realdata <- function(crossdata, method){
         prediction_store[,i] <- apply(prediction.dummy, 1, mean)
         precision_store[,i] <- 1/findVarianceUsingRubinsRule(prediction.dummy, variance.dummy)
         
-        print(paste0("2nd one; ", studyname2[i]))
       }
       product_store <- prediction_store * precision_store
       precision_vec <- apply(precision_store, 1, sum)
@@ -145,11 +132,11 @@ crossvalidation_realdata <- function(crossdata, method){
       
       predictions[[studyid]] <- apply(final_store, 1, sum)
       #predictions[[studyid]] <- apply(prediction_store, 1, mean)
+      
+      testingoutcome[[studyid]] <- testing_set$y
     }
   }
-  
-  return(unlist(predictions))
-  
+  return(list(predictions = predictions, testingoutcome = testingoutcome))
 }
 
 

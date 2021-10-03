@@ -8,17 +8,18 @@ library(miceadds)#2l.pmm
 library(micemd) #2l.2stage.norm
 
 library(lme4) #running lmer
-#library(broom.mixed)
-# library(mitools)
+library(broom.mixed) #for summarizing lmer results from multiply imputed dataset
+library(mitools) #for function imputationList
 
 setwd("C:/Users/mike/Desktop")
 data <- read.csv("data_ICBT.csv")
 
-#setwd("C:/Users/mike/Desktop/Github/phd/missing")
-#source("helpful.functions.R")
-#source("realdata.related.functions.R")
+setwd("C:/Users/mike/Desktop/Github/phd/missing")
+source("helpful.functions.R")
+source("realdata.crossvalidation.R")
 
-################################################### Data cleaning
+############################################################################
+################ Data cleaning
 
 # pick which treatment to compare
 mydata <- data %>% filter(treat.m2 %in% c("TAU", "Guided", "Unguided"))
@@ -44,141 +45,50 @@ mydata$study <- as.numeric(as.factor(mydata$study))
 # library(summarytools)
 # view(dfSummary(mydata), method = "browser")
 
-# pick the covariates of interest
+# Specify the covariates of interest and type of variable
 covariates <- c("baseline", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol")
 typeofvar <- c("continuous", "binary", "continuous", "binary", "binary", "binary", "binary", "binary")
-mydata <- mydata %>% select(study, y, treat, all_of(covariates))
-mydata[,covariates] <- mydata[,covariates] %>% mutate_if(typeofvar == "binary", as.factor)
-
-
-####################################################
-# Finding Imputations
-
-# Naive method
-imputations_naivemethod <- ipdma.impute(mydata, covariates = c("baseline", "gender"), typeofvar = c("continuous", "binary"), interaction = TRUE,
-                             studyname = "study", treatmentname = "treat", outcomename = "y")
-
-# If above doesn't work we can try by first find correct method and prediction matrix and
-# then using ipdma.impute using these obtained objects. Through this process, we can check if there is any errors
-# in setting up these objects.
-missP <- findMissingPattern(mydata, covariates = c("baseline", "gender"), typeofvar = c("continuous", "binary"), 
-                            studyname = "study",  treatmentname = "treat", outcomename = "y")
-correctMeth <- getCorrectMeth(mydata, missP)
-correctPred <- getCorrectPred(mydata, missP)
-imputations_test <- ipdma.impute(mydata, covariates = c("baseline", "gender"), typeofvar = c("continuous", "binary"),
-                             interaction = TRUE, meth = correctMeth, pred = correctPred,
-                             studyname = "study", treatmentname = "treat", outcomename = "y")
-
-fit <- with(imputations_naivemethod$imp, lmer(y ~ (baseline + gender) * treat + (1|study) + (0+treat|study)))
-t(sapply(fit$analyses, fixef))
-coef_fit <- summary(pool(fit))
-coef_fit
-
-
-
-
-
-# Imputation method
-imputations_impmethod <- ipdma.impute(mydata, covariates = covariates, typeofvar = typeofvar, interaction = TRUE,
-                                      studyname = "study", treatmentname = "treat", outcomename = "y")
-
-
-
-
-
-
-
-imputations2 <- ipdma.impute(mydata, covariates = covariates, typeofvar = typeofvar, interaction = TRUE,
-                             studyname = "study", treatmentname = "treat", outcomename = "y")
-
-
-
-
-
-
-
-
-##################################
-##############Cross validation
-####################################
-
-testing_subset <- findTestData(mydata)
-
-# naive approach
-naivepred <- crossvalidation_realdata(mydata, method = "naive")
-naiveperf <- findPerformance(testing_subset, naivepred)
-naiveperf
-
-# imputation approach
-imputationpred <- crossvalidation_realdata(mydata, method = "imputation")
-imputationperf <- findPerformance(testing_subset, imputationpred)
-imputationperf
-
-# separate prediction approach
-separatepred <- crossvalidation_realdata(mydata, method = "separate")
-separateperf <- findPerformance(testing_subset, separatepred)  
-separateperf
-  
+names(typeofvar) <- covariates
+mydata <- mydata %>% select(all_of(c("study", "treat", "y", covariates)))
 
 
 ###########################################################################
-######Analysis using full data
+############ Find regression estimates using full data
 
-#Naive approach
-newdata <- mydata %>% select(study, y, treat, all_of(c("baseline", "gender")))
-newdata <- newdata %>% mutate(baselinetreat = NA, gendertreat = NA)
-
-missingPattern <- findMissingPattern(newdata, c("baseline", "gender"))
-meth <- getCorrectMeth(newdata, missingPattern)
-pred <- getCorrectPred(newdata, missingPattern)
-
+# Naive approach
 set.seed(1)
-imp <- mice(newdata, pred = pred, meth = meth, m = 20)
-
-fit <- with(imp, lmer(y ~ (baseline + gender) * treat + (1|study) + (0+treat|study)))
+naiveapproach <- ipdma.impute(mydata, covariates = c("baseline", "gender"), typeofvar = c("continuous", "binary"), interaction = TRUE,
+                             studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
+fit <- with(naiveapproach$imp, lmer(y ~ (baseline + gender) * treat + (1|study) + (0+treat|study)))
 t(sapply(fit$analyses, fixef))
 coef_fit <- summary(pool(fit))
 coef_fit
 
-#Imputation approach
-newdata <- mydata
-newdata <- newdata %>% mutate(baselinetreat = NA, gendertreat = NA, agetreat = NA, relstattreat = NA, ComorbidAnxietytreat = NA, preveptreat = NA, Medicationtreat = NA,  alcoholtreat = NA)
-
-missingPattern <- findMissingPattern(newdata, covariates)
-meth <- getCorrectMeth(newdata, missingPattern, typeofvar = typeofvar)
-pred <- getCorrectPred(newdata, missingPattern)
-
-set.seed(1)
-imp <- mice(newdata, pred = pred, meth = meth, m = 20)
-
-fit <- with(imp, lmer(y ~ (baseline + gender + age + relstat + ComorbidAnxiety + prevep + Medication + alcohol) * treat + (1|study) + (0 + treat|study)))
+# Imputation approach
+set.seed(2)
+imputationapproach <- ipdma.impute(mydata, covariates = covariates, typeofvar = typeofvar, interaction = TRUE,
+                                  studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
+fit <- with(imputationapproach$imp, lmer(y ~ (baseline + gender + age + relstat + ComorbidAnxiety + prevep + Medication + alcohol) * treat + (1|study) + (0 + treat|study)))
 t(sapply(fit$analyses, fixef))
 coef_fit <- summary(pool(fit))
 coef_fit
 
-# Separate predictions approach
+# Separate prediction approach
+set.seed(3)
 coef_fit_store <- list()
 
 for(i in 1:length(unique(mydata$study))){
   
   newdata <- mydata %>% filter(study == i) 
   
-  missingPattern <- findMissingPattern(newdata, covariates)
+  # Need to remove systematically missing covariates for each study
+  missingPattern <- findMissingPattern(newdata, covariates, typeofvar, studyname = "study", treatmentname = "treat", outcomename = "y")
   newdata <- newdata %>% select(-all_of(missingPattern$sys_covariates))
-
-  newdata <- createinteractions(newdata, missingPattern$without_sys_covariates)
   
-  meth <- getCorrectMeth(newdata, missingPattern)
-  pred <- getCorrectPred(newdata, missingPattern)
-  print(meth)
-  print(pred)
-  
-  set.seed(1)
-  imp <- mice(newdata, pred = pred, meth = meth, m = 20)
-  impc <- complete(imp, "long", include = "TRUE")
-  imp.list <- imputationList(split(impc, impc[,1])[-1])$imputations
+  imputationapproach <- ipdma.impute(newdata, covariates = missingPattern$without_sys_covariates, typeofvar = typeofvar[missingPattern$without_sys_covariates], interaction = TRUE,
+                                     studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
+  imp.list <- imputationapproach$imp.list
   fit <- list()
-  
   for(ii in 1:length(imp.list)){
     imp.dummy <- imp.list[[ii]]
     imp.dummy <- imp.dummy %>% select(-".imp", -".id", -"study")
@@ -188,3 +98,28 @@ for(i in 1:length(unique(mydata$study))){
   coef_fit_store[[i]] <- summary(pool(fit))
 }
 coef_fit_store
+
+
+
+
+########################################################################
+########### Cross validation
+# Cross-validation functions are stored in separate R file: realdata.crossvalidation.R
+
+# naive approach
+naive_crossvalidation <- crossvalidation_realdata(mydata, method = "naive")
+naivepred <- naive_crossvalidation$predictions
+testingoutcome <- naive_crossvalidation$testingoutcome
+naiveperf <- findPerformance(testingoutcome, naivepred, aggregation = "weighted")
+naiveperf
+
+# imputation approach
+imputation_crossvalidation <- crossvalidation_realdata(mydata, method = "imputation")
+imputationperf <- findPerformance(testing_subset, imputationpred)
+imputationperf
+
+# separate prediction approach
+separatepred <- crossvalidation_realdata(mydata, method = "separate")
+separateperf <- findPerformance(testing_subset, separatepred)  
+separateperf
+
