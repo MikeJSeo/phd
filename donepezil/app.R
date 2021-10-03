@@ -1,4 +1,4 @@
-library(rjags)
+library(coda)
 library(shiny)
 
 result <- list()
