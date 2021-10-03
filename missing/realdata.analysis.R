@@ -107,6 +107,7 @@ coef_fit_store
 # Cross-validation functions are stored in separate R file: realdata.crossvalidation.R
 
 # naive approach
+set.seed(1)
 naive_crossvalidation <- crossvalidation_realdata(mydata, method = "naive")
 naivepred <- naive_crossvalidation$predictions
 testingoutcome <- naive_crossvalidation$testingoutcome
@@ -114,12 +115,18 @@ naiveperf <- findPerformance(testingoutcome, naivepred, aggregation = "weighted"
 naiveperf
 
 # imputation approach
+set.seed(2)
 imputation_crossvalidation <- crossvalidation_realdata(mydata, method = "imputation")
-imputationperf <- findPerformance(testing_subset, imputationpred)
+imputationpred <- imputation_crossvalidation$predictions
+testingoutcome <- imputation_crossvalidation$testingoutcome
+imputationperf <- findPerformance(testingoutcome, imputationpred, aggregation = "weighted")
 imputationperf
 
 # separate prediction approach
-separatepred <- crossvalidation_realdata(mydata, method = "separate")
-separateperf <- findPerformance(testing_subset, separatepred)  
+set.seed(3)
+separate_crossvalidation <- crossvalidation_realdata(mydata, method = "separate")
+separatepred <- separate_crossvalidation$predictions
+testingoutcome <- separate_crossvalidation$testingoutcome
+separateperf <- findPerformance(testingoutcome, separatepred, aggregation = "weighted")
 separateperf
 
