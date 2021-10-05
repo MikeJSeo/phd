@@ -1,5 +1,6 @@
 ############ Some helpful functions
 
+# function to name treatment-covariate terms
 createinteractions <- function(df, cov, treatmentname) {
   for(i in 1:length(cov)){
     varname <- paste0(cov[i], treatmentname)
@@ -8,7 +9,7 @@ createinteractions <- function(df, cov, treatmentname) {
   df
 }
 
-
+# Use Rubin's rule to calculate the variance
 findVarianceUsingRubinsRule <- function(prediction.dummy, variance.dummy){
   
   avg.prediction <- apply(prediction.dummy, 1, mean)
@@ -19,8 +20,7 @@ findVarianceUsingRubinsRule <- function(prediction.dummy, variance.dummy){
   return(apply(variance.dummy, 1, mean) + (5 + 1)/ (5^2 - 5) * summ)
 }
 
-
-
+# output testing output in a list format divided by each study; used to calculate performance measures
 findTestingOutcome <- function(dataset){
   
   nstudy <- length(unique(dataset$study))

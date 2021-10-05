@@ -45,7 +45,7 @@ naive_prediction <- function(traindata, testdata){
     testdata_dummy <- testdata %>% filter(study == studyid)
     
     bb <- model.matrix(form2, data = testdata_dummy)
-    predictions[[studyid]] <- bb %*% fixef(trained_model)
+    predictions[[studyid]] <- c(bb %*% fixef(trained_model))
   }
   return(predictions)
 }
@@ -80,7 +80,7 @@ imputation_prediction <- function(traindata, testdata){
     testdata_dummy <- testdata %>% filter(study == studyid)
     prediction.dummy <- matrix(NA, nrow = dim(testdata_dummy)[1], ncol = length(imp.list))
     
-    missingPatternTest <- findMissingPattern(testdata, covariates, typeofvar, 
+    missingPatternTest <- findMissingPattern(testdata_dummy, covariates, typeofvar, 
                                          studyname = "study", treatmentname = "treat", outcomename = "y")
     
     if(interaction == FALSE){

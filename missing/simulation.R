@@ -11,7 +11,6 @@ naivepred <- naive_prediction(simulated_dataset, validation_dataset)
 imputationpred <- imputation_prediction(simulated_dataset, validation_dataset)
 separatepred <- separate_prediction(simulated_dataset, validation_dataset)
 
-
 testdata <- findTestingOutcome(validation_dataset)
 
 naiveperf <- findPerformance(testdata, naivepred)
@@ -35,9 +34,9 @@ library(micemd)
 
 #library(mitools)
 
-setwd("~/GitHub/phd/missing")
+setwd("C:/Users/mike/Desktop/Github/phd/missing")
 source("helpful.functions.R")
-source("simulation.related.functions.R")
+source("simulation.functions.R")
 
 ####################################
 # type of variable
