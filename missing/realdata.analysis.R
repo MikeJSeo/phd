@@ -85,7 +85,7 @@ for(i in 1:length(unique(mydata$study))){
   missingPattern <- findMissingPattern(newdata, covariates, typeofvar, studyname = "study", treatmentname = "treat", outcomename = "y")
   newdata <- newdata %>% select(-all_of(missingPattern$sys_covariates))
   
-  imputationapproach <- ipdma.impute(newdata, covariates = missingPattern$without_sys_covariates, typeofvar = typeofvar[missingPattern$without_sys_covariates], interaction = TRUE,
+  imputationapproach <- ipdma.impute(newdata, covariates = missingPattern$without_sys_covariates, typeofvar = typeofvar[which(covariates %in% missingPattern$without_sys_covariates)], interaction = TRUE,
                                      studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
   imp.list <- imputationapproach$imp.list
   fit <- list()
@@ -100,14 +100,14 @@ for(i in 1:length(unique(mydata$study))){
 coef_fit_store
 
 
-imputationapproach <- ipdma.impute(training_set, covariates = covariates, typeofvar = typeofvar, interaction = TRUE,
-                                   studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
-mydata2 <- preprocess.data(training_set, covariates, typeofvar, interaction = TRUE,
-                           studyname = "study", treatmentname = "treat", outcomename = "y")
-missP <- findMissingPattern(mydata2, covariates, typeofvar,
-                            studyname = "study", treatmentname = "treat", outcomename = "y")
-meth <- getCorrectMeth(mydata2, missP)
-pred <- getCorrectPred(mydata2, missP)
+# imputationapproach <- ipdma.impute(training_set, covariates = covariates, typeofvar = typeofvar, interaction = TRUE,
+#                                    studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
+# mydata2 <- preprocess.data(training_set, covariates, typeofvar, interaction = TRUE,
+#                            studyname = "study", treatmentname = "treat", outcomename = "y")
+# missP <- findMissingPattern(mydata2, covariates, typeofvar,
+#                             studyname = "study", treatmentname = "treat", outcomename = "y")
+# meth <- getCorrectMeth(mydata2, missP)
+# pred <- getCorrectPred(mydata2, missP)
 
 
 
