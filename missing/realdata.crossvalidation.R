@@ -1,26 +1,4 @@
 
-findTestData <- function(crossdata){
-  
-  nstudy <- length(unique(crossdata$study))
-  
-  testingdata <- list()
-  
-  for(studyid in 1:nstudy){
-    
-    testing_set <- crossdata[crossdata$study == studyid,]
-    
-    covariates_all <- c("baseline", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol")
-    typeofvar_all <- c("continuous", "binary", "continuous", "binary", "binary", "binary", "binary", "binary")
-    
-    missingPatternTest <- findMissingPattern(testing_set, covariates_all, typeofvar_all, 
-                                             studyname = "study", treatmentname = "treat", outcomename = "y")  
-    
-    testing_set <- testing_set %>% select(study, y, treat, all_of(missingPatternTest$without_sys_covariates)) %>% filter(complete.cases(.))
-    testingdata[[studyid]] <- testing_set$y
-  }
-  return(testingdata)
-}
-
 crossvalidation_realdata <- function(crossdata, method){
   
   nstudy <- length(unique(crossdata$study))

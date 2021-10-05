@@ -20,3 +20,17 @@ findVarianceUsingRubinsRule <- function(prediction.dummy, variance.dummy){
 }
 
 
+
+findTestingOutcome <- function(dataset){
+  
+  nstudy <- length(unique(dataset$study))
+  
+  testingdata <- list()
+  
+  for(studyid in 1:nstudy){
+    
+    testing_set <- dataset[dataset$study == studyid,]
+    testingdata[[studyid]] <- testing_set$y
+  }
+  return(testingdata)
+}

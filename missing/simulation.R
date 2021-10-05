@@ -1,30 +1,39 @@
 
 ###Test trial
 
-
-simulated_data <- generate_simulation_data_with_no_EM(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, signal = "small", sign = "different")
+simulated_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, signal = "small", sign = "different", interaction = FALSE)
 simulated_dataset <- simulated_data$dataset
 
-validation_data <- generate_simulation_data_with_no_EM(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, signal = "small", sign = "different")
+validation_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, signal = "small", sign = "different", interaction = FALSE)
 validation_dataset <- validation_data$dataset
 
+naivepred <- naive_prediction(simulated_dataset, validation_dataset)
+imputationpred <- imputation_prediction(simulated_dataset, validation_dataset)
+separatepred <- separate_prediction(simulated_dataset, validation_dataset)
 
-imputationpred <- imputation_prediction(simulated_dataset, validation_dataset, type_of_var = type_of_var)
-imputationperf <- try(findPerformance(validation_dataset$y, imputationpred))
 
+testdata <- findTestingOutcome(validation_dataset)
 
+naiveperf <- findPerformance(testdata, naivepred)
+imputationperf <- findPerformance(testdata, imputationpred)
+separateperf <- findPerformance(testdata, separatepred)
+
+naiveperf
+imputationperf
+separateperf
 
 
 
 
 #####################################
-
-
+#devtools::install_github("MikeJSeo/bipd") 
+library(bipd)
 library(dplyr)
 library(mvtnorm)
-library(micemd)
 library(lme4)
-library(mitools)
+library(micemd)
+
+#library(mitools)
 
 setwd("~/GitHub/phd/missing")
 source("helpful.functions.R")
