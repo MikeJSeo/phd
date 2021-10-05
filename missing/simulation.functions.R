@@ -172,9 +172,8 @@ separate_prediction <- function(traindata, testdata){
 
 
 
-
-
-wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NULL, nonlinear = NULL, signal = NULL, interaction = NULL, heterogeneity = NULL, Nsim = 100){
+#wrapper function to calculate performance metrics for multiple simulations (i.e. Nsim = 100)
+wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NULL, signal = NULL, sign = NULL, interaction = NULL, Nsim = 100){
 
   naive_store <- matrix(NA, nrow = Nsim, ncol = 3)
   imputation_store <- matrix(NA, nrow = Nsim, ncol = 3)
@@ -182,11 +181,24 @@ wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NU
   
   for(i in 1:Nsim){
     
+    # NEED TO FIX###############################
+    simulated_data <- generate_sysmiss_ipdma_example(Nstudies = Nstudies, Ncov = Ncov, sys_missing_prob = sys_missing_prob,
+                                                      signal = signal, sign = sign, interaction = interaction)
+    simulated_dataset <- simulated_data$dataset
+    
+    validation_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, signal = "small", sign = "same", interaction = FALSE)
+    validation_dataset <- validation_data$dataset
+    
+    naivepred <- naive_prediction(simulated_dataset, validation_dataset)
+    imputationpred <- imputation_prediction(simulated_dataset, validation_dataset)
+    separatepred <- separate_prediction(simulated_dataset, validation_dataset)
+    
+    
     set.seed(i)
     simulated_data <- generate_simulation_data(Nstudies = Nstudies, Ncov = Ncov, sys_missing_prob = sys_missing_prob, nonlinear = nonlinear, signal = signal, interaction = interaction, heterogeneity = heterogeneity) 
     simulated_dataset <- simulated_data$dataset
     
-    validation_data <- generate_simulation_data(Nstudies = 10, Ncov = Ncov, sys_missing_prob = sys_missing_prob, nonlinear = nonlinear, signal = signal, interaction = interaction, heterogeneity = heterogeneity)
+    validation_data <- generate_simulation_data(Nstudies = Nstudies, Ncov = Ncov, sys_missing_prob = sys_missing_prob, nonlinear = nonlinear, signal = signal, interaction = interaction, heterogeneity = heterogeneity)
     validation_dataset <- validation_data$dataset
 
     # naive method

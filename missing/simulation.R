@@ -1,5 +1,19 @@
 
-###Test trial
+#####################################
+#devtools::install_github("MikeJSeo/bipd") 
+library(bipd)
+library(dplyr)
+library(mvtnorm)
+library(lme4)
+library(micemd)
+
+#library(mitools)
+
+setwd("C:/Users/mike/Desktop/Github/phd/missing")
+source("helpful.functions.R")
+source("simulation.functions.R")
+
+##################################################
 
 simulated_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, signal = "small", sign = "different", interaction = FALSE)
 simulated_dataset <- simulated_data$dataset
@@ -24,19 +38,29 @@ separateperf
 
 
 
-#####################################
-#devtools::install_github("MikeJSeo/bipd") 
-library(bipd)
-library(dplyr)
-library(mvtnorm)
-library(lme4)
-library(micemd)
+simulated_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, signal = "small", sign = "same", interaction = FALSE)
+simulated_dataset <- simulated_data$dataset
 
-#library(mitools)
+validation_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, signal = "small", sign = "same", interaction = FALSE)
+validation_dataset <- validation_data$dataset
 
-setwd("C:/Users/mike/Desktop/Github/phd/missing")
-source("helpful.functions.R")
-source("simulation.functions.R")
+naivepred <- naive_prediction(simulated_dataset, validation_dataset)
+imputationpred <- imputation_prediction(simulated_dataset, validation_dataset)
+separatepred <- separate_prediction(simulated_dataset, validation_dataset)
+
+testdata <- findTestingOutcome(validation_dataset)
+
+naiveperf <- findPerformance(testdata, naivepred)
+imputationperf <- findPerformance(testdata, imputationpred)
+separateperf <- findPerformance(testdata, separatepred)
+
+naiveperf
+imputationperf
+separateperf
+
+
+
+
 
 ####################################
 # type of variable

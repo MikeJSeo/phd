@@ -1,4 +1,4 @@
-#devtools::install_github("MikeJSeo/bipd") # included some imputation functions
+#devtools::install_github("MikeJSeo/bipd") # personal github with some imputation related functions
 library(bipd)
 library(dplyr)
 
