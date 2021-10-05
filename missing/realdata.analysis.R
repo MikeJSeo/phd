@@ -48,7 +48,7 @@ mydata$study <- as.numeric(as.factor(mydata$study))
 # Specify the covariates of interest and type of variable
 covariates <- c("baseline", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol")
 typeofvar <- c("continuous", "binary", "continuous", "binary", "binary", "binary", "binary", "binary")
-names(typeofvar) <- covariates
+#names(typeofvar) <- covariates
 mydata <- mydata %>% select(all_of(c("study", "treat", "y", covariates)))
 
 
@@ -98,6 +98,16 @@ for(i in 1:length(unique(mydata$study))){
   coef_fit_store[[i]] <- summary(pool(fit))
 }
 coef_fit_store
+
+
+imputationapproach <- ipdma.impute(training_set, covariates = covariates, typeofvar = typeofvar, interaction = TRUE,
+                                   studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
+mydata2 <- preprocess.data(training_set, covariates, typeofvar, interaction = TRUE,
+                           studyname = "study", treatmentname = "treat", outcomename = "y")
+missP <- findMissingPattern(mydata2, covariates, typeofvar,
+                            studyname = "study", treatmentname = "treat", outcomename = "y")
+meth <- getCorrectMeth(mydata2, missP)
+pred <- getCorrectPred(mydata2, missP)
 
 
 

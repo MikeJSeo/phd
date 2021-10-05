@@ -37,7 +37,7 @@ crossvalidation_realdata <- function(crossdata, method){
       
     } else if(method == "imputation"){
       
-      imputationapproach <- ipdma.impute(mydata, covariates = covariates_all, typeofvar = typeofvar_all, interaction = TRUE,
+      imputationapproach <- ipdma.impute(training_set, covariates = covariates_all, typeofvar = typeofvar_all, interaction = TRUE,
                                          studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
       imp.list <- imputationapproach$imp.list
       
