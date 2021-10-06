@@ -79,7 +79,7 @@ crossvalidation_realdata <- function(crossdata, method){
         missingPattern <- findMissingPattern(training_set_dummy, covariates_all, typeofvar_all, 
                                                  studyname = "study", treatmentname = "treat", outcomename = "y")
         training_set_dummy <- training_set_dummy %>% select(-all_of(missingPattern$sys_covariates))
-        imputationapproach <- ipdma.impute(training_set_dummy, covariates = missingPattern$without_sys_covariates, typeofvar = typeofvar[missingPattern$without_sys_covariates], interaction = TRUE,
+        imputationapproach <- ipdma.impute(training_set_dummy, covariates = missingPattern$without_sys_covariates, typeofvar = typeofvar[which(covariates_all %in% missingPattern$without_sys_covariates)], interaction = TRUE,
                                            studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
         imp.list <- imputationapproach$imp.list
         

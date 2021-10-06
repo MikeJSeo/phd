@@ -1,7 +1,14 @@
 # Here we demonstrate a simple example of predicting systematically missing IPD with the three different approaches mentioned.
 
+# Before going to imputation, there might be some preprocessing one might need to do.
+# There are couple of instances that won't allow imputing systematically missing data (check if your data applies)
+# a) For every study, covariate should have more than two values. For instance, if one study only has measurements 
+# for female, then we need to throw away that study or variable
+# b) Also, there's a problem when there is no observation to measure interaction effect. 
+# For instance, including a study where comorbid anxiety (binary variable) is only observed for treated patients and not
+# for untreated patients, would lead to an error.
 
-# First let's simulate some fake IPD with systematically missing studies.
+# Let's simulate some fake IPD with systematically missing studies.
 
 mydata2 <- preprocess.data(mydata, covariates, typeofvar, interaction = TRUE,
                            studyname = "study", treatmentname = "treat", outcomename = "y")
@@ -25,5 +32,5 @@ imputationapproach <- ipdma.impute(mydata, covariates = covariates, typeofvar = 
 
 
 
-# For whatever reason this wrapper imputation function doesn't work, he/she can dig in to see which part might have gone wrong. 
-# Also, if the user doesn't like the selected method or prediction matrix, he/she can simply put their own.
+# For whatever reason this wrapper imputation function doesn't work, one can dig in to see which part might have gone wrong. 
+# Also, if one doesn't like the selected method or prediction matrix, one can simply specify a different one.
