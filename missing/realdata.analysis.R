@@ -63,6 +63,17 @@ t(sapply(fit$analyses, fixef))
 coef_fit <- summary(pool(fit))
 coef_fit
 
+
+# Imputation approach - ignoring clustering
+set.seed(4)
+imputationapproach.nocluster <- ipdma.impute(mydata, covariates = covariates, typeofvar = typeofvar, sys_impute_method = "pmm",
+                                   interaction = TRUE, studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
+fit <- with(imputationapproach.nocluster$imp, lmer(y ~ (baseline + gender + age + relstat + ComorbidAnxiety + prevep + Medication + alcohol) * treat + (1|study) + (0 + treat|study)))
+t(sapply(fit$analyses, fixef))
+coef_fit <- summary(pool(fit))
+coef_fit
+
+
 # Imputation approach
 set.seed(2)
 imputationapproach <- ipdma.impute(mydata, covariates = covariates, typeofvar = typeofvar, interaction = TRUE,
@@ -138,3 +149,4 @@ testingoutcome <- separate_crossvalidation$testingoutcome
 separateperf <- findPerformance(testingoutcome, separatepred, aggregation = "weighted")
 separateperf
 
+rbind(naiveperf, imputationperf, separateperf)

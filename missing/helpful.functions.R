@@ -14,10 +14,12 @@ findVarianceUsingRubinsRule <- function(prediction.dummy, variance.dummy){
   
   avg.prediction <- apply(prediction.dummy, 1, mean)
   summ <- 0
-  for(iii in 1:5){
+  
+  mm <- dim(prediction.dummy)[2]
+  for(iii in 1:mm){
     summ <- summ + (prediction.dummy[,iii] - avg.prediction)^2
   }
-  return(apply(variance.dummy, 1, mean) + (5 + 1)/ (5^2 - 5) * summ)
+  return(apply(variance.dummy, 1, mean) + (mm + 1)/ (mm * (mm - 1)) * summ)
 }
 
 # output testing output in a list format divided by each study; used to calculate performance measures

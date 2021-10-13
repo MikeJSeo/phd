@@ -38,7 +38,7 @@ crossvalidation_realdata <- function(crossdata, method){
     } else if(method == "imputation"){
       
       imputationapproach <- ipdma.impute(training_set, covariates = covariates_all, typeofvar = typeofvar_all, interaction = TRUE,
-                                         studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
+                                         studyname = "study", treatmentname = "treat", outcomename = "y", m = 5)
       imp.list <- imputationapproach$imp.list
       
       missingPatternTest <- findMissingPattern(testing_set, covariates_all, typeofvar_all, 
@@ -56,6 +56,8 @@ crossvalidation_realdata <- function(crossdata, method){
         prediction.dummy[,ii] <- bb %*% fixef(imp.model)
       }
       
+      print(paste0("study ", studyid, " done"))
+      
       testingoutcome[[studyid]] <- testing_set$y
       predictions[[studyid]] <- apply(prediction.dummy, 1, mean)
       
@@ -68,8 +70,10 @@ crossvalidation_realdata <- function(crossdata, method){
                                                studyname = "study", treatmentname = "treat", outcomename = "y")
       testing_set <- testing_set %>% select(study, y, treat, all_of(missingPatternTest$without_sys_covariates)) %>% filter(complete.cases(.))
       
-      prediction_store <- matrix(NA, dim(testing_set)[1], nstudy2)
-      precision_store <- matrix(NA, dim(testing_set)[1], nstudy2)
+      prediction_store <- matrix(NA, dim(testing_set)[1], nstudy2) # to store prediction of the fit estimates (X*beta)
+      precision_store <- matrix(NA, dim(testing_set)[1], nstudy2) # to store precision of the prediction (standard error of fit + residual standard deviation) 
+      
+      logstandarddeviation_store <- rep(NA, nstudy2) # to store log of estimated standard deviation of the model
       
       for(i in 1:nstudy2){
         
@@ -98,9 +102,17 @@ crossvalidation_realdata <- function(crossdata, method){
           bb <- model.matrix(form, data = testing_set)
           prediction.dummy[,ii] <- bb %*% coef(imp.model)
           variance.dummy[,ii] <- diag(bb %*% vcov(imp.model) %*% t(bb))
+          logstandarddeviation_store[ii] <- log(sigma(imp.model))
+          
+          #Equivalent way of calculating residual Standard error
+          #k=length(imp.model$coefficients)-1 #Subtract one to ignore intercept
+          #SSE=sum(imp.model$residuals**2)
+          #n=length(imp.model$residuals)
+          #sqrt(SSE/(n-(1+k))) #Residual Standard Error
         }
         prediction_store[,i] <- apply(prediction.dummy, 1, mean)
-        precision_store[,i] <- 1/findVarianceUsingRubinsRule(prediction.dummy, variance.dummy)
+        standarddeviation <- exp(mean(logstandarddeviation_store))
+        precision_store[,i] <- 1/(sqrt(findVarianceUsingRubinsRule(prediction.dummy, variance.dummy) + standarddeviation^2))
         
       }
       product_store <- prediction_store * precision_store

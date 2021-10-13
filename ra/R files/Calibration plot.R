@@ -1,4 +1,4 @@
-setwd("~/GitHub/phd/ra/Result")
+setwd("C:/Users/mike/Desktop/Github/phd/ra/Result")
 load("Approach1.result.RData")
 load("Approach2a.result.RData")
 load("Approach2b.result.RData")
