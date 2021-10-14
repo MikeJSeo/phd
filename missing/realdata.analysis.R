@@ -63,9 +63,8 @@ t(sapply(fit$analyses, fixef))
 coef_fit <- summary(pool(fit))
 coef_fit
 
-
 # Imputation approach - ignoring clustering
-set.seed(4)
+set.seed(1)
 imputationapproach.nocluster <- ipdma.impute(mydata, covariates = covariates, typeofvar = typeofvar, sys_impute_method = "pmm",
                                    interaction = TRUE, studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
 fit <- with(imputationapproach.nocluster$imp, lmer(y ~ (baseline + gender + age + relstat + ComorbidAnxiety + prevep + Medication + alcohol) * treat + (1|study) + (0 + treat|study)))
@@ -73,9 +72,8 @@ t(sapply(fit$analyses, fixef))
 coef_fit <- summary(pool(fit))
 coef_fit
 
-
-# Imputation approach
-set.seed(2)
+# Imputation approach - accounting clustering
+set.seed(1)
 imputationapproach <- ipdma.impute(mydata, covariates = covariates, typeofvar = typeofvar, interaction = TRUE,
                                   studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
 fit <- with(imputationapproach$imp, lmer(y ~ (baseline + gender + age + relstat + ComorbidAnxiety + prevep + Medication + alcohol) * treat + (1|study) + (0 + treat|study)))
@@ -84,7 +82,7 @@ coef_fit <- summary(pool(fit))
 coef_fit
 
 # Separate prediction approach
-set.seed(3)
+set.seed(1)
 coef_fit_store <- list()
 
 for(i in 1:length(unique(mydata$study))){
@@ -109,17 +107,6 @@ for(i in 1:length(unique(mydata$study))){
 }
 coef_fit_store
 
-# imputationapproach <- ipdma.impute(training_set, covariates = covariates, typeofvar = typeofvar, interaction = TRUE,
-#                                    studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
-# mydata2 <- preprocess.data(training_set, covariates, typeofvar, interaction = TRUE,
-#                            studyname = "study", treatmentname = "treat", outcomename = "y")
-# missP <- findMissingPattern(mydata2, covariates, typeofvar,
-#                             studyname = "study", treatmentname = "treat", outcomename = "y")
-# meth <- getCorrectMeth(mydata2, missP)
-# pred <- getCorrectPred(mydata2, missP)
-
-
-
 
 ########################################################################
 ########### Cross validation
@@ -133,8 +120,16 @@ testingoutcome <- naive_crossvalidation$testingoutcome
 naiveperf <- findPerformance(testingoutcome, naivepred, aggregation = "weighted")
 naiveperf
 
-# imputation approach
-set.seed(2)
+# imputation approach ignoring clustering
+set.seed(1)
+imputation_nocluster_crossvalidation <- crossvalidation_realdata(mydata, method = "imputation_nocluster")
+imputationpred <- imputation_nocluster_crossvalidation$predictions
+testingoutcome <- imputation_nocluster_crossvalidation$testingoutcome
+imputation_noclusterperf <- findPerformance(testingoutcome, imputationpred, aggregation = "weighted")
+imputation_noclusterperf
+
+# imputation approach accounting for clustering
+set.seed(1)
 imputation_crossvalidation <- crossvalidation_realdata(mydata, method = "imputation")
 imputationpred <- imputation_crossvalidation$predictions
 testingoutcome <- imputation_crossvalidation$testingoutcome
@@ -142,11 +137,11 @@ imputationperf <- findPerformance(testingoutcome, imputationpred, aggregation = 
 imputationperf
 
 # separate prediction approach
-set.seed(3)
+set.seed(1)
 separate_crossvalidation <- crossvalidation_realdata(mydata, method = "separate")
 separatepred <- separate_crossvalidation$predictions
 testingoutcome <- separate_crossvalidation$testingoutcome
 separateperf <- findPerformance(testingoutcome, separatepred, aggregation = "weighted")
 separateperf
 
-rbind(naiveperf, imputationperf, separateperf)
+rbind(naiveperf, imputation_noclusterperf, imputationperf, separateperf)
