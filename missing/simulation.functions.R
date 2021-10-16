@@ -52,7 +52,7 @@ naive_prediction <- function(traindata, testdata){
 
 
 # Given simulated training data, estimate a model using imputation method and calculates predictions using the testing data.
-imputation_prediction <- function(traindata, testdata){
+imputation_prediction <- function(traindata, testdata, method = "imputation"){
   
   nstudy <- length(unique(testdata$study))
   predictions <- list()
@@ -71,8 +71,14 @@ imputation_prediction <- function(traindata, testdata){
     names(typeofvar) <- paste0("x", 1:10)
   }
   
-  imputationapproach <- ipdma.impute(traindata, covariates = covariates, typeofvar = typeofvar, interaction = interaction,
-                                     studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
+  if(method == "imputation"){
+    imputationapproach <- ipdma.impute(traindata, covariates = covariates, typeofvar = typeofvar, interaction = interaction,
+                                       studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)    
+  } else if(method == "imputation_nocluster"){
+    imputationapproach <- ipdma.impute(traindata, covariates = covariates, typeofvar = typeofvar, sys_impute_method = "pmm",
+                                       interaction = interaction, studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)   
+  }
+
   imp.list <- imputationapproach$imp.list
 
   for(studyid in 1:nstudy){
@@ -157,7 +163,7 @@ separate_prediction <- function(traindata, testdata){
       
       bb <- model.matrix(form, data = testdata_dummy)
       prediction_store[,studyid2] <- bb %*% coef(trained_model)
-      precision_store[,studyid2] <- 1/diag(bb %*% vcov(trained_model) %*% t(bb))
+      precision_store[,studyid2] <- 1/(diag(bb %*% vcov(trained_model) %*% t(bb))+ sigma(trained_model)^2)
     }
     product_store <- prediction_store * precision_store
     precision_vec <- apply(precision_store, 1, sum)

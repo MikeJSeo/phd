@@ -145,3 +145,14 @@ separateperf <- findPerformance(testingoutcome, separatepred, aggregation = "wei
 separateperf
 
 rbind(naiveperf, imputation_noclusterperf, imputationperf, separateperf)
+
+
+
+### Just checking different imputation method: 2l.glm.norm
+# imputation approach accounting for clustering
+set.seed(1)
+imputation_crossvalidation <- crossvalidation_realdata(mydata, method = "imputation_2lglm")
+imputationpred <- imputation_crossvalidation$predictions
+testingoutcome <- imputation_crossvalidation$testingoutcome
+imputationperf <- findPerformance(testingoutcome, imputationpred, aggregation = "weighted")
+imputationperf

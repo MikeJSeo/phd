@@ -35,7 +35,7 @@ crossvalidation_realdata <- function(crossdata, method){
       testingoutcome[[studyid]] <- testing_set$y
       predictions[[studyid]] <- apply(prediction.dummy, 1, mean)
       
-    } else if(method %in%  c("imputation", "imputation_nocluster")){
+    } else if(method %in%  c("imputation", "imputation_nocluster", "imputation_2lglm")){
       
       if(method == "imputation_nocluster"){
         imputationapproach <- ipdma.impute(training_set, covariates = covariates_all, typeofvar = typeofvar_all, sys_impute_method = "pmm",
@@ -43,6 +43,9 @@ crossvalidation_realdata <- function(crossdata, method){
       } else if(method == "imputation"){
         imputationapproach <- ipdma.impute(training_set, covariates = covariates_all, typeofvar = typeofvar_all, interaction = TRUE,
                                            studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
+      } else if(method == "imputation_2lglm"){
+        imputationapproach <- ipdma.impute(training_set, covariates = covariates_all, typeofvar = typeofvar_all, sys_impute_method = "2l.glm",
+                                           interaction = TRUE, studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)  
       }
       
       imp.list <- imputationapproach$imp.list
@@ -109,7 +112,7 @@ crossvalidation_realdata <- function(crossdata, method){
         }
         prediction_store[,i] <- apply(prediction.dummy, 1, mean)
         standarddeviation <- exp(mean(logstandarddeviation_store))
-        precision_store[,i] <- 1/(sqrt(findVarianceUsingRubinsRule(prediction.dummy, variance.dummy) + standarddeviation^2))
+        precision_store[,i] <- 1/(findVarianceUsingRubinsRule(prediction.dummy, variance.dummy) + standarddeviation^2)
         
       }
       product_store <- prediction_store * precision_store
@@ -122,6 +125,8 @@ crossvalidation_realdata <- function(crossdata, method){
       
       testingoutcome[[studyid]] <- testing_set$y
     }
+    
+    print(paste0("studyid ", studyid, " finished"))
   }
   return(list(predictions = predictions, testingoutcome = testingoutcome))
 }
