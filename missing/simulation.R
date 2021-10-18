@@ -15,6 +15,11 @@ source("simulation.functions.R")
 
 ##################################################
 
+#small number of studies
+
+
+
+
 simulated_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, signal = "small", sign = "different", interaction = FALSE)
 simulated_dataset <- simulated_data$dataset
 
