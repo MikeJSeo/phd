@@ -1,0 +1,34 @@
+model{
+  
+  for(i in 1:Np){
+    y[i] ~ dbern(p[i])
+    logit(p[i]) <- alpha[studyid[i]] + inprod(beta[], X[i,]) +
+      (1 - equals(treat[i],1)) * inprod(gamma[], X[i,]) + 
+      delta[studyid[i], treat[i]]
+  }
+ 
+  for(j in 1:Nstudies){
+    delta[j,1] <- 0
+    delta[j,2] ~ dnorm(d, tau.delta)  
+  }
+  d ~ dnorm(0, 0.001)
+  tau.delta ~ dlnorm(-2.99, pow(1.74, -2)) #Turner's heterogeneity for drop-outs
+  sd.delta <- pow(tau.delta, -1/2)
+
+  for(j in 1:Nstudies){
+    alpha[j] ~ dnorm(0, 0.001)
+  }
+
+  for(k in 1:Ncovariate){
+    beta[k] ~ dnorm(0, 0.001)
+  }
+  
+  #lambda ~ dgamma(2, 0.1)
+  lambda <- pow(lambda.inv, -1)
+  lambda.inv ~ dunif(0, 5)
+
+  for(k in 1:Ncovariate){
+    gamma[k] ~ ddexp(0, lambda)
+  }
+
+}

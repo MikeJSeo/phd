@@ -1,0 +1,37 @@
+model{
+  
+  for(i in 1:Np){
+    y[i] ~ dnorm(mu[i], tau)
+    mu[i] <- alpha[studyid[i]] + inprod(beta[], X[i,]) +
+      (1 - equals(treat[i],1)) * inprod(gamma[], X[i,]) + 
+      delta[studyid[i], treat[i]]
+  }
+  tau ~ dgamma(0.001, 0.001)
+  sigma <- pow(tau, -1/2) 
+
+  for(j in 1:Nstudies){
+    delta[j,1] <- 0
+    delta[j,2] ~ dnorm(d, tau.delta)  
+  }
+  d ~ dnorm(0, 0.001)
+  tau.delta ~ dlnorm(-2.12, pow(1.53, -2)) #Turner's heterogeneity
+  sd.delta <- pow(tau.delta, -1/2)
+
+  for(j in 1:Nstudies){
+    alpha[j] ~ dnorm(0, 0.001)
+  }
+
+  for(k in 1:Ncovariate){
+    beta[k] ~ dnorm(0, 0.001)
+  }
+  
+  tt <- lambda * sigma #uses conditional prior
+  #lambda ~ dgamma(2, 0.1)
+  lambda <- pow(lambda.inv, -1)
+  lambda.inv ~ dunif(0, 5)
+
+  for(k in 1:Ncovariate){
+    gamma[k] ~ ddexp(0, tt)
+  }
+
+}
