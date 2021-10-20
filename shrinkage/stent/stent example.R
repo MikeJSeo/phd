@@ -8,7 +8,7 @@ library(devtools)
 #devtools::install_github("MikeJSeo/bipd")
 library(bipd) 
 
-setwd("C:/Users/ms19g661/Desktop")
+setwd("C:/Users/mike/Desktop")
 stent <- read.dta13("1_year_stent_data_21092018.dta")
 
 
