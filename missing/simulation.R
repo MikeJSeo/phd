@@ -17,10 +17,10 @@ source("simulation.functions.R")
 
 #small number of studies
 
-simulated_data <- generate_sysmiss_ipdma_example(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.6, signal = "small", interaction = FALSE)
+simulated_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.6, signal = "small", interaction = FALSE, aggregation_bias = TRUE)
 simulated_dataset <- simulated_data$dataset
 
-validation_data <- generate_sysmiss_ipdma_example(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.6, signal = "small", interaction = FALSE)
+validation_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.6, signal = "small", interaction = FALSE, aggregation_bias = TRUE)
 validation_dataset <- validation_data$dataset
 
 naivepred <- naive_prediction(simulated_dataset, validation_dataset)
