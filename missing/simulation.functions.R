@@ -1,6 +1,4 @@
 
-
-# Given simulated training data, estimate a model using naive method and calculates predictions using the testing data.
 naive_prediction <- function(traindata, testdata){
   
   nstudy <- length(unique(testdata$study))
@@ -51,7 +49,6 @@ naive_prediction <- function(traindata, testdata){
 }
 
 
-# Given simulated training data, estimate a model using imputation method and calculates predictions using the testing data.
 imputation_prediction <- function(traindata, testdata, method = "imputation"){
   
   nstudy <- length(unique(testdata$study))
@@ -75,8 +72,8 @@ imputation_prediction <- function(traindata, testdata, method = "imputation"){
     imputationapproach <- ipdma.impute(traindata, covariates = covariates, typeofvar = typeofvar, interaction = interaction,
                                        studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)    
   } else if(method == "imputation_nocluster"){
-    imputationapproach <- ipdma.impute(traindata, covariates = covariates, typeofvar = typeofvar, sys_impute_method = "pmm",
-                                       interaction = interaction, studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)   
+    imputationapproach <- ipdma.impute(traindata, covariates = covariates, typeofvar = typeofvar, sys_impute_method = "pmm", interaction = interaction,
+                                       studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)   
   }
 
   imp.list <- imputationapproach$imp.list
@@ -114,7 +111,6 @@ imputation_prediction <- function(traindata, testdata, method = "imputation"){
 }
 
 
-# Given simulated training data, estimate a model using imputation method and calculates predictions using the testing data.
 separate_prediction <- function(traindata, testdata){
   
   nstudy <- length(unique(testdata$study))
@@ -177,73 +173,73 @@ separate_prediction <- function(traindata, testdata){
 }
 
 
-
-#wrapper function to calculate performance metrics for multiple simulations (i.e. Nsim = 100)
-wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NULL, signal = NULL, sign = NULL, interaction = NULL, Nsim = 100){
+wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NULL, magnitude = NULL, heterogeneity = NULL, interaction = NULL, aggregation_bias = NULL, Nsim = 100){
 
   naive_store <- matrix(NA, nrow = Nsim, ncol = 3)
+  imputation_noclusterstore <- matrix(NA, nrow = Nsim, ncol = 3)
   imputation_store <- matrix(NA, nrow = Nsim, ncol = 3)
   separate_store <- matrix(NA, nrow = Nsim, ncol = 3)
   
   for(i in 1:Nsim){
     
-    # NEED TO FIX###############################
-    simulated_data <- generate_sysmiss_ipdma_example(Nstudies = Nstudies, Ncov = Ncov, sys_missing_prob = sys_missing_prob,
-                                                      signal = signal, sign = sign, interaction = interaction)
-    simulated_dataset <- simulated_data$dataset
-    
-    validation_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, signal = "small", sign = "same", interaction = FALSE)
-    validation_dataset <- validation_data$dataset
-    
-    naivepred <- naive_prediction(simulated_dataset, validation_dataset)
-    imputationpred <- imputation_prediction(simulated_dataset, validation_dataset)
-    separatepred <- separate_prediction(simulated_dataset, validation_dataset)
-    
-    
     set.seed(i)
-    simulated_data <- generate_simulation_data(Nstudies = Nstudies, Ncov = Ncov, sys_missing_prob = sys_missing_prob, nonlinear = nonlinear, signal = signal, interaction = interaction, heterogeneity = heterogeneity) 
+    simulated_data <- generate_sysmiss_ipdma_example(Nstudies = Nstudies, Ncov = Ncov, sys_missing_prob = sys_missing_prob, magnitude = magnitude, 
+                                                     heterogeneity = heterogeneity, interaction = interaction, aggregation_bias = aggregation_bias)
     simulated_dataset <- simulated_data$dataset
     
-    validation_data <- generate_simulation_data(Nstudies = Nstudies, Ncov = Ncov, sys_missing_prob = sys_missing_prob, nonlinear = nonlinear, signal = signal, interaction = interaction, heterogeneity = heterogeneity)
+    validation_data <- generate_sysmiss_ipdma_example(Nstudies = Nstudies, Ncov = Ncov, sys_missing_prob = sys_missing_prob, magnitude = magnitude, 
+                                                      heterogeneity = heterogeneity, interaction = interaction, aggregation_bias = aggregation_bias)
     validation_dataset <- validation_data$dataset
-
+    
+    testdata <- findTestingOutcome(validation_dataset)
+    
     # naive method
-    naivepred <- naive_prediction(simulated_dataset, validation_dataset)
-    naiveperf <- findPerformance(validation_dataset$y, naivepred)
+    naivepred <- NA
+    naivepred <- try(naive_prediction(simulated_dataset, validation_dataset))
+    naiveperf <- try(findPerformance(testdata, naivepred))
     naive_store[i,] <- naiveperf
-      
-    # imputation
-    imputationpred <- try(imputation_prediction(simulated_dataset, validation_dataset, type_of_var = type_of_var))
-    imputationperf <- try(findPerformance(validation_dataset$y, imputationpred))
+    
+    # imputation method - ignoring study level
+    imputation_noclusterpred <- NA
+    imputation_noclusterpred <- try(imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_nocluster"))
+    imputation_noclusterperf <- try(findPerformance(testdata, imputation_noclusterpred))
+    imputation_noclusterstore[i,] <- imputation_noclusterperf
+    
+    # imputation method - accounting for study level
+    imputationpred <- NA
+    imputationpred <- try(imputation_prediction(simulated_dataset, validation_dataset))
+    imputationperf <- try(findPerformance(testdata, imputationpred))
     imputation_store[i,] <- imputationperf
-
-    # separate predictions
-    separatepred <- separate_prediction(simulated_dataset, validation_dataset)
-    separateperf <- findPerformance(validation_dataset$y, separatepred)
-    separate_store[i,] <- separateperf 
-
+    
+    # separate method
+    separatepred <- NA
+    separatepred <- try(separate_prediction(simulated_dataset, validation_dataset))
+    separateperf <- try(findPerformance(testdata, separatepred))
+    separate_store[i,] <- separateperf
   }
   
-  imputation_store <- apply(imputation_store, 2, as.numeric)
-  failed_trials <- which(rowSums(is.na(imputation_store)) > 0)
-  print(paste("failed # of trials: ", length(failed_trials)))
+  naive_store_revised <- apply(naive_store, 2, as.numeric)
+  imputation_noclusterstore_revised <- apply(imputation_noclusterstore, 2, as.numeric)
+  imputation_store_revised <- apply(imputation_store, 2, as.numeric)
+  separate_store_revised <- apply(separate_store, 2, as.numeric)
   
-  if(length(failed_trials) != 0){
-    imputation_store <- imputation_store[-failed_trials,]
-    naive_store <- naive_store[-failed_trials,]
-    separate_store <- separate_store[-failed_trials,]
-  }
+  naive_failed <- which(rowSums(is.na(naive_store_revised)) > 0)
+  imputation_noclusterfailed <- which(rowSums(is.na(imputation_noclusterstore_revised)) > 0)
+  imputation_failed <- which(rowSums(is.na(imputation_store_revised)) > 0)
+  separate_failed <- which(rowSums(is.na(separate_store_revised)) > 0)
+  
+  number_failed_simulations <- c(length(naive_failed), length(imputation_noclusterfailed),
+                                 length(imputation_failed), length(separate_failed))
 
-  print(round(apply(naive_store, 2, mean), digits = 3))
-  print(round(apply(imputation_store, 2, mean), digits = 3))
-  print(round(apply(separate_store, 2, mean), digits = 3))
-  
-  return_matrix <- matrix(NA, 3, 3)
-  return_matrix[1,] <- round(apply(naive_store, 2, mean), digits = 3)
-  return_matrix[2,] <- round(apply(imputation_store, 2, mean), digits = 3)
-  return_matrix[3,] <- round(apply(separate_store, 2, mean), digits = 3)
-  return(return_matrix)
-  #return(list(naive_store = naive_store, imputation_store = imputation_store, separate_store = separate_store))
+  return_matrix <- matrix(NA, 4, 3)
+  return_matrix[1,] <- round(apply(naive_store_revised, 2, mean, na.rm = TRUE), digits = 5)
+  return_matrix[2,] <- round(apply(imputation_noclusterstore_revised, 2, mean, na.rm = TRUE), digits = 5)
+  return_matrix[3,] <- round(apply(imputation_store_revised, 2, mean, na.rm = TRUE), digits = 5)
+  return_matrix[4,] <- round(apply(separate_store_revised, 2, mean, na.rm = TRUE), digits = 5)
+
+  return(list(naive_store = naive_store, imputation_noclusterstore = imputation_noclusterstore,
+              imputation_store = imputation_store, separate_store = separate_store,
+              number_failed_simulations = number_failed_simulations, return_matrix = return_matrix))
 }
 
 

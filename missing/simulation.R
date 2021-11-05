@@ -1,70 +1,14 @@
-
-#####################################
 #devtools::install_github("MikeJSeo/bipd") 
 library(bipd)
 library(dplyr)
 library(mvtnorm)
 library(lme4)
 library(micemd)
-
 #library(mitools)
 
 setwd("C:/Users/mike/Desktop/Github/phd/missing")
 source("helpful.functions.R")
 source("simulation.functions.R")
-
-##################################################
-
-#small number of studies
-
-simulated_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.6, signal = "small", interaction = FALSE, aggregation_bias = TRUE)
-simulated_dataset <- simulated_data$dataset
-
-validation_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.6, signal = "small", interaction = FALSE, aggregation_bias = TRUE)
-validation_dataset <- validation_data$dataset
-
-naivepred <- naive_prediction(simulated_dataset, validation_dataset)
-imputationpred <- imputation_prediction(simulated_dataset, validation_dataset)
-imputation_noclusterpred <- imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_nocluster")
-separatepred <- separate_prediction(simulated_dataset, validation_dataset)
-
-testdata <- findTestingOutcome(validation_dataset)
-
-naiveperf <- findPerformance(testdata, naivepred)
-imputationperf <- findPerformance(testdata, imputationpred)
-imputation_noclusterpref <- findPerformance(testdata, imputation_noclusterpred)
-separateperf <- findPerformance(testdata, separatepred)
-
-naiveperf
-imputationperf
-imputation_noclusterpref
-separateperf
-
-
-
-
-simulated_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, signal = "small", sign = "same", interaction = FALSE)
-simulated_dataset <- simulated_data$dataset
-
-validation_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, signal = "small", sign = "same", interaction = FALSE)
-validation_dataset <- validation_data$dataset
-
-naivepred <- naive_prediction(simulated_dataset, validation_dataset)
-imputationpred <- imputation_prediction(simulated_dataset, validation_dataset)
-separatepred <- separate_prediction(simulated_dataset, validation_dataset)
-
-testdata <- findTestingOutcome(validation_dataset)
-
-naiveperf <- findPerformance(testdata, naivepred)
-imputationperf <- findPerformance(testdata, imputationpred)
-separateperf <- findPerformance(testdata, separatepred)
-
-naiveperf
-imputationperf
-separateperf
-
-
-
 
 
 ####################################
@@ -75,11 +19,11 @@ names(type_of_var) <- paste0("x", 1:10)
 store_result <- list()
 
 #################################### simulation1
-result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, nonlinear = "no", signal = "small", interaction = "no", heterogeneity = "small")
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation2
-result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, nonlinear = "no", signal = "small", interaction = "no", heterogeneity = "large")
+result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation3
@@ -589,27 +533,28 @@ store_result[[length(store_result)+1]] <- result
 
 
 
-# set.seed(2)
-# simulated_data <- generate_simulation_data(Ncov = 10, sys_missing_prob = 0.6, nonlinear = "no", signal = "large", interaction = "no", heterogeneity = "large")
+# Example
+# simulated_data <- generate_sysmiss_ipdma_example(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 # simulated_dataset <- simulated_data$dataset
 # 
-# validation_data <- generate_simulation_data(Ncov = 10, sys_missing_prob = 0.6, nonlinear = "no", signal = "large", interaction = "no", heterogeneity = "large")
+# validation_data <- generate_sysmiss_ipdma_example(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 # validation_dataset <- validation_data$dataset
 # 
 # naivepred <- naive_prediction(simulated_dataset, validation_dataset)
-# naiveperf <- findPerformance(validation_dataset$y, naivepred)
-# naiveperf
-# 
+# imputationpred <- imputation_prediction(simulated_dataset, validation_dataset)
+# imputation_noclusterpred <- imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_nocluster")
 # separatepred <- separate_prediction(simulated_dataset, validation_dataset)
-# separateperf <- findPerformance(validation_dataset$y, separatepred)
-# separateperf
 # 
-# imputationpred <- imputation_prediction(simulated_dataset, validation_dataset, type_of_var = type_of_var)
-# imputationperf <- findPerformance(validation_dataset$y, imputationpred)
+# testdata <- findTestingOutcome(validation_dataset)
+# 
+# naiveperf <- findPerformance(testdata, naivepred)
+# imputationperf <- findPerformance(testdata, imputationpred)
+# imputation_noclusterpref <- findPerformance(testdata, imputation_noclusterpred)
+# separateperf <- findPerformance(testdata, separatepred)
+# 
+# naiveperf
 # imputationperf
-#
-# apply(result$naive_store, 2, mean)
-# apply(result$imputation_store, 2, mean)
-# apply(result$separate_store, 2, mean)
+# imputation_noclusterpref
+# separateperf
 
 
