@@ -231,12 +231,24 @@ wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NU
   number_failed_simulations <- c(length(naive_failed), length(imputation_noclusterfailed),
                                  length(imputation_failed), length(separate_failed))
 
+  failed_set <- unique(c(naive_failed, imputation_noclusterfailed, imputation_failed, separate_failed))
+
+  if(length(failed_set) != 0){
+    naive_store_revised <- naive_store_revised[-failed_set,]
+    imputation_noclusterstore_revised <- imputation_noclusterstore_revised[-failed_set,]
+    imputation_store_revisedd <- imputation_store_revised[-failed_set,]
+    separate_store_revised <- separate_store_revised[-failed_set,]
+  }
+  
   return_matrix <- matrix(NA, 4, 3)
   return_matrix[1,] <- round(apply(naive_store_revised, 2, mean, na.rm = TRUE), digits = 5)
   return_matrix[2,] <- round(apply(imputation_noclusterstore_revised, 2, mean, na.rm = TRUE), digits = 5)
   return_matrix[3,] <- round(apply(imputation_store_revised, 2, mean, na.rm = TRUE), digits = 5)
   return_matrix[4,] <- round(apply(separate_store_revised, 2, mean, na.rm = TRUE), digits = 5)
 
+  rownames(return_matrix) <- c("Naive", "Imputation ignoring heterogeneity", "Imputation accounting heterogeneity", "Separate prediction")
+  colnames(return_matrix) <- c("MSE", "MAE", "R-squared")
+  
   return(list(naive_store = naive_store, imputation_noclusterstore = imputation_noclusterstore,
               imputation_store = imputation_store, separate_store = separate_store,
               number_failed_simulations = number_failed_simulations, return_matrix = return_matrix))
