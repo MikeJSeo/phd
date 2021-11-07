@@ -4,7 +4,6 @@ library(dplyr)
 library(mvtnorm)
 library(lme4)
 library(micemd)
-#library(mitools)
 
 setwd("C:/Users/mike/Desktop/Github/phd/missing")
 source("helpful.functions.R")
@@ -31,187 +30,189 @@ result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.1, magn
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation4
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 3, Ncov = 10, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation5
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 5, Ncov = 10, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation6
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation7
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation8
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation9
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation10
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 3, Ncov = 10, sys_missing_prob = 0.3, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation11
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 5, Ncov = 10, sys_missing_prob = 0.3, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation12
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.3, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation13
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation14
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation15
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation16
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 3, Ncov = 10, sys_missing_prob = 0.1, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation17
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 5, Ncov = 10, sys_missing_prob = 0.1, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation18
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.1, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation19
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation20
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation21
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation22
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 3, Ncov = 10, sys_missing_prob = 0.3, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation23
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 5, Ncov = 10, sys_missing_prob = 0.3, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation24
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.3, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation25
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation26
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation27
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation28
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 3, Ncov = 10, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation29
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 5, Ncov = 10, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation30
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation31
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.2, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation32
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.2, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation33
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.2, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation34
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 3, Ncov = 10, sys_missing_prob = 0.3, magnitude = 0.2, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation35
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 5, Ncov = 10, sys_missing_prob = 0.3, magnitude = 0.2, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation36
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.3, magnitude = 0.2, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation37
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.5, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation38
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.5, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation39
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.5, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation40
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 3, Ncov = 10, sys_missing_prob = 0.1, magnitude = 0.5, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation41
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 5, Ncov = 10, sys_missing_prob = 0.1, magnitude = 0.5, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation42
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.1, magnitude = 0.5, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation43
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.5, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation44
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.5, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation45
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.5, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation46
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 3, Ncov = 10, sys_missing_prob = 0.3, magnitude = 0.5, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation47
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 5, Ncov = 10, sys_missing_prob = 0.3, magnitude = 0.5, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation48
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.3, magnitude = 0.5, heterogeneity = 0.3, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
+
+#################################################################### Fix from here
 #################################### simulation49
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation50
@@ -219,7 +220,7 @@ result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magni
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation51
-result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
+result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
 store_result[[length(store_result)+1]] <- result
 
 #################################### simulation52

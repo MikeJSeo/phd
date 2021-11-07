@@ -245,9 +245,12 @@ wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NU
   return_matrix[2,] <- round(apply(imputation_noclusterstore_revised, 2, mean, na.rm = TRUE), digits = 5)
   return_matrix[3,] <- round(apply(imputation_store_revised, 2, mean, na.rm = TRUE), digits = 5)
   return_matrix[4,] <- round(apply(separate_store_revised, 2, mean, na.rm = TRUE), digits = 5)
+  
+  #only report MSE and R-squared
+  return_matrix <- return_matrix[,c(1,3)]
 
   rownames(return_matrix) <- c("Naive", "Imputation ignoring heterogeneity", "Imputation accounting heterogeneity", "Separate prediction")
-  colnames(return_matrix) <- c("MSE", "MAE", "R-squared")
+  colnames(return_matrix) <- c("MSE", "R-squared")
   
   return(list(naive_store = naive_store, imputation_noclusterstore = imputation_noclusterstore,
               imputation_store = imputation_store, separate_store = separate_store,
