@@ -117,7 +117,7 @@ set.seed(1)
 naive_crossvalidation <- crossvalidation_realdata(mydata, method = "naive")
 naivepred <- naive_crossvalidation$predictions
 testingoutcome <- naive_crossvalidation$testingoutcome
-naiveperf <- findPerformance(testingoutcome, naivepred, aggregation = "weighted")
+naiveperf <- findPerformance(testingoutcome, naivepred, aggregation = "ignore")
 naiveperf
 
 # imputation approach ignoring clustering
@@ -125,7 +125,7 @@ set.seed(1)
 imputation_nocluster_crossvalidation <- crossvalidation_realdata(mydata, method = "imputation_nocluster")
 imputationpred <- imputation_nocluster_crossvalidation$predictions
 testingoutcome <- imputation_nocluster_crossvalidation$testingoutcome
-imputation_noclusterperf <- findPerformance(testingoutcome, imputationpred, aggregation = "weighted")
+imputation_noclusterperf <- findPerformance(testingoutcome, imputationpred, aggregation = "ignore")
 imputation_noclusterperf
 
 # imputation approach accounting for clustering
@@ -133,7 +133,7 @@ set.seed(1)
 imputation_crossvalidation <- crossvalidation_realdata(mydata, method = "imputation")
 imputationpred <- imputation_crossvalidation$predictions
 testingoutcome <- imputation_crossvalidation$testingoutcome
-imputationperf <- findPerformance(testingoutcome, imputationpred, aggregation = "weighted")
+imputationperf <- findPerformance(testingoutcome, imputationpred, aggregation = "ignore")
 imputationperf
 
 # separate prediction approach
@@ -141,14 +141,14 @@ set.seed(1)
 separate_crossvalidation <- crossvalidation_realdata(mydata, method = "separate")
 separatepred <- separate_crossvalidation$predictions
 testingoutcome <- separate_crossvalidation$testingoutcome
-separateperf <- findPerformance(testingoutcome, separatepred, aggregation = "weighted")
+separateperf <- findPerformance(testingoutcome, separatepred, aggregation = "ignore")
 separateperf
 
 rbind(naiveperf, imputation_noclusterperf, imputationperf, separateperf)
 
 
 
-### Just checking different imputation method: 2l.glm.norm
+### Using different imputation method: 2l.glm.norm
 # imputation approach accounting for clustering
 set.seed(1)
 imputation_crossvalidation <- crossvalidation_realdata(mydata, method = "imputation_2lglm")

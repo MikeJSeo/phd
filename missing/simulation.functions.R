@@ -70,10 +70,10 @@ imputation_prediction <- function(traindata, testdata, method = "imputation"){
   
   if(method == "imputation"){
     imputationapproach <- ipdma.impute(traindata, covariates = covariates, typeofvar = typeofvar, interaction = interaction,
-                                       studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)    
+                                       studyname = "study", treatmentname = "treat", outcomename = "y", m = 10)    
   } else if(method == "imputation_nocluster"){
     imputationapproach <- ipdma.impute(traindata, covariates = covariates, typeofvar = typeofvar, sys_impute_method = "pmm", interaction = interaction,
-                                       studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)   
+                                       studyname = "study", treatmentname = "treat", outcomename = "y", m = 10)   
   }
 
   imp.list <- imputationapproach$imp.list
@@ -187,7 +187,7 @@ wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NU
                                                      heterogeneity = heterogeneity, interaction = interaction, aggregation_bias = aggregation_bias)
     simulated_dataset <- simulated_data$dataset
     
-    validation_data <- generate_sysmiss_ipdma_example(Nstudies = Nstudies, Ncov = Ncov, sys_missing_prob = sys_missing_prob, magnitude = magnitude, 
+    validation_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = Ncov, sys_missing_prob = sys_missing_prob, magnitude = magnitude, 
                                                       heterogeneity = heterogeneity, interaction = interaction, aggregation_bias = aggregation_bias)
     validation_dataset <- validation_data$dataset
     
