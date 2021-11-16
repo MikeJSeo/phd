@@ -173,49 +173,78 @@ separate_prediction <- function(traindata, testdata){
 }
 
 
-wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NULL, magnitude = NULL, heterogeneity = NULL, interaction = NULL, aggregation_bias = NULL, Nsim = 100){
+wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NULL, magnitude = NULL, heterogeneity = NULL, Nsim = 100){
 
+  testdata <- naivepred <- imputation_noclusterpred <- imputationpred <- separatepred <- list()
+  
+  for(i in 1:Nsim){
+    
+    set.seed(i)
+    simulated_data <- generate_sysmiss_ipdma_example(Nstudies = Nstudies, Ncov = Ncov, sys_missing_prob = sys_missing_prob, magnitude = magnitude, 
+                                                     heterogeneity = heterogeneity)
+    simulated_dataset <- simulated_data$dataset
+    
+    validation_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = Ncov, sys_missing_prob = sys_missing_prob, magnitude = magnitude, 
+                                                      heterogeneity = heterogeneity)
+    validation_dataset <- validation_data$dataset
+    
+    testdata[[i]] <- findTestingOutcome(validation_dataset)
+    
+    # naive method
+    naivepred[[i]] <- NA
+    naivepred[[i]] <- try(naive_prediction(simulated_dataset, validation_dataset))
+
+    # imputation method - ignoring study level
+    imputation_noclusterpred[[i]] <- NA
+    imputation_noclusterpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_nocluster"))
+
+    # imputation method - accounting for study level
+    imputationpred[[i]] <- NA
+    imputationpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset))
+
+    # separate method
+    separatepred[[i]] <- NA
+    separatepred[[i]] <- try(separate_prediction(simulated_dataset, validation_dataset))
+  }
+  
+  list(testdata = testdata, naivepred = naivepred, imputation_noclusterpred = imputation_noclusterpred,
+       imputationpred = imputationpred, separatepred = separatepred)
+}
+
+
+# From the calculated predictions, finds performance metrics
+wrapper_function2 <- function(stored_predictions){
+  
+  Nsim <- length(stored_predictions$testdata)
+  
   naive_store <- matrix(NA, nrow = Nsim, ncol = 3)
   imputation_noclusterstore <- matrix(NA, nrow = Nsim, ncol = 3)
   imputation_store <- matrix(NA, nrow = Nsim, ncol = 3)
   separate_store <- matrix(NA, nrow = Nsim, ncol = 3)
   
   for(i in 1:Nsim){
-    
-    set.seed(i)
-    simulated_data <- generate_sysmiss_ipdma_example(Nstudies = Nstudies, Ncov = Ncov, sys_missing_prob = sys_missing_prob, magnitude = magnitude, 
-                                                     heterogeneity = heterogeneity, interaction = interaction, aggregation_bias = aggregation_bias)
-    simulated_dataset <- simulated_data$dataset
-    
-    validation_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = Ncov, sys_missing_prob = sys_missing_prob, magnitude = magnitude, 
-                                                      heterogeneity = heterogeneity, interaction = interaction, aggregation_bias = aggregation_bias)
-    validation_dataset <- validation_data$dataset
-    
-    testdata <- findTestingOutcome(validation_dataset)
-    
-    # naive method
-    naivepred <- NA
-    naivepred <- try(naive_prediction(simulated_dataset, validation_dataset))
-    naiveperf <- try(findPerformance(testdata, naivepred))
-    naive_store[i,] <- naiveperf
-    
-    # imputation method - ignoring study level
-    imputation_noclusterpred <- NA
-    imputation_noclusterpred <- try(imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_nocluster"))
-    imputation_noclusterperf <- try(findPerformance(testdata, imputation_noclusterpred))
-    imputation_noclusterstore[i,] <- imputation_noclusterperf
-    
-    # imputation method - accounting for study level
-    imputationpred <- NA
-    imputationpred <- try(imputation_prediction(simulated_dataset, validation_dataset))
-    imputationperf <- try(findPerformance(testdata, imputationpred))
-    imputation_store[i,] <- imputationperf
-    
-    # separate method
-    separatepred <- NA
-    separatepred <- try(separate_prediction(simulated_dataset, validation_dataset))
-    separateperf <- try(findPerformance(testdata, separatepred))
-    separate_store[i,] <- separateperf
+      
+      testdata <- stored_predictions$testdata[[i]] 
+      naivepred <- stored_predictions$naivepred[[i]]
+      imputation_noclusterpred <- stored_predictions$imputation_noclusterpred[[i]]
+      imputationpred <- stored_predictions$imputationpred[[i]]
+      separatepred <- stored_predictions$separatepred[[i]]
+      
+      # naive method
+      naiveperf <- try(findPerformance(testdata, naivepred, aggregation = "ignore"))
+      naive_store[i,] <- naiveperf
+      
+      # imputation method - ignoring study level
+      imputation_noclusterperf <- try(findPerformance(testdata, imputation_noclusterpred, aggregation = "ignore"))
+      imputation_noclusterstore[i,] <- imputation_noclusterperf
+      
+      # imputation method - accounting for study level
+      imputationperf <- try(findPerformance(testdata, imputationpred, aggregation = "ignore"))
+      imputation_store[i,] <- imputationperf
+      
+      # separate method
+      separateperf <- try(findPerformance(testdata, separatepred, aggregation = "ignore"))
+      separate_store[i,] <- separateperf
   }
   
   naive_store_revised <- apply(naive_store, 2, as.numeric)
@@ -230,37 +259,38 @@ wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NU
   
   number_failed_simulations <- c(length(naive_failed), length(imputation_noclusterfailed),
                                  length(imputation_failed), length(separate_failed))
-
-  failed_set <- unique(c(naive_failed, imputation_noclusterfailed, imputation_failed, separate_failed))
-
+  
+  # Set a threshold to exclude from comparison
+  threshold <- 20
+  
+  if(length(imputation_failed) <= threshold){
+    failed_set <- unique(c(naive_failed, imputation_noclusterfailed, imputation_failed, separate_failed))
+  } else{
+    failed_set <- unique(c(naive_failed, imputation_noclusterfailed, separate_failed))
+  }
+  
   if(length(failed_set) != 0){
     naive_store_revised <- naive_store_revised[-failed_set,]
     imputation_noclusterstore_revised <- imputation_noclusterstore_revised[-failed_set,]
-    imputation_store_revisedd <- imputation_store_revised[-failed_set,]
+    imputation_store_revised <- imputation_store_revised[-failed_set,]
     separate_store_revised <- separate_store_revised[-failed_set,]
   }
   
   return_matrix <- matrix(NA, 4, 3)
   return_matrix[1,] <- round(apply(naive_store_revised, 2, mean, na.rm = TRUE), digits = 5)
   return_matrix[2,] <- round(apply(imputation_noclusterstore_revised, 2, mean, na.rm = TRUE), digits = 5)
-  return_matrix[3,] <- round(apply(imputation_store_revised, 2, mean, na.rm = TRUE), digits = 5)
+  
+  if(length(imputation_failed) <= threshold){
+    return_matrix[3,] <- round(apply(imputation_store_revised, 2, mean, na.rm = TRUE), digits = 5)
+  }
   return_matrix[4,] <- round(apply(separate_store_revised, 2, mean, na.rm = TRUE), digits = 5)
   
   #only report MSE and R-squared
   return_matrix <- return_matrix[,c(1,3)]
-
+  
   rownames(return_matrix) <- c("Naive", "Imputation ignoring heterogeneity", "Imputation accounting heterogeneity", "Separate prediction")
   colnames(return_matrix) <- c("MSE", "R-squared")
   
-  return(list(naive_store = naive_store, imputation_noclusterstore = imputation_noclusterstore,
-              imputation_store = imputation_store, separate_store = separate_store,
-              number_failed_simulations = number_failed_simulations, return_matrix = return_matrix))
+  return(list(number_failed_simulations = number_failed_simulations, return_matrix = return_matrix))
+  
 }
-
-
-
-
-
-
-
-
