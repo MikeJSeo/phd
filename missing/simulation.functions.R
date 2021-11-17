@@ -184,7 +184,7 @@ wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NU
                                                      heterogeneity = heterogeneity)
     simulated_dataset <- simulated_data$dataset
     
-    validation_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = Ncov, sys_missing_prob = sys_missing_prob, magnitude = magnitude, 
+    validation_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = Ncov, sys_missing_prob = 0, magnitude = magnitude, 
                                                       heterogeneity = heterogeneity)
     validation_dataset <- validation_data$dataset
     

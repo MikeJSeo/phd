@@ -20,14 +20,14 @@ options(warn=-1) #options(warn=0)
 
 #################################### simulation1
 result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1)
-#save(result, file = "simulation1.RData")
+save(result, file = "simulation1.RData")
 
 load("simulation1.RData")
 wrapper_function2(result)
 
 ####################################  simulation2
 result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1)
-#save(result, file = "simulation2.RData")
+save(result, file = "simulation2.RData")
 
 load("simulation2.RData")
 wrapper_function2(result)
@@ -76,28 +76,28 @@ wrapper_function2(result)
 
 #################################### simulation9
 result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.2, heterogeneity = 0.1)
-#save(result, file = "simulation9.RData")
+save(result, file = "simulation9.RData")
 
 load("simulation9.RData")
 wrapper_function2(result)
 
 #################################### simulation10
 result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.2, heterogeneity = 0.1)
-#save(result, file = "simulation10.RData")
+save(result, file = "simulation10.RData")
 
 load("simulation10.RData")
 wrapper_function2(result)
 
 #################################### simulation11
 result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.2, heterogeneity = 0.1)
-#save(result, file = "simulation11.RData")
+save(result, file = "simulation11.RData")
 
 load("simulation11.RData")
 wrapper_function2(result)
 
 #################################### simulation12
 result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.2, heterogeneity = 0.1)
-#save(result, file = "simulation12.RData")
+save(result, file = "simulation12.RData")
 
 load("simulation12.RData")
 wrapper_function2(result)
@@ -244,28 +244,28 @@ wrapper_function2(result)
 
 #################################### simulation33
 result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.3)
-#save(result, file = "simulation33.RData")
+save(result, file = "simulation33.RData")
 
 load("simulation33.RData")
 wrapper_function2(result)
 
 #################################### simulation34
 result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.3)
-#save(result, file = "simulation34.RData")
+save(result, file = "simulation34.RData")
 
 load("simulation34.RData")
 wrapper_function2(result)
 
 #################################### simulation35
 result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.3)
-#save(result, file = "simulation35.RData")
+save(result, file = "simulation35.RData")
 
 load("simulation35.RData")
 wrapper_function2(result)
 
 #################################### simulation36
 result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.3)
-#save(result, file = "simulation36.RData")
+save(result, file = "simulation36.RData")
 
 load("simulation36.RData")
 wrapper_function2(result)
@@ -412,16 +412,16 @@ wrapper_function2(result)
 
 #################################### simulation57
 result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.3, heterogeneity = 0.3)
-save(result, file = "simulation57extra.RData")
+save(result, file = "simulation57.RData")
 
-load("simulation57extra.RData")
+load("simulation57.RData")
 wrapper_function2(result)
 
 #################################### simulation58
 result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.3, heterogeneity = 0.3)
-save(result, file = "simulation58extra.RData")
+save(result, file = "simulation58.RData")
 
-load("simulation58extra.RData")
+load("simulation58.RData")
 wrapper_function2(result)
 
 #################################### simulation59
