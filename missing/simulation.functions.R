@@ -213,7 +213,7 @@ wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NU
 
 
 # From the calculated predictions, finds performance metrics
-wrapper_function2 <- function(stored_predictions){
+wrapper_function2 <- function(stored_predictions, aggregation = "ignore"){
   
   Nsim <- length(stored_predictions$testdata)
   
@@ -231,19 +231,19 @@ wrapper_function2 <- function(stored_predictions){
       separatepred <- stored_predictions$separatepred[[i]]
       
       # naive method
-      naiveperf <- try(findPerformance(testdata, naivepred, aggregation = "ignore"))
+      naiveperf <- try(findPerformance(testdata, naivepred, aggregation = aggregation))
       naive_store[i,] <- naiveperf
       
       # imputation method - ignoring study level
-      imputation_noclusterperf <- try(findPerformance(testdata, imputation_noclusterpred, aggregation = "ignore"))
+      imputation_noclusterperf <- try(findPerformance(testdata, imputation_noclusterpred, aggregation = aggregation))
       imputation_noclusterstore[i,] <- imputation_noclusterperf
       
       # imputation method - accounting for study level
-      imputationperf <- try(findPerformance(testdata, imputationpred, aggregation = "ignore"))
+      imputationperf <- try(findPerformance(testdata, imputationpred, aggregation = aggregation))
       imputation_store[i,] <- imputationperf
       
       # separate method
-      separateperf <- try(findPerformance(testdata, separatepred, aggregation = "ignore"))
+      separateperf <- try(findPerformance(testdata, separatepred, aggregation = aggregation))
       separate_store[i,] <- separateperf
   }
   

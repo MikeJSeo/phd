@@ -79,7 +79,7 @@ crossvalidation_realdata <- function(crossdata, method){
       
       prediction_store <- matrix(NA, dim(testing_set)[1], nstudy2) # to store prediction of the fit estimates (X*beta)
       precision_store <- matrix(NA, dim(testing_set)[1], nstudy2) # to store precision of the prediction (standard error of fit + residual standard deviation) 
-      logstandarddeviation_store <- rep(NA, nstudy2) # to store log of estimated standard deviation of the model
+      #logstandarddeviation_store <- rep(NA, nstudy2) # to store log of estimated standard deviation of the model
       
       for(i in 1:nstudy2){
         
@@ -107,13 +107,13 @@ crossvalidation_realdata <- function(crossdata, method){
           
           bb <- model.matrix(form, data = testing_set)
           prediction.dummy[,ii] <- bb %*% coef(imp.model)
-          variance.dummy[,ii] <- diag(bb %*% vcov(imp.model) %*% t(bb))
-          logstandarddeviation_store[ii] <- log(sigma(imp.model))
+          variance.dummy[,ii] <- diag(bb %*% vcov(imp.model) %*% t(bb)) + sigma(imp.model)^2
+          #logstandarddeviation_store[ii] <- log(sigma(imp.model))
         }
         prediction_store[,i] <- apply(prediction.dummy, 1, mean)
-        standarddeviation <- exp(mean(logstandarddeviation_store))
-        precision_store[,i] <- 1/(findVarianceUsingRubinsRule(prediction.dummy, variance.dummy) + standarddeviation^2)
-        
+        #standarddeviation <- exp(mean(logstandarddeviation_store))
+        #precision_store[,i] <- 1/(findVarianceUsingRubinsRule(prediction.dummy, variance.dummy) + standarddeviation^2)
+        precision_store[,i] <- 1/(findVarianceUsingRubinsRule(prediction.dummy, variance.dummy))
       }
       product_store <- prediction_store * precision_store
       precision_vec <- apply(precision_store, 1, sum)

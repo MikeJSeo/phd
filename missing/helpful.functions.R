@@ -36,3 +36,21 @@ findTestingOutcome <- function(dataset){
   }
   return(testingdata)
 }
+
+# Find bootstrap samples index accounting for study level 
+findBootstrapSample <- function(dataset){
+  
+  rownames_data <- rownames(dataset)
+  nstudy <- length(unique(dataset$study))
+  final_vector <- c()
+  
+  for(i in 1:nstudy){
+    
+    studylevel_rownames <- rownames_data[dataset$study == i]
+    index <- sample(1:length(studylevel_rownames), replace = TRUE)
+    index <- index[order(index)]
+    
+    final_vector <- c(final_vector, studylevel_rownames[index])
+  }
+  return(final_vector)
+}
