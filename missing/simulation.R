@@ -21,29 +21,33 @@ options(warn=-1) #options(warn=0)
 #################################### simulation1
 result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1)
 #save(result, file = "simulation1.RData")
+#save(result, file = "simulation1-newtrial.RData")
 
-load("simulation1.RData")
+load("simulation1-newtrial.RData")
 wrapper_function2(result)
 
 ####################################  simulation2
 result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1)
 #save(result, file = "simulation2.RData")
+#save(result, file = "simulation2-newtrial.RData")
 
-load("simulation2.RData")
+load("simulation2-newtrial.RData")
 wrapper_function2(result)
 
 #################################### simulation3
 result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1)
 #save(result, file = "simulation3.RData")
+#save(result, file = "simulation3-newtrial.RData")
 
-load("simulation3.RData")
+load("simulation3-newtrial.RData")
 wrapper_function2(result)
 
 #################################### simulation4
 result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1)
 #save(result, file = "simulation4.RData")
+#save(result, file = "simulation4-newtrial.RData")
 
-load("simulation4.RData")
+load("simulation4-newtrial.RData")
 wrapper_function2(result)
 
 #################################### simulation5

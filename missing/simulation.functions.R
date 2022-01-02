@@ -74,6 +74,9 @@ imputation_prediction <- function(traindata, testdata, method = "imputation"){
   } else if(method == "imputation_nocluster"){
     imputationapproach <- ipdma.impute(traindata, covariates = covariates, typeofvar = typeofvar, sys_impute_method = "pmm", interaction = interaction,
                                        studyname = "study", treatmentname = "treat", outcomename = "y", m = 10)   
+  } else if(method == "imputation_2lglm"){
+    imputationapproach <- ipdma.impute(traindata, covariates = covariates, typeofvar = typeofvar, sys_impute_method = "2l.glm", interaction = interaction,
+                                       studyname = "study", treatmentname = "treat", outcomename = "y", m = 10)   
   }
 
   imp.list <- imputationapproach$imp.list
@@ -200,8 +203,9 @@ wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NU
 
     # imputation method - accounting for study level
     imputationpred[[i]] <- NA
-    imputationpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset))
-
+    #imputationpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset))
+    imputationpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_2lglm"))
+    
     # separate method
     separatepred[[i]] <- NA
     separatepred[[i]] <- try(separate_prediction(simulated_dataset, validation_dataset))
