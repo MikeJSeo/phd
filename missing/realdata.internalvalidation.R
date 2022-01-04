@@ -65,13 +65,17 @@ nstudy <- length(unique(mydata$study))
 predictions <- list()
 testingoutcome <- list()
 
+study_index <- 1:nstudy # for all studies
+#study_index <- c(6,7,8) # for studies with no systematically missing predictors
+
+
 # Naive approach
 set.seed(1)
 naiveapproach <- ipdma.impute(mydata, covariates = c("baseline", "gender"), typeofvar = c("continuous", "binary"), interaction = TRUE,
                               studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
 imp.list <- naiveapproach$imp.list
 
-for(studyid in 1:nstudy){
+for(studyid in study_index){ 
   testing_set <- mydata[mydata$study == studyid,]
 
   testing_set <- testing_set %>% select(study, y, treat, all_of(covariates_naive)) %>% filter(complete.cases(.))
@@ -96,7 +100,7 @@ imputationapproach <- ipdma.impute(mydata, covariates = covariates_all, typeofva
                                    interaction = TRUE, studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)  
 imp.list <- imputationapproach$imp.list
 
-for(studyid in 1:nstudy){
+for(studyid in study_index){
   testing_set <- mydata[mydata$study == studyid,]
   
   missingPatternTest <- findMissingPattern(testing_set, covariates_all, typeofvar_all, 
@@ -126,7 +130,7 @@ imputationapproach <- ipdma.impute(mydata, covariates = covariates_all, typeofva
                                    studyname = "study", treatmentname = "treat", outcomename = "y", m = 20)
 imp.list <- imputationapproach$imp.list
 
-for(studyid in 1:nstudy){
+for(studyid in study_index){
   testing_set <- mydata[mydata$study == studyid,]
   
   missingPatternTest <- findMissingPattern(testing_set, covariates_all, typeofvar_all, 
@@ -152,7 +156,7 @@ apparent_imputationperf <- findPerformance(testingoutcome, predictions, aggregat
 #separate prediction
 set.seed(1)
 
-for(studyid in 1:nstudy){
+for(studyid in study_index){
   testing_set <- mydata[mydata$study == studyid,]
 
   studyname2 <- unique(mydata$study)
@@ -206,8 +210,8 @@ for(studyid in 1:nstudy){
 }
 apparent_separateperf <- findPerformance(testingoutcome, predictions, aggregation = "ignore")
 
-
 rbind(apparent_naiveperf, apparent_imputation_noclusterperf, apparent_imputationperf, apparent_separateperf)
+
 
 
 ############## Optimism-corrected performance

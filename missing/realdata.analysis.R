@@ -115,6 +115,7 @@ coef_fit_store
 # naive approach
 set.seed(1)
 naive_crossvalidation <- crossvalidation_realdata(mydata, method = "naive")
+#naive_crossvalidation <- crossvalidation_realdata(mydata, method = "naive", testdata_index = c(6,7,8))
 naivepred <- naive_crossvalidation$predictions
 testingoutcome <- naive_crossvalidation$testingoutcome
 naiveperf <- findPerformance(testingoutcome, naivepred, aggregation = "ignore")
@@ -123,6 +124,7 @@ naiveperf
 # imputation approach ignoring clustering
 set.seed(1)
 imputation_nocluster_crossvalidation <- crossvalidation_realdata(mydata, method = "imputation_nocluster")
+#imputation_nocluster_crossvalidation <- crossvalidation_realdata(mydata, method = "imputation_nocluster", testdata_index = c(6,7,8))
 imputationpred <- imputation_nocluster_crossvalidation$predictions
 testingoutcome <- imputation_nocluster_crossvalidation$testingoutcome
 imputation_noclusterperf <- findPerformance(testingoutcome, imputationpred, aggregation = "ignore")
@@ -131,6 +133,7 @@ imputation_noclusterperf
 # imputation approach accounting for clustering
 set.seed(1)
 imputation_crossvalidation <- crossvalidation_realdata(mydata, method = "imputation")
+#imputation_crossvalidation <- crossvalidation_realdata(mydata, method = "imputation", testdata_index = c(6,7,8))
 imputationpred <- imputation_crossvalidation$predictions
 testingoutcome <- imputation_crossvalidation$testingoutcome
 imputationperf <- findPerformance(testingoutcome, imputationpred, aggregation = "ignore")
@@ -139,6 +142,7 @@ imputationperf
 # separate prediction approach
 set.seed(1)
 separate_crossvalidation <- crossvalidation_realdata(mydata, method = "separate")
+#separate_crossvalidation <- crossvalidation_realdata(mydata, method = "separate", testdata_index = c(6,7,8))
 separatepred <- separate_crossvalidation$predictions
 testingoutcome <- separate_crossvalidation$testingoutcome
 separateperf <- findPerformance(testingoutcome, separatepred, aggregation = "ignore")

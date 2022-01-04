@@ -1,5 +1,5 @@
 
-crossvalidation_realdata <- function(crossdata, method){
+crossvalidation_realdata <- function(crossdata, method, testdata_index = NULL){
   
   nstudy <- length(unique(crossdata$study))
   studyname <- unique(crossdata$study)
@@ -12,7 +12,11 @@ crossvalidation_realdata <- function(crossdata, method){
   covariates_all <- c("baseline", "gender", "age", "relstat", "ComorbidAnxiety", "prevep", "Medication", "alcohol")
   typeofvar_all <- c("continuous", "binary", "continuous", "binary", "binary", "binary", "binary", "binary")
   
-  for(studyid in 1:nstudy){
+  if(is.null(testdata_index)) {
+    testdata_index <- 1:nstudy
+  }
+  
+  for(studyid in testdata_index){
     training_set <- crossdata[crossdata$study != studyid,]
     testing_set <- crossdata[crossdata$study == studyid,]
     

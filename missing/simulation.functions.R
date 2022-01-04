@@ -203,8 +203,8 @@ wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NU
 
     # imputation method - accounting for study level
     imputationpred[[i]] <- NA
-    #imputationpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset))
-    imputationpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_2lglm"))
+    imputationpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset))
+    #imputationpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_2lglm"))
     
     # separate method
     separatepred[[i]] <- NA
