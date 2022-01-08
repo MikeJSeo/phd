@@ -83,7 +83,7 @@ for(studyid in study_index){
 
   for(ii in 1:length(imp.list)){
     imp.dummy <- imp.list[[ii]]
-    imp.model <- lmer(y ~ (baseline + gender) * treat + (1| study) + (0 + treat|study), data = imp.dummy)
+    imp.model <- lmer(mydata$y ~ (baseline + gender) * treat + (1| study) + (0 + treat|study), data = imp.dummy)
     bb <- model.matrix(y ~ (baseline + gender) * treat, data = testing_set)
     prediction.dummy[,ii] <- bb %*% fixef(imp.model)
   }
@@ -110,7 +110,7 @@ for(studyid in study_index){
 
   for(ii in 1:length(imp.list)){
     imp.dummy <- imp.list[[ii]]
-    form <- as.formula(paste0("y ~ ", "(", paste(missingPatternTest$without_sys_covariates, collapse= "+"), ") * treat + (1|study) + (0 + treat|study)" ))
+    form <- as.formula(paste0("mydata$y ~ ", "(", paste(missingPatternTest$without_sys_covariates, collapse= "+"), ") * treat + (1|study) + (0 + treat|study)" ))
     imp.model <- lmer(form, data = imp.dummy)
     
     form2 <- as.formula(paste0("y ~ ", "(", paste(missingPatternTest$without_sys_covariates, collapse= "+"), ") * treat" ))
@@ -140,7 +140,7 @@ for(studyid in study_index){
   
   for(ii in 1:length(imp.list)){
     imp.dummy <- imp.list[[ii]]
-    form <- as.formula(paste0("y ~ ", "(", paste(missingPatternTest$without_sys_covariates, collapse= "+"), ") * treat + (1|study) + (0 + treat|study)" ))
+    form <- as.formula(paste0("mydata$y ~ ", "(", paste(missingPatternTest$without_sys_covariates, collapse= "+"), ") * treat + (1|study) + (0 + treat|study)" ))
     imp.model <- lmer(form, data = imp.dummy)
     
     form2 <- as.formula(paste0("y ~ ", "(", paste(missingPatternTest$without_sys_covariates, collapse= "+"), ") * treat" ))
@@ -190,10 +190,14 @@ for(studyid in study_index){
     for(ii in 1:length(imp.list)){
       imp.dummy <- imp.list[[ii]]
       imp.dummy <- imp.dummy %>% select(-".imp", -".id", -"study")
-      form <- as.formula(paste0("y ~ ", "(", paste(without_sys_cov, collapse= "+"), ") * treat" ))
+      form <- as.formula(paste0("training_set_dummy$y ~ ", "(", paste(without_sys_cov, collapse= "+"), ") * treat" ))
       imp.model <- lm(form, data = imp.dummy)
+      print("hi")
+      print(summary(imp.model))
+      print(length(training_set_dummy$y))
     
-      bb <- model.matrix(form, data = testing_set)
+      form2 <- as.formula(paste0("y ~ ", "(", paste(without_sys_cov, collapse= "+"), ") * treat" ))
+      bb <- model.matrix(form2, data = testing_set)
       prediction.dummy[,ii] <- bb %*% coef(imp.model)
       variance.dummy[,ii] <- diag(bb %*% vcov(imp.model) %*% t(bb)) + sigma(imp.model)^2
     }
