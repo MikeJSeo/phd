@@ -192,10 +192,7 @@ for(studyid in study_index){
       imp.dummy <- imp.dummy %>% select(-".imp", -".id", -"study")
       form <- as.formula(paste0("training_set_dummy$y ~ ", "(", paste(without_sys_cov, collapse= "+"), ") * treat" ))
       imp.model <- lm(form, data = imp.dummy)
-      print("hi")
-      print(summary(imp.model))
-      print(length(training_set_dummy$y))
-    
+
       form2 <- as.formula(paste0("y ~ ", "(", paste(without_sys_cov, collapse= "+"), ") * treat" ))
       bb <- model.matrix(form2, data = testing_set)
       prediction.dummy[,ii] <- bb %*% coef(imp.model)
