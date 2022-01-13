@@ -183,14 +183,12 @@ wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NU
   for(i in 1:Nsim){
     
     set.seed(i)
-    simulated_data <- generate_sysmiss_ipdma_example(Nstudies = Nstudies, Ncov = Ncov, sys_missing_prob = sys_missing_prob, magnitude = magnitude, 
-                                                     heterogeneity = heterogeneity)
-    simulated_dataset <- simulated_data$dataset
-    
-    validation_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = Ncov, sys_missing_prob = 0, magnitude = magnitude, 
-                                                      heterogeneity = heterogeneity)
-    validation_dataset <- validation_data$dataset
-    
+    simulated_dataset <- generate_sysmiss_ipdma_example(Nstudies = Nstudies, Ncov = Ncov, sys_missing_prob = sys_missing_prob, magnitude = magnitude, 
+                                                     heterogeneity = heterogeneity, interaction = FALSE)
+
+    validation_dataset <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = Ncov, sys_missing_prob = 0, magnitude = magnitude, 
+                                                      heterogeneity = heterogeneity, interaction = FALSE)
+
     testdata[[i]] <- findTestingOutcome(validation_dataset)
     
     # naive method
