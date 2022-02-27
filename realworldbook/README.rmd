@@ -1,0 +1,17 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "README-"
+)
+```
+
+# Comparative effectiveness and personalized medicine research using Real-World Data
+
+This folder provides R code for the book chapter written on analyzing real-world data.
