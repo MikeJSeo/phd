@@ -1,4 +1,4 @@
-setwd("C:/Users/mike/Desktop/Github/phd/book chapter/book chapter part3")
+setwd("C:/Users/mike/Desktop/Github/phd/realworldbook/part3")
 source("helpful.functions.R")
 
 library(readxl)
@@ -33,7 +33,7 @@ load("TOWARD-ApproachI.RData")
 load("BSRBR-ApproachI.RData")
 load("SCQM-ApproachI.Rdata")
 
-setwd("C:/Users/mike/Desktop/Github/phd/book chapter/book chapter part3")
+setwd("C:/Users/mike/Desktop/Github/phd/realworldbook/part3")
 
 #find summary mean and covariance matrix for each study
 r1 <- summarize_each_study(samples_BSRBR)
@@ -81,7 +81,7 @@ load("TOWARD-ApproachI-bayesLASSO.RData")
 load("BSRBR-ApproachI-bayesLASSO.RData")
 load("SCQM-ApproachI-bayesLASSO.Rdata")
 
-setwd("C:/Users/mike/Desktop/Github/phd/book chapter/book chapter part3")
+setwd("C:/Users/mike/Desktop/Github/phd/realworldbook/part3")
 
 #find summary mean and covariance matrix for each study
 r1 <- summarize_each_study(samples_BSRBR)
@@ -129,7 +129,7 @@ load("TOWARD-ApproachI-bayesLASSO.RData")
 load("BSRBR-ApproachI-bayesLASSO.RData")
 load("SCQM-ApproachI-bayesLASSO.Rdata")
 
-setwd("C:/Users/mike/Desktop/Github/phd/book chapter/book chapter part3")
+setwd("C:/Users/mike/Desktop/Github/phd/realworldbook/part3")
 
 #find summary mean and covariance matrix for each study
 r1 <- summarize_each_study(samples_BSRBR)
@@ -158,6 +158,6 @@ Sigma <- list(Sigma1 = r1[[2]], Sigma2 = r2[[2]], Sigma3 = r3[[2]], Sigma4 = r4[
 W50 <- matrix(0.5, nrow = 20, ncol = 20)
 W25 <- matrix(0.25, nrow = 20, ncol = 20)
 
-result <- secondStage(y = y, Sigma = Sigma, W = W25, jags_file = "second stage weighted.txt")
-#result <- secondStage(y = y, Sigma = Sigma, W = W50, jags_file = "second stage weighted.txt")
+#result <- secondStage(y = y, Sigma = Sigma, W = W25, jags_file = "second stage weighted.txt")
+result <- secondStage(y = y, Sigma = Sigma, W = W50, jags_file = "second stage weighted.txt")
 summary(result)
