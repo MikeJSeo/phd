@@ -33,7 +33,21 @@ unstandardize_coefficients <- function(first_stage_result, study_data = NULL, X_
   vec_length <- length(first_stage_result$y)
   N_star <- matrix(0, nrow = vec_length, ncol = vec_length)
   
-  if(is.null(study_data)){
+  if(length(unique(study_data$treat)) == 3){
+    N_star[1,] <- c(1, -X_mean/X_sd, rep(0, vec_length - 1 - length(X_mean)))
+    for(k in 1:length(X_mean)){
+      N_star[k+1,] <- c(rep(0,k), 1/X_sd[k], rep(0, length(X_mean) -  k), rep(0, vec_length - 1 - length(X_mean)))
+    }  
+    for(k in 1:length(X_mean)){
+      N_star[1+length(X_mean)+k,] <- c(rep(0, length(X_mean)+k), 1/X_sd[k], rep(0, length(X_mean) - k), rep(0, vec_length - 1 - 2*length(X_mean)))
+    }
+    for(k in 1:length(X_mean)){
+      N_star[1+2*length(X_mean)+k,] <- c(rep(0, 2* length(X_mean)+k), 1/X_sd[k], rep(0, length(X_mean) - k), rep(0, vec_length - 1 - 3*length(X_mean)))
+    }
+    N_star[1+3*length(X_mean)+1,] <- c(rep(0, length(X_mean)+1), -X_mean/X_sd, rep(0, vec_length - 1 - 2*length(X_mean)-2), 1, 0)
+    N_star[1+3*length(X_mean)+2,] <- c(rep(0, 2*length(X_mean)+1), -X_mean/X_sd, rep(0, vec_length - 1 - 3*length(X_mean)-2), 0, 1)
+  } else if(length(unique(study_data$treat)) == 2){
+      
     N_star[1,] <- c(1, -X_mean/X_sd, rep(0, vec_length - 1 - length(X_mean)))
     for(k in 1:length(X_mean)){
       N_star[k+1,] <- c(rep(0,k), 1/X_sd[k], rep(0, length(X_mean) -  k), rep(0, vec_length - 1 - length(X_mean)))
@@ -42,34 +56,8 @@ unstandardize_coefficients <- function(first_stage_result, study_data = NULL, X_
       N_star[1+length(X_mean)+k,] <- c(rep(0, length(X_mean)+k), 1/X_sd[k], rep(0, length(X_mean) - k), 0)
     } 
     N_star[1+2*length(X_mean)+1,] <- c(rep(0, length(X_mean)+1), -X_mean/X_sd, 1)
-    
-  } else {
-    if(length(unique(study_data$treat)) == 3){
-      N_star[1,] <- c(1, -X_mean/X_sd, rep(0, vec_length - 1 - length(X_mean)))
-      for(k in 1:length(X_mean)){
-        N_star[k+1,] <- c(rep(0,k), 1/X_sd[k], rep(0, length(X_mean) -  k), rep(0, vec_length - 1 - length(X_mean)))
-      }  
-      for(k in 1:length(X_mean)){
-        N_star[1+length(X_mean)+k,] <- c(rep(0, length(X_mean)+k), 1/X_sd[k], rep(0, length(X_mean) - k), rep(0, vec_length - 1 - 2*length(X_mean)))
-      }
-      for(k in 1:length(X_mean)){
-        N_star[1+2*length(X_mean)+k,] <- c(rep(0, 2* length(X_mean)+k), 1/X_sd[k], rep(0, length(X_mean) - k), rep(0, vec_length - 1 - 3*length(X_mean)))
-      }
-      N_star[1+3*length(X_mean)+1,] <- c(rep(0, length(X_mean)+1), -X_mean/X_sd, rep(0, vec_length - 1 - 2*length(X_mean)-2), 1, 0)
-      N_star[1+3*length(X_mean)+2,] <- c(rep(0, 2*length(X_mean)+1), -X_mean/X_sd, rep(0, vec_length - 1 - 3*length(X_mean)-2), 0, 1)
-    } else if(length(unique(study_data$treat)) == 2){
-      
-      N_star[1,] <- c(1, -X_mean/X_sd, rep(0, vec_length - 1 - length(X_mean)))
-      for(k in 1:length(X_mean)){
-        N_star[k+1,] <- c(rep(0,k), 1/X_sd[k], rep(0, length(X_mean) -  k), rep(0, vec_length - 1 - length(X_mean)))
-      }  
-      for(k in 1:length(X_mean)){
-        N_star[1+length(X_mean)+k,] <- c(rep(0, length(X_mean)+k), 1/X_sd[k], rep(0, length(X_mean) - k), 0)
-      } 
-      N_star[1+2*length(X_mean)+1,] <- c(rep(0, length(X_mean)+1), -X_mean/X_sd, 1)
-    }  
-  }
-  
+  } 
+
   y <- N_star %*% first_stage_result$y
   Sigma <- N_star %*% solve(first_stage_result$Omega) %*% t(N_star)
   
@@ -77,10 +65,10 @@ unstandardize_coefficients <- function(first_stage_result, study_data = NULL, X_
 }
 
 
-
 ######## first stage model
 firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", "d", "sigma"), scale = TRUE){
   
+  #imputation steps
   y <- study_data$DAS28
   treat <- factor(study_data$treat, level = c(1,2,3))
   X <- as.matrix(study_data[,c(-1,-2,-3)])
@@ -107,6 +95,7 @@ firstStage <- function(study_data, jags_file, mm = 20, index = c("a", "b", "c", 
     study_data$treat[study_data$treat == "3"] <- "2"
   }
   
+  # Model fitting step
   jags_data <- list(
     N = length(y),
     treat = study_data$treat,
@@ -154,10 +143,34 @@ secondStage <- function(y, Sigma, W = NULL, jags_file = NULL, n.iter = 200000){
   mod <- jags.model(jags_file, data_jags, n.chains = 3, n.adapt = 1000)
   stats::update(mod, 20000)
   
-  var.names <- c("gamma", "delta")    
+  var.names <- c("gamma", "delta")
+  #var.names <- c("gamma", "d")    #for random effects
   
   samples <- coda.samples(mod, variable.names = var.names, n.iter = n.iter, n.chains = 3)
   
   return(samples) 
 }
 
+
+find.treatment.effect <- function(samples, newpatient, quantiles = c(0.025, 0.5, 0.975)){
+  
+  store_result <- list()
+  for(ii in 1:2){
+    
+    index0 <- which(colnames(samples[[1]]) == paste0("delta[", ii, "]"))  
+    index1 <- grep(paste0("gamma\\[", ii, ","), colnames(samples[[1]]))
+    index <- c(index0, index1)
+    samples2 <- samples[,index]
+    
+    merged <- samples2[[1]]
+    for(i in 2:length(samples2)){
+      merged <- rbind(merged, samples2[[i]])
+    }
+    pred <- merged %*% c(1, newpatient)
+    
+    CI <- quantile(pred, probs = quantiles)
+    names(CI) <- quantiles
+    store_result[[paste0("treatment ", ii)]] <- CI
+  }
+  return(store_result)
+}

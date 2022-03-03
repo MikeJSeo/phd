@@ -59,8 +59,12 @@ r4$Sigma <- r4$Sigma[11:20, 11:20]
 y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]])
 Sigma <- list(Sigma1 = r1[[2]], Sigma2 = r2[[2]], Sigma3 = r3[[2]], Sigma4 = r4[[2]])
 
-result <- secondStage(y = y, Sigma = Sigma, jags_file = "second stage.txt")
+result <- secondStage(y = y, Sigma = Sigma, jags_file = "second stage fixed effects.txt")
 summary(result)
+
+newpatient <- c(1, 45, 10, 25, 1, 2, 1, 40, 5)
+find.treatment.effect(result, newpatient, quantiles = c(0.025, 0.5, 0.975))
+  
 
 
 # with shrinkage two-stage analysis - load datasets
@@ -107,8 +111,9 @@ r4$Sigma <- r4$Sigma[11:20, 11:20]
 y <- list(y1 = r1[[1]], y2 = r2[[1]], y3 = r3[[1]], y4 = r4[[1]])
 Sigma <- list(Sigma1 = r1[[2]], Sigma2 = r2[[2]], Sigma3 = r3[[2]], Sigma4 = r4[[2]])
 
-result <- secondStage(y = y, Sigma = Sigma, jags_file = "second stage.txt")
+result <- secondStage(y = y, Sigma = Sigma, jags_file = "second stage fixed effects.txt")
 summary(result)
+find.treatment.effect(result, newpatient, quantiles = c(0.025, 0.5, 0.975))
 
 
 # with shrinkage and NRS down-weighting two-stage analysis - load datasets
@@ -158,6 +163,7 @@ Sigma <- list(Sigma1 = r1[[2]], Sigma2 = r2[[2]], Sigma3 = r3[[2]], Sigma4 = r4[
 W50 <- matrix(0.5, nrow = 20, ncol = 20)
 W25 <- matrix(0.25, nrow = 20, ncol = 20)
 
-#result <- secondStage(y = y, Sigma = Sigma, W = W25, jags_file = "second stage weighted.txt")
-result <- secondStage(y = y, Sigma = Sigma, W = W50, jags_file = "second stage weighted.txt")
+#result <- secondStage(y = y, Sigma = Sigma, W = W25, jags_file = "second stage fixed effects weighted.txt")
+result <- secondStage(y = y, Sigma = Sigma, W = W50, jags_file = "second stage fixed effects weighted.txt")
 summary(result)
+find.treatment.effect(result, newpatient, quantiles = c(0.025, 0.5, 0.975))
