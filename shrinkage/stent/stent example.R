@@ -2,13 +2,14 @@
 library(readstata13) #reading stat data file
 library(lme4) #for fitting glmm
 library(glmnet) #for lasso/ridge
+library(dplyr)
 
 ## The github library ("bipd") contains functions for generating sample data and running Bayesian IPD-MA methods.
 library(devtools)
 #devtools::install_github("MikeJSeo/bipd")
 library(bipd) 
 
-setwd("C:/Users/mike/Desktop")
+setwd("C:/Users/ms19g661/Desktop")
 stent <- read.dta13("1_year_stent_data_21092018.dta")
 
 
@@ -40,6 +41,10 @@ X[ii] <- lapply(X[ii], as.numeric)
 data_stent <- cbind(X, y = data0$a_death_5yr_yn, treat = ifelse(data0$rand == "BMS", 0, 1), studyid = data0$trial_name)
 mydata <- na.omit(data_stent)
 #mydata2 <- data_stent[!complete.cases(data_stent),]
+
+col_to_aggregate <- c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")
+mydata %>% group_by(studyid) %>% summarise_at(vars(col_to_aggregate), list(~ round(mean(.), digits = 2)))
+mydata %>% group_by(studyid, treat) %>% tally
 
 # X is unscaled covariates
 X <- mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")]

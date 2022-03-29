@@ -8,7 +8,7 @@ library(devtools)
 #or install by devtools::install_github("MikeJSeo/bipd")
 library(bipd) 
 
-setwd("C:/Users/mike/Desktop")
+setwd("C:/Users/ms19g661/Desktop")
 stent <- read.dta13("1_year_stent_data_21092018.dta")
 
 
@@ -62,7 +62,7 @@ group2 <- (c(50, 1, 0, 1, 0, 0, 0, 1, 1) - scale_mean) / scale_sd
 
 
 ############## glmm_full
-m2 <- glmer(y ~ studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat + (-1 + treat|studyid), data = mydata, family = binomial)
+m2 <- glmer(y ~ -1 + studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat + (-1 + treat|studyid), data = mydata, family = binomial)
 summary(m2)
 
 # group 1
@@ -83,16 +83,20 @@ exp(mean2 + qnorm(c(.025,0.5,.975))* as.vector(se2[[1]]))
 ########### Bayesian LASSO (ie Laplacian shrinkage)
 ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = X, response = "binomial", shrinkage = "laplace", lambda.prior = list("dgamma",2,0.1)))
 
-samples <- ipd.run.parallel(ipd, pars.save = c("lambda", "beta", "gamma", "delta", "sd"))
+samples <- ipd.run(ipd, pars.save = c("lambda", "alpha", "beta", "gamma", "delta", "sd"))
+#load("BayesLASSO.RData")
+#save(samples, file = "BayesLASSO.RData")
 
 treatment.effect(ipd, samples, newpatient = c(80, 0, 1, 0, 1, 1, 1, 0, 5))
 treatment.effect(ipd, samples, newpatient = c(50, 1, 0, 1, 0, 0, 0, 1, 1))
 
 ########### SSVS
 ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = X, response = "binomial", shrinkage = "SSVS", g = 100))
-samples <- ipd.run.parallel(ipd, pars.save = c("Ind", "eta", "beta", "gamma", "delta", "sd"))
+samples <- ipd.run(ipd, pars.save = c("Ind", "eta", "alpha", "beta", "gamma", "delta", "sd"))
+#load("SSVS.RData")
+#save(samples, file = "SSVS.RData")
 
-samples2 <- samples[,-19] #remove delta[1] which is 0
+samples2 <- samples[,colnames(samples[[1]]) != "delta[1]"] #remove delta[1] which is 0
 summary(samples2)
 plot(samples2) #traceplot and posterior of parameters
 coda::gelman.plot(samples2) #gelman diagnostic plot
