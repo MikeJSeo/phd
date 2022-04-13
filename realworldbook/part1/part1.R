@@ -1,6 +1,8 @@
 # load packages needed
 library(readstata13) #reading stat data file
 library(lme4) #for fitting glmm
+setwd("~/GitHub/phd/realworldbook/part1")
+source("helpful.functions.R")
 
 ## The github library ("bipd") contains functions for generating sample data and running Bayesian IPD-MA methods.
 library(devtools)
@@ -47,6 +49,7 @@ X <- mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtrea
 # scale all variables
 scale_mean <- apply(mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")], 2, mean)
 scale_sd <- apply(mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")], 2, sd)
+mydata0 <- mydata #unscaled
 mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")] <- apply(mydata[,c("age", "gender", "diabetes", "stable_cad", "multivessel","ladtreated", "overlap", "m_dia_above_3", "num_stent")], 2, scale)
 
 expit <- function(x){
@@ -64,6 +67,24 @@ group2 <- (c(50, 1, 0, 1, 0, 0, 0, 1, 1) - scale_mean) / scale_sd
 ############## glmm_full
 m2 <- glmer(y ~ -1 + studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat + (-1 + treat|studyid), data = mydata, family = binomial)
 summary(m2)
+
+##unstandardize
+variable.order <- c(paste0("studyid",1:8), c("age","gender", "diabetes", "stable_cad", "multivessel", "ladtreated", "overlap", "m_dia_above_3", "num_stent"),
+                    paste0(c("age","gender", "diabetes", "stable_cad", "multivessel", "ladtreated", "overlap", "m_dia_above_3", "num_stent"), ":treat"), "treat")
+
+y <- summary(m2)$coefficients[variable.order,"Estimate"]
+Sigma <- vcov(m2)[variable.order, variable.order]
+X_mean <- scale_mean
+X_sd <- scale_sd
+
+unstandardized <- unstandardize_coefficients_frequentist(X_mean = X_mean, X_sd = X_sd,
+                                       y = y, Sigma = Sigma, ntreat = 2, nstudies = 8)
+unstandardized$y #coefficient estimate
+sqrt(diag(unstandardized$Sigma)) #standard
+
+# model without standardization to check
+m0 <- glmer(y ~ -1 + studyid + (age + gender + diabetes + stable_cad + multivessel + ladtreated + overlap + m_dia_above_3 + num_stent)*treat + (-1 + treat|studyid), data = mydata0, family = binomial)
+summary(m0)
 
 # group 1
 contr <- c(rep(0, 8), rep(0, 9), 1, group1)
@@ -84,8 +105,13 @@ exp(mean2 + qnorm(c(.025,0.5,.975))* as.vector(se2[[1]]))
 ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = X, response = "binomial", shrinkage = "laplace", lambda.prior = list("dgamma",2,0.1)))
 
 samples <- ipd.run(ipd, pars.save = c("lambda", "alpha", "beta", "gamma", "delta", "sd"))
-#load("BayesLASSO.RData")
+setwd("~/GitHub/phd/realworldbook/part1")
+load("BayesLASSO.RData")
 #save(samples, file = "BayesLASSO.RData")
+
+unstandardized <- unstandardize_coefficients(ipd, samples)
+unstandardized$y #coefficient estimate
+sqrt(diag(unstandardized$Sigma)) #standard
 
 treatment.effect(ipd, samples, newpatient = c(80, 0, 1, 0, 1, 1, 1, 0, 5))
 treatment.effect(ipd, samples, newpatient = c(50, 1, 0, 1, 0, 0, 0, 1, 1))
@@ -93,8 +119,14 @@ treatment.effect(ipd, samples, newpatient = c(50, 1, 0, 1, 0, 0, 0, 1, 1))
 ########### SSVS
 ipd <- with(mydata, ipdma.model.onestage(y = y, study = studyid, treat = treat, X = X, response = "binomial", shrinkage = "SSVS", g = 100))
 samples <- ipd.run(ipd, pars.save = c("Ind", "eta", "alpha", "beta", "gamma", "delta", "sd"))
-#load("SSVS.RData")
+
+setwd("~/GitHub/phd/realworldbook/part1")
+load("SSVS.RData")
 #save(samples, file = "SSVS.RData")
+
+unstandardized <- unstandardize_coefficients(ipd, samples)
+unstandardized$y #coefficient estimate
+sqrt(diag(unstandardized$Sigma)) #standard
 
 samples2 <- samples[,colnames(samples[[1]]) != "delta[1]"] #remove delta[1] which is 0
 summary(samples2)
