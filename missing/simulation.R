@@ -478,18 +478,18 @@ wrapper_function2(result)
 # naivepred <- naive_prediction(simulated_dataset, validation_dataset)
 # imputationpred <- imputation_prediction(simulated_dataset, validation_dataset)
 # imputation_noclusterpred <- imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_nocluster")
-# separatepred <- separate_prediction(simulated_dataset, validation_dataset)
+# ensemblepred <- ensemble_prediction(simulated_dataset, validation_dataset)
 # 
 # testdata <- findTestingOutcome(validation_dataset)
 # 
 # naiveperf <- findPerformance(testdata, naivepred)
 # imputationperf <- findPerformance(testdata, imputationpred)
 # imputation_noclusterpref <- findPerformance(testdata, imputation_noclusterpred)
-# separateperf <- findPerformance(testdata, separatepred)
+# ensembleperf <- findPerformance(testdata, ensemblepred)
 # 
 # naiveperf
 # imputationperf
 # imputation_noclusterpref
-# separateperf
+# ensembleperf
 
 

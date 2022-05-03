@@ -114,7 +114,7 @@ imputation_prediction <- function(traindata, testdata, method = "imputation"){
 }
 
 
-separate_prediction <- function(traindata, testdata){
+ensemble_prediction <- function(traindata, testdata){
   
   nstudy <- length(unique(testdata$study))
   nstudy2 <- length(unique(traindata$study))
@@ -178,7 +178,7 @@ separate_prediction <- function(traindata, testdata){
 
 wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NULL, magnitude = NULL, heterogeneity = NULL, Nsim = 100){
 
-  testdata <- naivepred <- imputation_noclusterpred <- imputationpred <- separatepred <- list()
+  testdata <- naivepred <- imputation_noclusterpred <- imputationpred <- ensemblepred <- list()
   
   for(i in 1:Nsim){
     
@@ -204,13 +204,13 @@ wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NU
     imputationpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset))
     #imputationpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_2lglm"))
     
-    # separate method
-    separatepred[[i]] <- NA
-    separatepred[[i]] <- try(separate_prediction(simulated_dataset, validation_dataset))
+    # ensemble method
+    ensemblepred[[i]] <- NA
+    ensemblepred[[i]] <- try(ensemble_prediction(simulated_dataset, validation_dataset))
   }
   
   list(testdata = testdata, naivepred = naivepred, imputation_noclusterpred = imputation_noclusterpred,
-       imputationpred = imputationpred, separatepred = separatepred)
+       imputationpred = imputationpred, ensemblepred = ensemblepred)
 }
 
 
@@ -222,7 +222,7 @@ wrapper_function2 <- function(stored_predictions, aggregation = "ignore"){
   naive_store <- matrix(NA, nrow = Nsim, ncol = 3)
   imputation_noclusterstore <- matrix(NA, nrow = Nsim, ncol = 3)
   imputation_store <- matrix(NA, nrow = Nsim, ncol = 3)
-  separate_store <- matrix(NA, nrow = Nsim, ncol = 3)
+  ensemble_store <- matrix(NA, nrow = Nsim, ncol = 3)
   
   for(i in 1:Nsim){
       
@@ -230,7 +230,7 @@ wrapper_function2 <- function(stored_predictions, aggregation = "ignore"){
       naivepred <- stored_predictions$naivepred[[i]]
       imputation_noclusterpred <- stored_predictions$imputation_noclusterpred[[i]]
       imputationpred <- stored_predictions$imputationpred[[i]]
-      separatepred <- stored_predictions$separatepred[[i]]
+      ensemblepred <- stored_predictions$ensemblepred[[i]]
       
       # naive method
       naiveperf <- try(findPerformance(testdata, naivepred, aggregation = aggregation))
@@ -244,38 +244,38 @@ wrapper_function2 <- function(stored_predictions, aggregation = "ignore"){
       imputationperf <- try(findPerformance(testdata, imputationpred, aggregation = aggregation))
       imputation_store[i,] <- imputationperf
       
-      # separate method
-      separateperf <- try(findPerformance(testdata, separatepred, aggregation = aggregation))
-      separate_store[i,] <- separateperf
+      # ensemble method
+      ensembleperf <- try(findPerformance(testdata, ensemblepred, aggregation = aggregation))
+      ensemble_store[i,] <- ensembleperf
   }
   
   naive_store_revised <- apply(naive_store, 2, as.numeric)
   imputation_noclusterstore_revised <- apply(imputation_noclusterstore, 2, as.numeric)
   imputation_store_revised <- apply(imputation_store, 2, as.numeric)
-  separate_store_revised <- apply(separate_store, 2, as.numeric)
+  ensemble_store_revised <- apply(ensemble_store, 2, as.numeric)
   
   naive_failed <- which(rowSums(is.na(naive_store_revised)) > 0)
   imputation_noclusterfailed <- which(rowSums(is.na(imputation_noclusterstore_revised)) > 0)
   imputation_failed <- which(rowSums(is.na(imputation_store_revised)) > 0)
-  separate_failed <- which(rowSums(is.na(separate_store_revised)) > 0)
+  ensemble_failed <- which(rowSums(is.na(ensemble_store_revised)) > 0)
   
   number_failed_simulations <- c(length(naive_failed), length(imputation_noclusterfailed),
-                                 length(imputation_failed), length(separate_failed))
+                                 length(imputation_failed), length(ensemble_failed))
   
   # Set a threshold to exclude from comparison
   threshold <- 20
   
   if(length(imputation_failed) <= threshold){
-    failed_set <- unique(c(naive_failed, imputation_noclusterfailed, imputation_failed, separate_failed))
+    failed_set <- unique(c(naive_failed, imputation_noclusterfailed, imputation_failed, ensemble_failed))
   } else{
-    failed_set <- unique(c(naive_failed, imputation_noclusterfailed, separate_failed))
+    failed_set <- unique(c(naive_failed, imputation_noclusterfailed, ensemble_failed))
   }
   
   if(length(failed_set) != 0){
     naive_store_revised <- naive_store_revised[-failed_set,]
     imputation_noclusterstore_revised <- imputation_noclusterstore_revised[-failed_set,]
     imputation_store_revised <- imputation_store_revised[-failed_set,]
-    separate_store_revised <- separate_store_revised[-failed_set,]
+    ensemble_store_revised <- ensemble_store_revised[-failed_set,]
   }
   
   return_matrix <- matrix(NA, 4, 3)
@@ -285,12 +285,12 @@ wrapper_function2 <- function(stored_predictions, aggregation = "ignore"){
   if(length(imputation_failed) <= threshold){
     return_matrix[3,] <- round(apply(imputation_store_revised, 2, mean, na.rm = TRUE), digits = 5)
   }
-  return_matrix[4,] <- round(apply(separate_store_revised, 2, mean, na.rm = TRUE), digits = 5)
+  return_matrix[4,] <- round(apply(ensemble_store_revised, 2, mean, na.rm = TRUE), digits = 5)
   
   #only report MSE and R-squared
   return_matrix <- return_matrix[,c(1,3)]
   
-  rownames(return_matrix) <- c("Naive", "Imputation ignoring heterogeneity", "Imputation accounting heterogeneity", "Separate prediction")
+  rownames(return_matrix) <- c("Naive", "Imputation ignoring heterogeneity", "Imputation accounting heterogeneity", "Emsemble prediction")
   colnames(return_matrix) <- c("MSE", "R-squared")
   
   return(list(number_failed_simulations = number_failed_simulations, return_matrix = return_matrix))
