@@ -11,10 +11,12 @@ library(lme4) #running lmer
 library(broom.mixed) #for summarizing lmer results from multiply imputed dataset
 library(mitools) #for function imputationList
 
-setwd("C:/Users/mike/Desktop")
+#setwd("C:/Users/mike/Desktop")
+setwd("C:/Users/ms19g661/Desktop")
 data <- read.csv("data_ICBT.csv")
 
-setwd("C:/Users/mike/Desktop/Github/phd/missing")
+#setwd("C:/Users/mike/Desktop/Github/phd/missing")
+setwd("~/GitHub/phd/missing")
 source("helpful.functions.R")
 source("realdata.crossvalidation.R")
 
