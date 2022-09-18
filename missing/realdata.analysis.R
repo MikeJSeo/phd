@@ -83,7 +83,7 @@ t(sapply(fit$analyses, fixef))
 coef_fit <- summary(pool(fit))
 coef_fit
 
-# Ensemble prediction approach
+# Separate prediction approach
 set.seed(1)
 coef_fit_store <- list()
 
@@ -141,16 +141,16 @@ testingoutcome <- imputation_crossvalidation$testingoutcome
 imputationperf <- findPerformance(testingoutcome, imputationpred, aggregation = "ignore")
 imputationperf
 
-# ensemble prediction approach
+# separate prediction approach
 set.seed(1)
-#ensemble_crossvalidation <- crossvalidation_realdata(mydata, method = "ensemble")
-ensemble_crossvalidation <- crossvalidation_realdata(mydata, method = "ensemble", testdata_index = c(6,7,8))
-ensemblepred <- ensemble_crossvalidation$predictions
-testingoutcome <- ensemble_crossvalidation$testingoutcome
-ensembleperf <- findPerformance(testingoutcome, ensemblepred, aggregation = "ignore")
-ensembleperf
+#separate_crossvalidation <- crossvalidation_realdata(mydata, method = "separate")
+separate_crossvalidation <- crossvalidation_realdata(mydata, method = "separate", testdata_index = c(6,7,8))
+separatepred <- separate_crossvalidation$predictions
+testingoutcome <- separate_crossvalidation$testingoutcome
+separateperf <- findPerformance(testingoutcome, separatepred, aggregation = "ignore")
+separateperf
 
-rbind(naiveperf, imputation_noclusterperf, imputationperf, ensembleperf)
+rbind(naiveperf, imputation_noclusterperf, imputationperf, separateperf)
 
 
 

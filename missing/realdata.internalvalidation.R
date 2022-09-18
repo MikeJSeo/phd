@@ -153,7 +153,7 @@ for(studyid in study_index){
 }
 apparent_imputationperf <- findPerformance(testingoutcome, predictions, aggregation = "ignore")
 
-#ensemble prediction
+#separate prediction
 set.seed(1)
 
 for(studyid in study_index){
@@ -209,9 +209,9 @@ for(studyid in study_index){
   predictions[[studyid]] <- apply(final_store, 1, sum)
   testingoutcome[[studyid]] <- testing_set$y
 }
-apparent_ensembleperf <- findPerformance(testingoutcome, predictions, aggregation = "ignore")
+apparent_separateperf <- findPerformance(testingoutcome, predictions, aggregation = "ignore")
 
-rbind(apparent_naiveperf, apparent_imputation_noclusterperf, apparent_imputationperf, apparent_ensembleperf)
+rbind(apparent_naiveperf, apparent_imputation_noclusterperf, apparent_imputationperf, apparent_separateperf)
 
 
 
@@ -391,7 +391,7 @@ optimism_averaged <- apply(optimism, 2, mean, na.rm = TRUE)
 optimism_corrected_imputationperf <- apparent_imputationperf - optimism_averaged
 
 
-#ensemble prediction
+#separate prediction
 set.seed(1)
 optimism <- matrix(NA, nrow = 200, ncol = 3)
 colnames(optimism) <- c("mse", "mae", "rsquared")
@@ -476,13 +476,13 @@ for(jjj in 1:200){
     predictions_bootstrap[[studyid]] <- apply(final_store_bootstrap, 1, sum)
     testingoutcome_bootstrap[[studyid]] <- testing_set_bootstrap$y
   }
-  ensembleperf_bootstrap <- findPerformance(testingoutcome_bootstrap, predictions_bootstrap, aggregation = "ignore")
-  ensembleperf_test <- findPerformance(testingoutcome, predictions, aggregation = "ignore")
+  separateperf_bootstrap <- findPerformance(testingoutcome_bootstrap, predictions_bootstrap, aggregation = "ignore")
+  separateperf_test <- findPerformance(testingoutcome, predictions, aggregation = "ignore")
   
-  optimism[jjj,] <- ensembleperf_bootstrap - ensembleperf_test
+  optimism[jjj,] <- separateperf_bootstrap - separateperf_test
 }
 optimism_averaged <- apply(optimism, 2, mean, na.rm = TRUE)
-optimism_corrected_ensembleperf <- apparent_ensembleperf - optimism_averaged
+optimism_corrected_separateperf <- apparent_separateperf - optimism_averaged
 
 
-rbind(optimism_corrected_naiveperf, optimism_corrected_imputation_noclusterperf, optimism_corrected_imputationperf, optimism_corrected_ensembleperf)
+rbind(optimism_corrected_naiveperf, optimism_corrected_imputation_noclusterperf, optimism_corrected_imputationperf, optimism_corrected_separateperf)

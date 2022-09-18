@@ -72,7 +72,7 @@ crossvalidation_realdata <- function(crossdata, method, testdata_index = NULL){
       testingoutcome[[studyid]] <- testing_set$y
       predictions[[studyid]] <- apply(prediction.dummy, 1, mean)
       
-    } else if(method == "ensemble"){
+    } else if(method == "separate"){
       
       studyname2 <- unique(training_set$study)
       nstudy2 <- length(studyname2)
@@ -126,7 +126,7 @@ crossvalidation_realdata <- function(crossdata, method, testdata_index = NULL){
       final_store <- sweep(product_store, 1, precision_vec, `/`)
       
       predictions[[studyid]] <- apply(final_store, 1, sum)
-      #predictions[[studyid]] <- apply(prediction_store, 1, mean) #this is for simple average
+      #predictions[[studyid]] <- apply(prediction_store, 1, mean)
       
       testingoutcome[[studyid]] <- testing_set$y
     }
