@@ -1,5 +1,124 @@
+# We changed name of the methods
+# naive method -> restrict predictor method
+# separate prediction method -> ensemble method
 
-naive_prediction <- function(traindata, testdata){
+generate_sysmiss_ipdma_example_revised <- function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.3,
+                                           heterogeneity = 0.1, interaction = TRUE, magnitude.complete = NULL, magnitude.sys = NULL) {
+  
+  Npatients <- sample(150:300, Nstudies, replace = TRUE)
+  Npatients.tot <- sum(Npatients)
+  study <- rep(1:Nstudies, times = Npatients)
+  
+  a <- stats::runif(Nstudies, 0.5, 1.5)
+  a <- rep(a, times = Npatients)
+  
+  ### generate X
+  rho <- 0.2
+  Omega <- diag(1, Ncov)
+  for(i in 1:Ncov){
+    for(j in 1:Ncov){
+      Omega[i,j] <- rho^abs(i - j)
+    }
+  }
+  sigma2 <- 1
+  
+  X <- NULL
+  for(i in 1:Nstudies){
+    mu <- stats::runif(Ncov, -1, 1)
+    X <- rbind(X, mvtnorm::rmvnorm(Npatients[i], mu, Omega * sigma2))
+  }
+  
+  #categorize predictors
+  if(Ncov == 5){
+    X[,2] <- ifelse(X[,2] > 0, 1, 0)
+    X[,3] <- ifelse(X[,3] > 0.5, 1, 0)
+  } else if(Ncov == 10){
+    X[,2] <- ifelse(X[,2] > 0, 1, 0)
+    X[,3] <- ifelse(X[,3] > 0, 1, 0)
+    X[,8] <- ifelse(X[,8] > 0, 1, 0)
+    X[,9] <- ifelse(X[,9] > 0.5, 1, 0)
+    X[,10] <- ifelse(X[,10] > 0.5, 1, 0)
+  }
+  
+  e_vec <- stats::rnorm(Npatients.tot, 0, 1) 
+  b <- matrix(NA, Npatients.tot, Ncov)
+  #b[,1] <- rep(0.2, Npatients.tot)
+  
+  for(i in 1:Ncov){
+    
+    if(!is.null(magnitude.complete)){
+      magnitude <- ifelse(i %in% c(1,2), magnitude.complete, magnitude.sys)
+    }
+    
+    b_dummy <- stats::rnorm(Nstudies, magnitude, heterogeneity)
+    b_dummy <- rep(b_dummy, times = Npatients)
+    b[,i] <- b_dummy
+    
+  }
+  
+  if(interaction == TRUE){
+    treat <- stats::rbinom(Npatients.tot, 1, 0.5)
+    Xinteraction <- X[,1:Ncov] * treat
+    cvec <- matrix(NA, Npatients.tot, Ncov)
+    
+    for(i in 1:Ncov){
+      cvec_dummy <- stats::rnorm(Nstudies, magnitude/2, heterogeneity)
+      cvec_dummy <- rep(cvec_dummy, times = Npatients)
+      cvec[,i] <- cvec_dummy
+    }
+    
+    d <- stats::rnorm(Nstudies, 1, 0.5)
+    d <- rep(d, times = Npatients)
+  }
+  
+  if(interaction == FALSE){
+    y <- a + apply(X * b, 1, sum) + e_vec    
+  } else if(interaction == TRUE){
+    y <- a + apply(X * b, 1, sum) + e_vec + d *treat + apply(Xinteraction * cvec, 1, sum)
+  }
+  
+  # introduce systematically missing; first two predictors are always observed
+  for(j in 3:Ncov){
+    for(i in 1:Nstudies){
+      if(stats::rbinom(1, 1, sys_missing_prob) == 1){
+        X[study == i,j] <- NA  
+      }
+    }
+  }  
+  
+  # Define dataset to return
+  dataset <- data.frame(y = y, X = X[,1:Ncov], study = study)
+  colnames(dataset) <- c("y", paste0("x", 1:Ncov), "study")
+  dataset <- as_tibble(dataset)
+  
+  if(Ncov == 5){
+    dataset <- dataset %>% mutate(x2 = as.factor(x2),
+                                  x3 = as.factor(x3))
+  } else if(Ncov == 10){
+    dataset <- dataset %>% mutate(x2 = as.factor(x2),
+                                  x3 = as.factor(x3),
+                                  x8 = as.factor(x8),
+                                  x9 = as.factor(x9),
+                                  x10 = as.factor(x10)
+    )
+  }  
+  
+  if(interaction == TRUE){
+    dataset <- cbind(dataset, treat = treat)
+    dataset <- as_tibble(dataset)
+  } else if(interaction == FALSE){
+    dataset <- as_tibble(dataset)
+  }
+  return(dataset)
+}
+
+
+
+naive_prediction <- function(traindata, testdata, shrinkage = NULL){
+  
+  if(is.null(shrinkage)){
+    shrinkage <- FALSE
+  }
   
   nstudy <- length(unique(testdata$study))
   predictions <- list()
@@ -25,12 +144,30 @@ naive_prediction <- function(traindata, testdata){
                                            studyname = "study", treatmentname = "treat", outcomename = "y")
   without_sys_cov <- intersect(missingPatternTest$without_sys_covariates, missingPattern$without_sys_covariates)
   
-  if(interaction == FALSE){
-    form <- as.formula(paste0("y ~ ", paste(without_sys_cov, collapse= "+"), " + (1|study) " ))
-  } else {
-    form <- as.formula(paste0("y ~ ", "(", paste(without_sys_cov, collapse= "+"), ") * treat + (1|study) + (0 + treat|study)" ))
+  if(shrinkage == FALSE){
+    
+    if(interaction == FALSE){
+      form <- as.formula(paste0("y ~ ", paste(without_sys_cov, collapse= "+"), " + (1|study) " ))
+    } else {
+      form <- as.formula(paste0("y ~ ", "(", paste(without_sys_cov, collapse= "+"), ") * treat + (1|study) + (0 + treat|study)" ))
+    }  
+    
+    trained_model <- lmer(form, data = traindata)
+    
+  } else{
+    
+    if(interaction == FALSE){
+      form <- as.formula(paste0("y ~ ", paste(without_sys_cov, collapse= "+")))
+    } else {
+      form <- as.formula(paste0("y ~ ", "(", paste(without_sys_cov, collapse= "+"), ") * treat" ))
+    }
+    
+    lambdas <- 10^seq(3, -3, by = -.1)
+    data_glmnet <- model.matrix(form, data = traindata)    
+    data_glmnet <- data_glmnet[,-1]
+    data_glmnet <- cbind(y = traindata$y, data_glmnet = data_glmnet)
+    cvfit.ridge <- cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), family = "gaussian", alpha = 0, type.measure = "deviance", lambda = lambdas)
   }
-  trained_model <- lmer(form, data = traindata)
   
   if(interaction == FALSE){
     form2 <- as.formula(paste0("y ~ ", paste(without_sys_cov, collapse= "+")))
@@ -43,13 +180,21 @@ naive_prediction <- function(traindata, testdata){
     testdata_dummy <- testdata %>% filter(study == studyid)
     
     bb <- model.matrix(form2, data = testdata_dummy)
-    predictions[[studyid]] <- c(bb %*% fixef(trained_model))
+    if(shrinkage == FALSE){
+      predictions[[studyid]] <- c(bb %*% fixef(trained_model))  
+    } else{
+      predictions[[studyid]] <- as.vector(bb %*% coef(cvfit.ridge, s = "lambda.min"))
+    }
   }
   return(predictions)
 }
 
 
-imputation_prediction <- function(traindata, testdata, method = "imputation"){
+imputation_prediction <- function(traindata, testdata, method = "imputation", shrinkage = NULL){
+  
+  if(is.null(shrinkage)){
+    shrinkage <- FALSE
+  }
   
   nstudy <- length(unique(testdata$study))
   predictions <- list()
@@ -89,24 +234,48 @@ imputation_prediction <- function(traindata, testdata, method = "imputation"){
     missingPatternTest <- findMissingPattern(testdata_dummy, covariates, typeofvar, 
                                          studyname = "study", treatmentname = "treat", outcomename = "y")
     
-    if(interaction == FALSE){
-      form <- as.formula(paste0("y ~ ", paste(missingPatternTest$without_sys_covariates, collapse= "+"), " + (1|study) "))
-    } else {
-      form <- as.formula(paste0("y ~ ", "(", paste(missingPatternTest$without_sys_covariates, collapse= "+"), ") * treat + (1|study) + (0 + treat|study)" ))
-    }
+    if(shrinkage == FALSE){
+      
+      if(interaction == FALSE){
+        form <- as.formula(paste0("y ~ ", paste(missingPatternTest$without_sys_covariates, collapse= "+"), " + (1|study) "))
+      } else {
+        form <- as.formula(paste0("y ~ ", "(", paste(missingPatternTest$without_sys_covariates, collapse= "+"), ") * treat + (1|study) + (0 + treat|study)" ))
+      }
     
-    if(interaction == FALSE){
-      form2 <- as.formula(paste0("y ~ ", paste(missingPatternTest$without_sys_covariates, collapse= "+")))
+      if(interaction == FALSE){
+        form2 <- as.formula(paste0("y ~ ", paste(missingPatternTest$without_sys_covariates, collapse= "+")))
+      } else {
+        form2 <- as.formula(paste0("y ~ ", "(", paste(missingPatternTest$without_sys_covariates, collapse= "+"), ") * treat" ))
+      }
     } else {
-      form2 <- as.formula(paste0("y ~ ", "(", paste(missingPatternTest$without_sys_covariates, collapse= "+"), ") * treat" ))
+      
+      if(interaction == FALSE){
+        form <- form2 <- as.formula(paste0("y ~ ", paste(missingPatternTest$without_sys_covariates, collapse= "+")))
+      } else {
+        form <- form2 <- as.formula(paste0("y ~ ", "(", paste(missingPatternTest$without_sys_covariates, collapse= "+"), ") * treat" ))
+      }
     }
-    
+      
     for(ii in 1:length(imp.list)){
       imp.dummy <- imp.list[[ii]]
-      imp.model <- lmer(form, data = imp.dummy)
+      
+      if(shrinkage == FALSE){
+        imp.model <- lmer(form, data = imp.dummy)  
+      } else{
+        lambdas <- 10^seq(3, -3, by = -.1)
+        data_glmnet <- model.matrix(form, data = imp.dummy)    
+        data_glmnet <- data_glmnet[,-1]
+        data_glmnet <- cbind(y = imp.dummy$y, data_glmnet = data_glmnet)
+        cvfit.ridge <- cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), family = "gaussian", alpha = 0, type.measure = "deviance", lambda = lambdas)
+      }
       
       bb <- model.matrix(form2, data = testdata_dummy)
-      prediction.dummy[,ii] <- bb %*% fixef(imp.model)
+      
+      if(shrinkage == FALSE){
+        prediction.dummy[,ii] <- c(bb %*% fixef(imp.model))
+      } else{
+        prediction.dummy[,ii] <- as.vector(bb %*% coef(cvfit.ridge, s = "lambda.min"))
+      }
     }
     predictions[[studyid]] <- apply(prediction.dummy, 1, mean)
   }
@@ -176,34 +345,52 @@ separate_prediction <- function(traindata, testdata){
 }
 
 
-wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NULL, magnitude = NULL, heterogeneity = NULL, Nsim = 100){
+wrapper_function <- function(Nstudies = NULL, Ncov = NULL, sys_missing_prob = NULL, magnitude = NULL, heterogeneity = NULL, Nsim = 100, shrinkage = NULL, magnitude.complete = NULL, magnitude.sys = NULL){
 
+  if(is.null(shrinkage)){
+    shrinkage <- FALSE
+  }
+  
   testdata <- naivepred <- imputation_noclusterpred <- imputationpred <- separatepred <- list()
   
   for(i in 1:Nsim){
     
     set.seed(i)
-    simulated_dataset <- generate_sysmiss_ipdma_example(Nstudies = Nstudies, Ncov = Ncov, sys_missing_prob = sys_missing_prob, magnitude = magnitude, 
-                                                     heterogeneity = heterogeneity, interaction = FALSE)
+    simulated_dataset <- generate_sysmiss_ipdma_example_revised(Nstudies = Nstudies, Ncov = Ncov, sys_missing_prob = sys_missing_prob, magnitude = magnitude, 
+                                                     heterogeneity = heterogeneity, interaction = FALSE, magnitude.complete = magnitude.complete, 
+                                                     magnitude.sys = magnitude.sys)
 
-    validation_dataset <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = Ncov, sys_missing_prob = 0, magnitude = magnitude, 
-                                                      heterogeneity = heterogeneity, interaction = FALSE)
+    validation_dataset <- generate_sysmiss_ipdma_example_revised(Nstudies = 10, Ncov = Ncov, sys_missing_prob = 0, magnitude = magnitude, 
+                                                     heterogeneity = heterogeneity, interaction = FALSE, magnitude.complete = magnitude.complete,
+                                                     magnitude.sys = magnitude.sys)
 
     testdata[[i]] <- findTestingOutcome(validation_dataset)
     
     # naive method
     naivepred[[i]] <- NA
-    naivepred[[i]] <- try(naive_prediction(simulated_dataset, validation_dataset))
-
+    if(shrinkage == FALSE){
+      naivepred[[i]] <- try(naive_prediction(simulated_dataset, validation_dataset))  
+    } else{
+      naivepred[[i]] <- try(naive_prediction(simulated_dataset, validation_dataset, shrinkage = TRUE))
+    }
+    
     # imputation method - ignoring study level
     imputation_noclusterpred[[i]] <- NA
-    imputation_noclusterpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_nocluster"))
-
+    if(shrinkage == FALSE){
+      imputation_noclusterpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_nocluster"))
+    } else{
+      imputation_noclusterpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_nocluster", shrinkage = TRUE))
+    }
+    
     # imputation method - accounting for study level
     imputationpred[[i]] <- NA
-    imputationpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset))
-    #imputationpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_2lglm"))
-    
+    if(shrinkage == FALSE){
+      imputationpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset))
+      #imputationpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_2lglm"))
+    } else{
+      imputationpred[[i]] <- try(imputation_prediction(simulated_dataset, validation_dataset, shrinkage = TRUE))
+    }
+
     # separate method
     separatepred[[i]] <- NA
     separatepred[[i]] <- try(separate_prediction(simulated_dataset, validation_dataset))
@@ -278,21 +465,27 @@ wrapper_function2 <- function(stored_predictions, aggregation = "ignore"){
     separate_store_revised <- separate_store_revised[-failed_set,]
   }
   
-  return_matrix <- matrix(NA, 4, 3)
+  # return_matrix is the mean value; return_matrix2 is the Monte Carlo error
+  return_matrix <- return_matrix2 <- matrix(NA, 4, 3)
   return_matrix[1,] <- round(apply(naive_store_revised, 2, mean, na.rm = TRUE), digits = 5)
   return_matrix[2,] <- round(apply(imputation_noclusterstore_revised, 2, mean, na.rm = TRUE), digits = 5)
   
+  return_matrix2[1,] <- round(apply(naive_store_revised, 2, sd, na.rm = TRUE)/sqrt(length(naive_store_revised)), digits = 5)
+  return_matrix2[2,] <- round(apply(imputation_noclusterstore_revised, 2, sd, na.rm = TRUE)/ sqrt(length(imputation_noclusterstore_revised)), digits = 5)
+  
   if(length(imputation_failed) <= threshold){
     return_matrix[3,] <- round(apply(imputation_store_revised, 2, mean, na.rm = TRUE), digits = 5)
+    return_matrix2[3,] <- round(apply(imputation_store_revised, 2, sd, na.rm = TRUE)/ sqrt(length(imputation_store_revised)), digits = 5)
   }
   return_matrix[4,] <- round(apply(separate_store_revised, 2, mean, na.rm = TRUE), digits = 5)
+  return_matrix2[4,] <- round(apply(separate_store_revised, 2, sd, na.rm = TRUE)/ sqrt(length(separate_store_revised)), digits = 5)
   
   #only report MSE and R-squared
   return_matrix <- return_matrix[,c(1,3)]
+  return_matrix2 <- return_matrix2[,c(1,3)]
   
-  rownames(return_matrix) <- c("Naive", "Imputation ignoring heterogeneity", "Imputation accounting heterogeneity", "Separate prediction")
-  colnames(return_matrix) <- c("MSE", "R-squared")
+  rownames(return_matrix) <- rownames(return_matrix2) <- c("Naive", "Imputation ignoring heterogeneity", "Imputation accounting heterogeneity", "Separate prediction")
+  colnames(return_matrix) <- colnames(return_matrix2) <- c("MSE", "R-squared")
   
-  return(list(number_failed_simulations = number_failed_simulations, return_matrix = return_matrix))
-  
+  return(list(number_failed_simulations = number_failed_simulations, return_matrix = return_matrix, return_matrix2 = return_matrix2))
 }

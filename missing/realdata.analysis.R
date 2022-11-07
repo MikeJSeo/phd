@@ -1,3 +1,7 @@
+# We changed name of the methods
+# naive method -> restrict predictor method
+# separate prediction method -> ensemble method
+
 #devtools::install_github("MikeJSeo/bipd") # personal github with some imputation related functions
 library(bipd)
 library(dplyr)
@@ -11,12 +15,10 @@ library(lme4) #running lmer
 library(broom.mixed) #for summarizing lmer results from multiply imputed dataset
 library(mitools) #for function imputationList
 
-#setwd("C:/Users/mike/Desktop")
-setwd("C:/Users/ms19g661/Desktop")
+setwd("C:/Users/swj88/OneDrive/Desktop")
 data <- read.csv("data_ICBT.csv")
 
-#setwd("C:/Users/mike/Desktop/Github/phd/missing")
-setwd("~/GitHub/phd/missing")
+setwd("C:/Users/swj88/Documents/Github/phd/missing")
 source("helpful.functions.R")
 source("realdata.crossvalidation.R")
 
@@ -107,7 +109,26 @@ for(i in 1:length(unique(mydata$study))){
   }
   coef_fit_store[[i]] <- summary(pool(fit))
 }
-coef_fit_store
+
+
+full_list <- as.vector(coef_fit_store[[6]]$term) # full list of variable names
+result_matrix <- matrix(NA, length(full_list), 3)
+result_matrix[,1] <- full_list
+colnames(result_matrix) <- c("varnames", "estimate", "std.error")
+
+for(i in 1:length(full_list)){
+  
+  var_name <- full_list[i]
+  estimate <- sapply(coef_fit_store, function(x) {
+    ifelse(any(x$term %in% var_name), x[x$term == var_name, c("estimate")], 0)
+  }) 
+  std.error <- sapply(coef_fit_store, function(x) {
+    ifelse(any(x$term %in% var_name), x[x$term == var_name, c("std.error")], 0)
+  }) 
+  
+  result_matrix[i, c(2,3)] <- round(c(mean(estimate), sqrt(sum(std.error^2)/length(std.error))), digit = 3)
+}
+result_matrix
 
 
 ########################################################################

@@ -1,3 +1,6 @@
+# We changed name of the methods
+# naive method -> restrict predictor method
+# separate prediction method -> ensemble method
 
 crossvalidation_realdata <- function(crossdata, method, testdata_index = NULL){
   

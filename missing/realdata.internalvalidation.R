@@ -1,3 +1,7 @@
+# We changed name of the methods
+# naive method -> restrict predictor method
+# separate prediction method -> ensemble method
+
 #devtools::install_github("MikeJSeo/bipd") # personal github with some imputation related functions
 library(bipd)
 library(dplyr)

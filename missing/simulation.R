@@ -1,3 +1,7 @@
+# We changed name of the methods
+# naive method -> restrict predictor method
+# separate prediction method -> ensemble method
+
 #devtools::install_github("MikeJSeo/bipd") 
 library(bipd)
 library(dplyr)
@@ -5,7 +9,7 @@ library(mvtnorm)
 library(lme4)
 library(micemd)
 
-setwd("C:/Users/mike/Desktop/Github/phd/missing")
+setwd("C:/Users/swj88/Documents/Github/phd/missing")
 source("helpful.functions.R")
 source("simulation.functions.R")
 
@@ -15,7 +19,7 @@ source("simulation.functions.R")
 type_of_var <- c("continuous", "binary", "binary", "continuous", "continuous", "continuous", "continuous", "binary", "binary", "binary")
 names(type_of_var) <- paste0("x", 1:10)
 
-setwd("C:/Users/mike/Desktop/Github/phd/missing/simulation_results")
+setwd("C:/Users/swj88/Documents/Github/phd/missing/simulation_results")
 options(warn=-1) #options(warn=0)
 
 #################################### simulation1
@@ -464,6 +468,16 @@ result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.3, mag
 #save(result, file = "simulation64.RData")
 
 load("simulation64.RData")
+wrapper_function2(result)
+
+#################################### Additional simulations
+
+#################################### simulationR1
+#result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, magnitude.complete = 0.2, magnitude.sys = 0.5)
+result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR1.RData")
+
+load("simulationR1.RData")
 wrapper_function2(result)
 
 
