@@ -40,20 +40,33 @@ generate_sysmiss_ipdma_example_revised <- function(Nstudies = 10, Ncov = 5, sys_
     X[,10] <- ifelse(X[,10] > 0.5, 1, 0)
   }
   
+  # introduce systematically missing; first two predictors are always observed
+  sysmissingPerStudy <- matrix(0, nrow = Nstudies, ncol = Ncov)
+  for(j in 3:Ncov){
+    for(i in 1:Nstudies){
+      if(stats::rbinom(1, 1, sys_missing_prob) == 1){
+        sysmissingPerStudy[i,j] <- 1
+      }
+    }
+  }  
+  allsys <- apply(sysmissingPerStudy, 2, sum)
+  
+  if(!is.null(magnitude.complete)){
+    magnitude <- ifelse(allsys == 0, magnitude.complete, magnitude.sys)
+    print(magnitude)
+  } else{
+    magnitude <- rep(magnitude, Ncov)
+  }
+
   e_vec <- stats::rnorm(Npatients.tot, 0, 1) 
   b <- matrix(NA, Npatients.tot, Ncov)
   #b[,1] <- rep(0.2, Npatients.tot)
   
   for(i in 1:Ncov){
     
-    if(!is.null(magnitude.complete)){
-      magnitude <- ifelse(i %in% c(1,2), magnitude.complete, magnitude.sys)
-    }
-    
-    b_dummy <- stats::rnorm(Nstudies, magnitude, heterogeneity)
+    b_dummy <- stats::rnorm(Nstudies, magnitude[i], heterogeneity)
     b_dummy <- rep(b_dummy, times = Npatients)
     b[,i] <- b_dummy
-    
   }
   
   if(interaction == TRUE){
@@ -77,10 +90,10 @@ generate_sysmiss_ipdma_example_revised <- function(Nstudies = 10, Ncov = 5, sys_
     y <- a + apply(X * b, 1, sum) + e_vec + d *treat + apply(Xinteraction * cvec, 1, sum)
   }
   
-  # introduce systematically missing; first two predictors are always observed
+  # fill in NA for systematically missing
   for(j in 3:Ncov){
     for(i in 1:Nstudies){
-      if(stats::rbinom(1, 1, sys_missing_prob) == 1){
+      if(sysmissingPerStudy[i,j] == 1){
         X[study == i,j] <- NA  
       }
     }
@@ -268,7 +281,6 @@ imputation_prediction <- function(traindata, testdata, method = "imputation", sh
         data_glmnet <- cbind(y = imp.dummy$y, data_glmnet = data_glmnet)
         cvfit.ridge <- cv.glmnet(as.matrix(data_glmnet[,-1]), as.matrix(data_glmnet[,1]), family = "gaussian", alpha = 0, type.measure = "deviance", lambda = lambdas)
       }
-      
       bb <- model.matrix(form2, data = testdata_dummy)
       
       if(shrinkage == FALSE){

@@ -8,13 +8,12 @@ library(dplyr)
 library(mvtnorm)
 library(lme4)
 library(micemd)
+library(glmnet)
 
 setwd("C:/Users/swj88/Documents/Github/phd/missing")
 source("helpful.functions.R")
 source("simulation.functions.R")
 
-
-####################################
 # type of variable
 type_of_var <- c("continuous", "binary", "binary", "continuous", "continuous", "continuous", "continuous", "binary", "binary", "binary")
 names(type_of_var) <- paste0("x", 1:10)
@@ -22,6 +21,8 @@ names(type_of_var) <- paste0("x", 1:10)
 setwd("C:/Users/swj88/Documents/Github/phd/missing/simulation_results")
 options(warn=-1) #options(warn=0)
 
+
+############Start of simulations################
 #################################### simulation1
 result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.2, heterogeneity = 0.1)
 #save(result, file = "simulation1.RData")
@@ -470,29 +471,475 @@ result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.3, mag
 load("simulation64.RData")
 wrapper_function2(result)
 
-#################################### Additional simulations
+#################################### Additional simulations with shrinkage
 
-#################################### simulationR1
-#result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#################################### simulationR33S
 result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
-#save(result, file = "simulationR1.RData")
+#save(result, file = "simulationR33S.RData")
 
-load("simulationR1.RData")
+load("simulationR33S.RData")
+wrapper_function2(result)
+
+#################################### simulationR34S
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR34S.RData")
+
+load("simulationR34S.RData")
+wrapper_function2(result)
+
+#################################### simulationR35S
+result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR35S.RData")
+
+load("simulationR35S.RData")
+wrapper_function2(result)
+
+#################################### simulationR36S
+result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR36S.RData")
+
+load("simulationR36S.RData")
+wrapper_function2(result)
+
+#################################### simulationR37S
+result <- wrapper_function(Nstudies = 2, Ncov = 10, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR37S.RData")
+
+load("simulationR37S.RData")
+wrapper_function2(result)
+
+#################################### simulationR38S
+result <- wrapper_function(Nstudies = 3, Ncov = 10, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR38S.RData")
+
+load("simulationR38S.RData")
+wrapper_function2(result)
+
+#################################### simulationR39S
+result <- wrapper_function(Nstudies = 5, Ncov = 10, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR39S.RData")
+
+load("simulationR39S.RData")
+wrapper_function2(result)
+
+#################################### simulationR40S
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR40S.RData")
+
+load("simulationR40S.RData")
+wrapper_function2(result)
+
+#################################### simulationR41S
+result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+save(result, file = "simulationR41S.RData")
+
+load("simulationR41S.RData")
+wrapper_function2(result)
+
+#################################### simulationR42S
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+save(result, file = "simulationR42S.RData")
+
+load("simulationR42S.RData")
+wrapper_function2(result)
+
+#################################### simulationR43S
+result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+save(result, file = "simulationR43S.RData")
+
+load("simulationR43S.RData")
+wrapper_function2(result)
+
+#################################### simulationR44S
+result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+save(result, file = "simulationR44S.RData")
+
+load("simulationR44S.RData")
+wrapper_function2(result)
+
+#################################### simulationR45S
+result <- wrapper_function(Nstudies = 2, Ncov = 10, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+save(result, file = "simulationR45S.RData")
+
+load("simulationR45S.RData")
+wrapper_function2(result)
+
+#################################### simulationR46S
+result <- wrapper_function(Nstudies = 3, Ncov = 10, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+save(result, file = "simulationR46S.RData")
+
+load("simulationR46S.RData")
+wrapper_function2(result)
+
+#################################### simulationR47S
+result <- wrapper_function(Nstudies = 5, Ncov = 10, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+save(result, file = "simulationR47S.RData")
+
+load("simulationR47S.RData")
+wrapper_function2(result)
+
+#################################### simulationR48S
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+save(result, file = "simulationR48S.RData")
+
+load("simulationR48S.RData")
+wrapper_function2(result)
+
+#################################### simulationR49S
+result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR49S.RData")
+
+load("simulationR49S.RData")
+wrapper_function2(result)
+
+#################################### simulationR50S
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR50S.RData")
+
+load("simulationR50S.RData")
+wrapper_function2(result)
+
+#################################### simulationR51S
+result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR51S.RData")
+
+load("simulationR51S.RData")
+wrapper_function2(result)
+
+#################################### simulationR52S
+result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR52S.RData")
+
+load("simulationR52S.RData")
+wrapper_function2(result)
+
+#################################### simulationR53S
+result <- wrapper_function(Nstudies = 2, Ncov = 10, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR53S.RData")
+
+load("simulationR53S.RData")
+wrapper_function2(result)
+
+#################################### simulationR54S
+result <- wrapper_function(Nstudies = 3, Ncov = 10, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR54S.RData")
+
+load("simulationR54S.RData")
+wrapper_function2(result)
+
+#################################### simulationR55S
+result <- wrapper_function(Nstudies = 5, Ncov = 10, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR55S.RData")
+
+load("simulationR55S.RData")
+wrapper_function2(result)
+
+#################################### simulationR56S
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR56S.RData")
+
+load("simulationR56S.RData")
+wrapper_function2(result)
+
+#################################### simulationR57S
+result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR57S.RData")
+
+load("simulationR57S.RData")
+wrapper_function2(result)
+
+#################################### simulationR58S
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR58S.RData")
+
+load("simulationR58S.RData")
+wrapper_function2(result)
+
+#################################### simulationR59S
+result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR59S.RData")
+
+load("simulationR59S.RData")
+wrapper_function2(result)
+
+#################################### simulationR60S
+result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR60S.RData")
+
+load("simulationR60S.RData")
+wrapper_function2(result)
+
+#################################### simulationR61S
+result <- wrapper_function(Nstudies = 2, Ncov = 10, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR61S.RData")
+
+load("simulationR61S.RData")
+wrapper_function2(result)
+
+#################################### simulationR62S
+result <- wrapper_function(Nstudies = 3, Ncov = 10, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR62S.RData")
+
+load("simulationR62S.RData")
+wrapper_function2(result)
+
+#################################### simulationR63S
+result <- wrapper_function(Nstudies = 5, Ncov = 10, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR63S.RData")
+
+load("simulationR63S.RData")
+wrapper_function2(result)
+
+#################################### simulationR64S
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = TRUE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR64S.RData")
+
+load("simulationR64S.RData")
 wrapper_function2(result)
 
 
 
+#################################### Additional simulations with no shrinkage
+
+#################################### simulationR33
+result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR33.RData")
+
+load("simulationR33.RData")
+wrapper_function2(result)
+
+#################################### simulationR34
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR34.RData")
+
+load("simulationR34.RData")
+wrapper_function2(result)
+
+#################################### simulationR35
+result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR35.RData")
+
+load("simulationR35.RData")
+wrapper_function2(result)
+
+#################################### simulationR36
+result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR36.RData")
+
+load("simulationR36.RData")
+wrapper_function2(result)
+
+#################################### simulationR37
+result <- wrapper_function(Nstudies = 2, Ncov = 10, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR37.RData")
+
+load("simulationR37.RData")
+wrapper_function2(result)
+
+#################################### simulationR38
+result <- wrapper_function(Nstudies = 3, Ncov = 10, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR38.RData")
+
+load("simulationR38.RData")
+wrapper_function2(result)
+
+#################################### simulationR39
+result <- wrapper_function(Nstudies = 5, Ncov = 10, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR39.RData")
+
+load("simulationR39.RData")
+wrapper_function2(result)
+
+#################################### simulationR40
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR40.RData")
+
+load("simulationR40.RData")
+wrapper_function2(result)
+
+#################################### simulationR41
+result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR41.RData")
+
+load("simulationR41.RData")
+wrapper_function2(result)
+
+#################################### simulationR42
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR42.RData")
+
+load("simulationR42.RData")
+wrapper_function2(result)
+
+#################################### simulationR43
+result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR43.RData")
+
+load("simulationR43.RData")
+wrapper_function2(result)
+
+#################################### simulationR44
+result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR44.RData")
+
+load("simulationR44.RData")
+wrapper_function2(result)
+
+#################################### simulationR45
+result <- wrapper_function(Nstudies = 2, Ncov = 10, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR45.RData")
+
+load("simulationR45.RData")
+wrapper_function2(result)
+
+#################################### simulationR46
+result <- wrapper_function(Nstudies = 3, Ncov = 10, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+#save(result, file = "simulationR46.RData")
+
+load("simulationR46.RData")
+wrapper_function2(result)
+
+#################################### simulationR47
+result <- wrapper_function(Nstudies = 5, Ncov = 10, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+save(result, file = "simulationR47.RData")
+
+load("simulationR47.RData")
+wrapper_function2(result)
+
+#################################### simulationR48
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.2, magnitude.sys = 0.5)
+save(result, file = "simulationR48.RData")
+
+load("simulationR48.RData")
+wrapper_function2(result)
+
+#################################### simulationR49
+result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR49.RData")
+
+load("simulationR49.RData")
+wrapper_function2(result)
+
+#################################### simulationR50
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR50.RData")
+
+load("simulationR50.RData")
+wrapper_function2(result)
+
+#################################### simulationR51
+result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR51.RData")
+
+load("simulationR51.RData")
+wrapper_function2(result)
+
+#################################### simulationR52
+result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR52.RData")
+
+load("simulationR52.RData")
+wrapper_function2(result)
+
+#################################### simulationR53
+result <- wrapper_function(Nstudies = 2, Ncov = 10, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR53.RData")
+
+load("simulationR53.RData")
+wrapper_function2(result)
+
+#################################### simulationR54
+result <- wrapper_function(Nstudies = 3, Ncov = 10, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR54.RData")
+
+load("simulationR54.RData")
+wrapper_function2(result)
+
+#################################### simulationR55
+result <- wrapper_function(Nstudies = 5, Ncov = 10, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR55.RData")
+
+load("simulationR55.RData")
+wrapper_function2(result)
+
+#################################### simulationR56
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.1, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR56.RData")
+
+load("simulationR56.RData")
+wrapper_function2(result)
+
+#################################### simulationR57
+result <- wrapper_function(Nstudies = 2, Ncov = 5, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR57.RData")
+
+load("simulationR57.RData")
+wrapper_function2(result)
+
+#################################### simulationR58
+result <- wrapper_function(Nstudies = 3, Ncov = 5, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR58.RData")
+
+load("simulationR58.RData")
+wrapper_function2(result)
+
+#################################### simulationR59
+result <- wrapper_function(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR59.RData")
+
+load("simulationR59.RData")
+wrapper_function2(result)
+
+#################################### simulationR60
+result <- wrapper_function(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR60.RData")
+
+load("simulationR60.RData")
+wrapper_function2(result)
+
+#################################### simulationR61
+result <- wrapper_function(Nstudies = 2, Ncov = 10, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR61.RData")
+
+load("simulationR61.RData")
+wrapper_function2(result)
+
+#################################### simulationR62
+result <- wrapper_function(Nstudies = 3, Ncov = 10, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR62.RData")
+
+load("simulationR62.RData")
+wrapper_function2(result)
+
+#################################### simulationR63
+result <- wrapper_function(Nstudies = 5, Ncov = 10, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR63.RData")
+
+load("simulationR63.RData")
+wrapper_function2(result)
+
+#################################### simulationR64
+result <- wrapper_function(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.3, magnitude = NULL, heterogeneity = 0.3, shrinkage = FALSE, magnitude.complete = 0.5, magnitude.sys = 0.2)
+save(result, file = "simulationR64.RData")
+
+load("simulationR64.RData")
+wrapper_function2(result)
+
+
 # Example
-# simulated_data <- generate_sysmiss_ipdma_example(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
-# simulated_dataset <- simulated_data$dataset
-# 
-# validation_data <- generate_sysmiss_ipdma_example(Nstudies = 10, Ncov = 5, sys_missing_prob = 0.3, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE, aggregation_bias = FALSE)
-# validation_dataset <- validation_data$dataset
-# 
-# naivepred <- naive_prediction(simulated_dataset, validation_dataset)
-# imputationpred <- imputation_prediction(simulated_dataset, validation_dataset)
-# imputation_noclusterpred <- imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_nocluster")
-# separatepred <- separate_prediction(simulated_dataset, validation_dataset)
+simulated_dataset <- generate_sysmiss_ipdma_example_revised(Nstudies = 5, Ncov = 5, sys_missing_prob = 0.1, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE)
+validation_dataset <- generate_sysmiss_ipdma_example_revised(Nstudies = 10, Ncov = 5, sys_missing_prob = 0, magnitude = 0.5, heterogeneity = 0.1, interaction = FALSE)
+
+naivepred <- naive_prediction(simulated_dataset, validation_dataset, shrinkage = TRUE)
+naivepred <- naive_prediction(simulated_dataset, validation_dataset, shrinkage = FALSE)
+
+imputationpred <- imputation_prediction(simulated_dataset, validation_dataset, shrinkage = TRUE)
+imputationpred <- imputation_prediction(simulated_dataset, validation_dataset, shrinkage = FALSE)
+
+imputation_noclusterpred <- imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_nocluster", shrinkage = TRUE)
+imputation_noclusterpred <- imputation_prediction(simulated_dataset, validation_dataset, method = "imputation_nocluster", shrinkage = FALSE)
+
+separatepred <- separate_prediction(simulated_dataset, validation_dataset)
 # 
 # testdata <- findTestingOutcome(validation_dataset)
 # 
@@ -506,4 +953,5 @@ wrapper_function2(result)
 # imputation_noclusterpref
 # separateperf
 
+simulated_dataset <- generate_sysmiss_ipdma_example_revised(Nstudies = 10, Ncov = 10, sys_missing_prob = 0.1, magnitude.complete = 0.2, magnitude.sys = 0.5, heterogeneity = 0.1, interaction = FALSE)
 
